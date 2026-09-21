@@ -1,0 +1,31 @@
+name: fetch-test
+# Dress rehearsal: pull real NBA.com JSON for the last 130 games of 2025-26 plus the 2026-27 schedule,
+# injuries and odds, and commit them so Claude can validate the parser against the mirror.
+on: workflow_dispatch
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install curl_cffi requests pandas
+      - name: 2026-27 schedule
+        run: python pipeline/nba_fetch.py schedule --season 2026
+      - name: 2025-26 games 1101-1230 (rehearsal)
+        run: python pipeline/nba_fetch.py games --season 2025 --idrange 1101-1230
+      - name: Injuries
+        run: python pipeline/nba_fetch.py injuries --season 2026
+      - name: Odds (today)
+        run: python pipeline/nba_fetch.py odds --season 2026
+      - name: Commit
+        run: |
+          git config user.name "jimbo-bot"
+          git config user.email "jimbo-bot@users.noreply.github.com"
+          git add live
+          git commit -m "fetch-test $(date -u +%F)" || echo "nothing to commit"
+          git push
