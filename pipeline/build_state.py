@@ -23,9 +23,18 @@ cfg = {"season": S, "slope": float(cal["slope"]), "unrated": float(cal["unrated"
        "gap_k": 20.0, "mpg_k": 10.0, "avail_k": 20.0, "out_default_games": 10,
        "notes": "M4 update (inseason_bt.py). tau_* and gap_k / mpg_k / avail_k are PROVISIONAL (in-season minutes and "
                 "uncertainty backtest not yet run)."}
+# keep hand-tuned settings already in an existing config (e.g. in-season minutes rule min_k/min_rec/min_alloc, notes);
+# model-derived values (slope, unrated, W, pace, tau_pre) are refreshed. (session 12: build_state used to drop them)
+_cf = os.path.join(out, "config.json")
+if os.path.exists(_cf):
+    _old = json.load(open(_cf))
+    for _k in ("mpg_k", "avail_k"): cfg.pop(_k, None) if _k not in _old else None
+    for _k, _v in _old.items():
+        if _k not in ("slope", "unrated", "Wo", "Wd", "pace", "tau_pre", "season"): cfg[_k] = _v
 # history window (box part of ratings), for the box update
 F = pd.read_parquet(f"{D}/features.parquet")
-fw = F[F.season.between(N - 2, N)].copy(); dec = fw.season.map({N - 2: .3, N - 1: .6, N: 1.0})
+fw = F[F.season.between(N - 2, N)].copy(); BOX_DECAY = (0.1, 0.4, 1.0)  # = production.py box decay (session 12; was .3/.6/1)
+dec = fw.season.map(dict(zip([N - 2, N - 1, N], BOX_DECAY)))
 fw["wo"], fw["wd"] = fw.poss_off * dec, fw.poss_def * dec
 H = pd.concat([fw[OFF_FEATS].mul(fw.wo, axis=0).groupby(fw.player).sum(), fw[DEF_FEATS].mul(fw.wd, axis=0).groupby(fw.player).sum(),
                fw.groupby("player")[["wo", "wd"]].sum()], axis=1)
