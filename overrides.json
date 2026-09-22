@@ -1,5 +1,23 @@
 {
  "_note": "User overrides applied by the nightly run (and later by the app). players: key -> {t: team, g: games of 82, mpg, r: rating}. Keys: p<NBA player id> or n:<name>|<team>. Migrated from the claude.ai dashboard (settings/current) 2026-09-21: no player overrides, all sliders at defaults.",
  "players": {},
- "sliders": {}
+ "sliders": {
+  "three_pt": 1,
+  "rim_finishing": 1,
+  "pullup_mid": 1,
+  "foul_drawing": 1,
+  "self_creation": 1,
+  "playmaking": 1,
+  "ball_security": 1,
+  "off_rebounding": 1,
+  "def_rebounding": 1,
+  "rim_protection": 1,
+  "perimeter_def": 1,
+  "lineup_o": 0.6,
+  "lineup_d": 0.8,
+  "eff": 1,
+  "age": 1,
+  "bm": 0.37290551766215724
+ },
+ "updated": "2026-09-22T21:03:26.835Z"
 }
