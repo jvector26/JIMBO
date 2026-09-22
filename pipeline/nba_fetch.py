@@ -13,6 +13,7 @@ Usage:
 Outputs under live/{season}/ (compact, committed to the repo).
 """
 import argparse, datetime as dt, gzip, io, json, os, sys, time
+import numpy as np
 import pandas as pd
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -136,7 +137,7 @@ def fetch_games(season, since=None, until=None, limit=None, kinds=("reg",), idra
     if until:
         todo = todo[todo.date_et <= until]
     pdir, bdir = live_dir(season, "pbp"), live_dir(season, "box")
-    todo = todo[[not os.path.exists(os.path.join(pdir, f"{g}.csv.gz")) for g in todo.gameId]]
+    todo = todo.loc[np.array([not os.path.exists(os.path.join(pdir, f"{g}.csv.gz")) for g in todo.gameId], dtype=bool)]
     if limit:
         todo = todo.head(limit)
     print(f"{len(todo)} games to fetch")
