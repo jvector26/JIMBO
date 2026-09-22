@@ -25,7 +25,7 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-      - run: pip install curl_cffi requests pandas pyarrow scipy numpy
+      - run: pip install -r requirements.txt
       - name: Fetch schedule, final games, injuries, lines
         run: |
           python pipeline/nba_fetch.py schedule --season 2026
