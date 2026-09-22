@@ -312,6 +312,7 @@ th .axis span{color:#fff;opacity:.85}
 .inj.dtd{background:#E8A200}
 tr.benchhd td{text-align:left;background:var(--soft);color:var(--muted);font-size:13px;font-weight:600;padding:8px 8px 6px;border-top:2px solid var(--line)}
 td.muted{color:var(--muted)}
+.rk2 small.p100{font-family:var(--text);font-weight:400;font-size:11px;color:var(--muted);margin-left:3px}
 @media (max-width:760px){ /* team detail stays on screen while the wide standings table scrolls sideways */
   tr.detail > td > .roster, tr.detail > td > .hist{position:sticky;left:0;width:calc(100vw - 58px);overflow-x:auto}
   .roster table{min-width:0 !important;width:100%}
@@ -1071,9 +1072,10 @@ function renderPV(){
   // rookie college profile
   if(rook){ const RV=M.rv;
     if(rook.college){ const st=rook.st, v=RV.col_a+RV.col_b*Math.max(-RV.col_cap,Math.min(RV.col_cap,rook.cs-RV.col_mean));
-      h+=`<div class="pvsec"><h3>Where the rookie baseline comes from</h3><p class="note">Pick ${rook.pick}. His last college season, per 100 possessions on court, scored against how 20 years of college first-rounders actually did as NBA rookies (rookie-year impact, not career outlook).</p>
-      <div class="rk2">${[['Points',st.pts.toFixed(1)],['True shooting',(st.ts*100).toFixed(1)+'%'],['Usage',st.usg.toFixed(1)+'%'],['3PA',st.tpa.toFixed(1)],['3P%',(st.tp*100).toFixed(1)+'%'],['FT%',(st.ft*100).toFixed(1)+'%'],['Off rebounds',st.orb.toFixed(1)],['Def rebounds',st.drb.toFixed(1)],['Assists',st.ast.toFixed(1)],['Turnovers',st.tov.toFixed(1)],['Steals',st.stl.toFixed(1)],['Blocks',st.blk.toFixed(1)],['Minutes/game',st.mpg.toFixed(1)],['Age at draft',Math.round(st.age)],['Height',`${Math.floor(st.h/12)}'${Math.round(st.h%12)}"`]].map(([a,b])=>`<div>${a} <b>${b}</b></div>`).join('')}</div>
-      <p class="note" style="margin-top:10px">College score ${fmt(rook.cs,2)}: better than ${rook.pct}% of first-rounders since 2006. Baseline = ${RV.col_a} + ${RV.col_b} × (score − average, capped at ±${RV.col_cap}) = ${fmt(v,2)}${rook.capped?' (capped)':''}, then ×${M.slope.toFixed(3)} calibration. An average first-round rookie comes out near ${RV.col_a}.</p></div>`;
+      h+=`<div class="pvsec"><h3>Where the rookie baseline comes from</h3><p class="note">Pick ${rook.pick}. His last college season${st.g?` (${st.g} games)`:''}, scored against how 20 years of college first-rounders actually did as NBA rookies (rookie-year impact, not career outlook). The model uses rates per 100 possessions on court, so pace doesn't matter; counting stats below are ${st.pg?'per game, with the per-100 rate the model uses in small print':'per 100 possessions on court'}.</p>
+      <div class="rk2">${(()=>{ const c=(v)=>st.pg?`${(v*st.pg).toFixed(1)} <small class="p100">${v.toFixed(1)}/100</small>`:v.toFixed(1); const u=st.pg?' per game':' per 100';
+        return [['Points'+u,c(st.pts)],['True shooting',(st.ts*100).toFixed(1)+'%'],['Usage',st.usg.toFixed(1)+'%'],['3PA'+u,c(st.tpa)],['3P%',(st.tp*100).toFixed(1)+'%'],['FT%',(st.ft*100).toFixed(1)+'%'],['Off rebounds',c(st.orb)],['Def rebounds',c(st.drb)],['Assists',c(st.ast)],['Turnovers',c(st.tov)],['Steals',c(st.stl)],['Blocks',c(st.blk)],['Minutes/game',st.mpg.toFixed(1)],['Age at draft',Math.round(st.age)],['Height',`${Math.floor(st.h/12)}'${Math.round(st.h%12)}"`]].map(([a,b])=>`<div>${a} <b>${b}</b></div>`).join(''); })()}</div>
+      <p class="note" style="margin-top:10px">College score ${fmt(rook.cs,2)}: better than ${rook.pct}% of first-rounders since 2006. Baseline = ${(+RV.col_a).toFixed(2)} + ${(+RV.col_b).toFixed(2)} × (score − average, capped at ±${RV.col_cap}) = ${fmt(v,2)}${rook.capped?' (capped)':''}, then ×${M.slope.toFixed(3)} calibration. An average first-round rookie comes out near ${(+RV.col_a).toFixed(2)}.</p></div>`;
     } else h+=`<div class="pvsec"><h3>Where the rookie baseline comes from</h3><p class="note">Pick ${rook.pick}, no college data (international or other path): baseline from draft slot and draft age.</p></div>`;
   }
   // career chart
@@ -1193,7 +1195,7 @@ if(window.claude&&window.claude.use){
   const hdr=t=>({Authorization:`Bearer ${t}`, Accept:'application/vnd.github+json'});
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
   let D, SZ, hist=null, remote=null;
-  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=9e7fd8f464',{}), getJSON('data/latest.json')]); }
+  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=5f29198d93',{}), getJSON('data/latest.json')]); }
   catch(e){ say('Could not load data. Check your connection and reopen.'); return; }
   try{ hist=await getJSON('data/history.json'); }catch(e){}
   async function fetchRemote(){
