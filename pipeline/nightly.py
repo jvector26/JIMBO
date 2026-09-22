@@ -129,11 +129,11 @@ if os.path.exists(inj_f) and not a.schedule_from_parsed:
         stt = str(row.status); cm = str(row.get("comment", "")).lower()
         if stt.lower().startswith("out") or "suspen" in stt.lower():
             rd = pd.to_datetime(row.get("return_date"), errors="coerce")
-            if "season" in cm and ("out for the season" in cm or "rest of the season" in cm or "remainder" in cm):
-                miss = G_rem.get(t, 0)
-            elif pd.notna(rd):
+            if pd.notna(rd):   # an explicit return date beats comment text (old notes say 'remainder of the season')
                 rdi = int(rd.strftime("%Y%m%d"))
                 miss = int((((rem.home == t) | (rem.away == t)) & (rem.date < rdi)).sum())
+            elif "season" in cm and ("out for the season" in cm or "rest of the season" in cm or "remainder" in cm):
+                miss = G_rem.get(t, 0)
             else:
                 miss = cfg["out_default_games"]
         elif "day" in stt.lower():
@@ -199,8 +199,11 @@ def game_strength(t):
     if per.sum() <= 0: return 0.0
     per = per * 240 / per.sum()
     return float((P.rating * per).sum() / 48)
-today = sched[sched.date == asof_i]
-odds_f = os.path.join(live, "odds", f"{asof.replace('-', '')}.csv")
+game_day = asof_i
+if not (sched.date == asof_i).any() and (sched.date > asof_i).any():
+    game_day = int(sched.date[sched.date > asof_i].min())   # no games today: show the next game day
+today = sched[sched.date == game_day]
+odds_f = os.path.join(live, "odds", f"{game_day}.csv")
 OD = pd.read_csv(odds_f) if os.path.exists(odds_f) else pd.DataFrame(columns=["home", "away", "spread", "details", "over_under", "home_ml", "away_ml"])
 netm = {t: game_strength(t) for t in SIM.TEAMS}; nm_mean = np.mean(list(netm.values()))
 tonight = []
@@ -223,15 +226,22 @@ for i, t in enumerate(SIM.TEAMS):
                   "pre_w": round(float(TP.blend_w_pre.get(t, np.nan)), 1),
                   **{k: round(float(F[k][i]), 4) for k in ["playoffs", "playin", "top6", "seed1", "r2", "cf", "finals", "title", "over"]},
                   "margin": round(float(fc_m[t]), 2), "model_margin": round(float(model_m[t]), 2), "offset": round(float(off[t]), 2),
-                  "g_rem": int(G_rem[t])})
+                  "g_rem": int(G_rem[t]), "gp": int(played[t]), "gap": round(float(gap0.get(t, 0)), 3),
+                  "dec": round(float(decay[t]), 4)})
 pl = P[(P.team != "FA") | (P.gp > 0)].copy()
 pl["rating_delta"] = pl.rating - pl.rating_pre
 players = [{"k": row.key, "n": row["name"], "t": row.team, "pos": round(float(row.pos_est), 2) if pd.notna(row.pos_est) else 3.0,
             "r": round(float(row.rating), 2), "r_pre": round(float(row.rating_pre), 2), "gp": int(row.gp),
-            "mpg": round(float(row.mpg_season), 1), "min_rem": round(float(row.min_rem)), "status": row.status or ""}
-           for _, row in pl.sort_values("rating", ascending=False).iterrows() if row.min_rem > 0 or row.gp > 0]
+            "mpg": round(float(row.mpg_season), 1), "min_rem": round(float(row.min_rem)), "status": row.status or "",
+            # app fields: pre-allocation minutes wanted, mpg estimate, availability, games out
+            "mw": round(float(row.min_want)), "me": round(float(row.mpg_est), 2), "av": round(float(row.avail), 3),
+            "miss": round(float(row.miss), 1)}
+           for _, row in pl.sort_values("rating", ascending=False).iterrows() if row.team != "FA" or row.gp > 0]   # every rostered player (injured ones carry their status to the app)
 latest = {"asof": asof, "season": S, "games_final": n_done, "games_parsed": n_parsed, "pace": round(pace, 1), "tau": round(float(tau), 2),
           "teams": teams, "players": players, "tonight": tonight, "sims": a.sims,
+          "game_day": f"{str(game_day)[:4]}-{str(game_day)[4:6]}-{str(game_day)[6:]}",
+          "cfg": {"gap_k": cfg["gap_k"], "sig": SIG, "hca": HCA},
+          "rem": [f"{h}-{w}" for h, w in zip(rem.home, rem.away)],   # remaining schedule (TBD Cup slots not included)
           "generated_utc": dt.datetime.now(dt.timezone.utc).replace(tzinfo=None).strftime("%Y-%m-%dT%H:%MZ")}
 json.dump(latest, open(os.path.join(a.out, "latest.json"), "w"), separators=(",", ":"))
 if not a.no_history:
