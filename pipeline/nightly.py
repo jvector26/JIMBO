@@ -147,7 +147,7 @@ for kk, o in OV.items():
     if "r" in o: P.loc[m, "rating"] = float(o["r"])
 # injuries (ESPN): games missed from now
 inj_f = os.path.join(live, "injuries.csv")
-P["status"] = ""; P["miss"] = 0.0
+P["status"] = ""; P["miss"] = 0.0; P["inj"] = ""; P["ret"] = ""
 G_rem = (82 - played).clip(lower=0).astype(int)   # includes TBD Cup-week games
 if os.path.exists(inj_f) and not a.schedule_from_parsed:
     I = pd.read_csv(inj_f); I["k"] = I.name.map(norm_name)
@@ -171,6 +171,10 @@ if os.path.exists(inj_f) and not a.schedule_from_parsed:
         else:
             miss = 0
         P.loc[m, "status"] = stt; P.loc[m, "miss"] = min(miss, G_rem.get(t, 0))
+        # game-page detail: injury type/side and expected return (factual fields only, no report text)
+        det_ = " ".join(str(x) for x in (row.get("detail"), row.get("side")) if pd.notna(x) and str(x).strip() and str(x) != "nan")
+        rd_ = pd.to_datetime(row.get("return_date"), errors="coerce")
+        P.loc[m, "inj"] = det_; P.loc[m, "ret"] = rd_.strftime("%Y-%m-%d") if pd.notna(rd_) else ""
 P["g_rem"] = P.team.map(G_rem).fillna(0)
 P.loc[(P.status.fillna("") == "") & (P.streak >= K_STREAK), "m_tg"] *= 0.5
 P["m_tg"] = P.m_tg.where(P.team != "FA", 0)
@@ -247,13 +251,24 @@ for _, gg in today.iterrows():
     ma = (netm[gg.away] - nm_mean) * pace / 100 + off[gg.away] + gap0.get(gg.away, 0) * decay[gg.away]
     sp_ = mh - ma + HCA
     o = OD[(OD.home == gg.home) & (OD.away == gg.away)]
-    tonight.append({"game": int(gg.game), "time_utc": gg.get("time_utc"), "home": gg.home, "away": gg.away,
+    def _rest(t):   # days since the team's previous game (None = no earlier game this season)
+        prev = sched[((sched.home == t) | (sched.away == t)) & (sched.date < game_day)].date
+        if not len(prev): return None
+        return int((pd.Timestamp(str(game_day)) - pd.Timestamp(str(int(prev.max())))).days)
+    mt = res[((res.home == gg.home) & (res.away == gg.away)) | ((res.home == gg.away) & (res.away == gg.home))].sort_values("date")
+    tonight.append({"rest_h": _rest(gg.home), "rest_a": _rest(gg.away),
+                    "meet": [[int(d), h_, a_, int(hp), int(ap_)] for d, h_, a_, hp, ap_ in zip(mt.date, mt.home, mt.away, mt.home_pts, mt.away_pts)],
+                    "game": int(gg.game), "time_utc": gg.get("time_utc"), "home": gg.home, "away": gg.away,
                     "margin": round(float(sp_), 1), "p_home": round(float(norm.cdf(sp_ / SIG)), 3),
                     "line": (o.details.iloc[0] if len(o) else None), "total": (float(o.over_under.iloc[0]) if len(o) and pd.notna(o.over_under.iloc[0]) else None)})
 # ------------------------------------------------------------------ write
 os.makedirs(a.out, exist_ok=True)
 F, M = out["forecast"], out["model"]
 teams = []
+def last10(t):   # [date, opponent, 'H'/'A', team pts, opp pts], newest last
+    r_ = res[(res.home == t) | (res.away == t)].sort_values("date").tail(10)
+    return [[int(d), (a_ if h_ == t else h_), ("H" if h_ == t else "A"), int(hp if h_ == t else ap_), int(ap_ if h_ == t else hp)]
+            for d, h_, a_, hp, ap_ in zip(r_.date, r_.home, r_.away, r_.home_pts, r_.away_pts)]
 for i, t in enumerate(SIM.TEAMS):
     teams.append({"t": t, "conf": SIM.conf_of[t], "w": int(wins[t]), "l": int(losses[t]),
                   "proj_w": round(float(F["mean"][i]), 1), "p10": int(F["p10"][i]), "p90": int(F["p90"][i]),
@@ -262,7 +277,7 @@ for i, t in enumerate(SIM.TEAMS):
                   **{k: round(float(F[k][i]), 4) for k in ["playoffs", "playin", "top6", "seed1", "r2", "cf", "finals", "title", "over"]},
                   "margin": round(float(fc_m[t]), 2), "model_margin": round(float(model_m[t]), 2), "offset": round(float(off[t]), 2),
                   "g_rem": int(G_rem[t]), "gp": int(played[t]), "gap": round(float(gap0.get(t, 0)), 3),
-                  "dec": round(float(decay[t]), 4)})
+                  "dec": round(float(decay[t]), 4), "l10": last10(t)})
 pl = P[(P.team != "FA") | (P.gp > 0)].copy()
 pl["rating_delta"] = pl.rating - pl.rating_pre
 players = [{"k": row.key, "n": row["name"], "t": row.team, "pos": round(float(row.pos_est), 2) if pd.notna(row.pos_est) else 3.0,
@@ -270,7 +285,7 @@ players = [{"k": row.key, "n": row["name"], "t": row.team, "pos": round(float(ro
             "mpg": round(float(row.mpg_season), 1), "min_rem": round(float(row.min_rem)), "status": row.status or "",
             # app fields: pre-allocation minutes wanted, mpg estimate, availability, games out
             "mw": round(float(row.min_want)), "me": round(float(row.mpg_est), 2), "mg": round(float(row.m_tg), 3), "mr": round(float(row.m_raw), 3), "av": round(float(row.avail), 3),
-            "miss": round(float(row.miss), 1)}
+            "miss": round(float(row.miss), 1), **({"inj": row.inj, "ret": row.ret} if row.status else {})}
            for _, row in pl.sort_values("rating", ascending=False).iterrows() if row.team != "FA" or row.gp > 0]   # every rostered player (injured ones carry their status to the app)
 latest = {"asof": asof, "season": S, "games_final": n_done, "games_parsed": n_parsed, "pace": round(pace, 1), "tau": round(float(tau), 2),
           "teams": teams, "players": players, "tonight": tonight, "sims": a.sims,

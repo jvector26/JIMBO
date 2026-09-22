@@ -371,6 +371,47 @@ td.muted{color:var(--muted)}
   .settings .sums{flex-basis:100%;order:3}
   .lede{display:none} header{padding-top:16px} h1{margin-bottom:6px}
 }
+/* game detail page (app) */
+#gv[hidden]{display:none}
+body.gvopen .tabs, body.gvopen .panel{display:none}
+body.pvopen #gv{display:none}
+#gv{background:var(--surface);border:2px solid var(--black);padding:14px;box-shadow:5px 5px 0 var(--shadow)}
+.gvh{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin:2px 0 4px}
+.gvteam{font-family:var(--display);font-size:clamp(22px,4vw,30px);line-height:1.1}
+.gvh .gpct{font-size:clamp(40px,7vw,56px)}
+.gvh .at{color:var(--muted);font-size:14px}
+#gv .pbar{height:12px;border:1.5px solid var(--black);background:var(--yellow);margin:6px 0 14px}
+#gv .pbar span{display:block;height:100%;background:var(--purple)}
+#gv td.l{white-space:normal}
+#gv .tbl table{min-width:0}
+.gvcards{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.gvcards .v{font-size:24px;white-space:nowrap}
+.wf{width:100%;max-width:640px;border-collapse:collapse;table-layout:fixed}
+.wf col.c{width:4.2em}
+.wf td,.wf th{padding:7px 6px;vertical-align:top}
+.wf td.l{text-align:left}
+.wf .d{display:block;font-size:12px;color:var(--muted);font-weight:400;white-space:normal;margin-top:1px}
+.wf tr.sub td{color:var(--muted)}
+.wf tr.tot td{border-top:2px solid var(--black);font-weight:700}
+.gvrot{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:16px}
+.gvrot h4{font-family:var(--display);font-weight:400;font-size:18px;margin:0 0 6px}
+.gvrot table{width:100%}
+.gvrot tr.offhd td{text-align:left;background:var(--bg,#FBF8F1);font-size:12.5px;color:var(--muted);font-weight:600;white-space:normal}
+.gvrot tr.teamtot td{border-top:2px solid var(--black);font-weight:700}
+.gvrot td .why{display:block;font-size:12px;color:var(--muted);white-space:normal}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 8px}
+.chip{font-family:var(--cond);font-size:14px;border:1.5px solid var(--black);padding:0 6px;border-radius:3px;white-space:nowrap}
+.chip.w{background:#C9F4F6} .chip.l{background:#FFD1E8}
+.ctxgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:6px 18px}
+.ctxgrid h4{font-size:14px;margin:6px 0 2px}
+.dist svg{display:block;width:100%;height:auto;max-height:220px}
+.dist text{font-family:var(--text);font-size:12px;fill:var(--muted)}
+.dist .lab{fill:var(--ink);font-weight:600}
+.game[data-g]{cursor:pointer}
+.game[data-g]:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.gdet{font-size:13px;font-weight:600;color:var(--focus);margin-top:6px;text-align:right}
+@media (max-width:640px){ #gv .gvrot td.l .tm{display:block;margin-left:0;font-size:12px} .gvcards .v{font-size:21px} .wf col.c{width:3.6em}
+  #gv{padding:10px 8px;box-shadow:3px 3px 0 var(--shadow)} .wf td,.wf th{padding:6px 3px} .gvrot td,.gvrot th{padding-left:3px;padding-right:3px} }
 </style>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -457,6 +498,7 @@ td.muted{color:var(--muted)}
         <tbody id="hRows"></tbody></table></div>
     </div>
     <div id="pv" hidden></div>
+    <div id="gv" hidden></div>
   </section>
   <details class="settings" id="settings">
     <summary><span class="sumt">Model settings</span><span class="sums" id="setSum">Sliders, accuracy check and your player changes</span><span class="chev" aria-hidden="true">▾</span></summary>
@@ -770,13 +812,19 @@ function gmv(r){ // games, minutes when playing, season minutes, value added to 
     return {g, mpg:mp, smin:r.min+r.gp*r.mpgS, add:gr>0?r.tot*r.min/(48*gr):0}; }
   const g=r.o.g!=null?r.o.g:r.p.g; return {g, mpg:g>0?r.min/g:0, smin:r.min, add:r.tot*r.min/3936};
 }
-function tonightGames(){
+function gameStrength(){ // per team: tonight's expected rotation (m_tg x injury status; edits apply) rescaled to 240 minutes
+  const st={}, rot={};
+  P.team.forEach(x=>{ let w=0; const per=x.roster.map(r=>{ const m=r.o.g===0?0:r.o.mpg!=null?r.o.mpg:(r.mtg||0)*statusMult(r.z); w+=m; return m; });
+    rot[x.t]=x.roster.map((r,i)=>({r, em:w>0?per[i]*240/w:0}));
+    st[x.t]=rot[x.t].reduce((a,q)=>a+q.r.tot*q.em,0)/48; });
+  return {st, rot, mean:Object.values(st).reduce((a,b)=>a+b,0)/NT};
+}
+function tonightGames(){ // spread = (lineup pts + team offset + blend adj)_home - (same)_away + home court; each part returned for the game page
   if(!SEASON||!SZ.tonight) return [];
-  const st={}; P.team.forEach(x=>{ let w=0; const per=x.roster.map(r=>{ const m=r.o.g===0?0:r.o.mpg!=null?r.o.mpg:(r.mtg||0)*statusMult(r.z); w+=m; return m; });
-    st[x.t]=w>0?x.roster.reduce((a,r,i)=>a+r.tot*per[i]*240/w,0)/48:0; });
-  const mean=Object.values(st).reduce((a,b)=>a+b,0)/NT, T=Object.fromEntries(P.team.map(x=>[x.t,x]));
-  const mg=t=>(st[t]-mean)*SZ.pace/100+ZT[t].offset+T[t].gap*ZT[t].dec;
-  return SZ.tonight.map(g=>{ const sp=mg(g.home)-mg(g.away)+M.hca; return {...g, sp, ph:E.Phi(sp/M.sig)}; });
+  const G=gameStrength(), T=Object.fromEntries(P.team.map(x=>[x.t,x]));
+  const part=t=>{ const lin=G.st[t]-G.mean, pts=lin*SZ.pace/100, off=ZT[t].offset, bl=T[t].gap*ZT[t].dec; return {t, lin, pts, off, bl, dec:ZT[t].dec, m:pts+off+bl, rot:G.rot[t], x:T[t]}; };
+  return SZ.tonight.map(g=>{ const H=part(g.home), A=part(g.away), sp=H.m-A.m+M.hca, spm=(H.pts+H.off)-(A.pts+A.off)+M.hca;
+    return {...g, sp, ph:E.Phi(sp/M.sig), spm, phm:E.Phi(spm/M.sig), H, A}; });
 }
 function injBadge(r){ const st=r.z&&r.z.status; if(!st) return ''; const lab=/^day/i.test(st)?'DTD':st.split(/[ -]/)[0];
   return `<span class="inj${lab==='DTD'?' dtd':''}" title="${esc(st)} (injury report)">${esc(lab)}</span>`; }
@@ -940,14 +988,110 @@ function renderTonight(){
   let h=`<div class="conf"><h2>${today?'Tonight':'Next games'}</h2><span class="note">${ds}${today?'':' (no games before then)'}</span></div>`;
   if(!gs.length) h+='<p class="note">No games scheduled.</p>';
   h+='<div class="games">'+gs.map(g=>{ const fav=g.sp>=0?g.home:g.away, ms=mktSpread(g);
-    return `<div class="game"><div class="gtop"><span class="note">${tipTime(g.time_utc)}</span>${ms!=null?`<span class="note">Line ${esc(g.line)}${g.total?` · total ${g.total}`:''}</span>`:''}</div>
+    return `<div class="game" data-g="${g.game}" tabindex="0" role="button" aria-label="Game details: ${g.away} at ${g.home}"><div class="gtop"><span class="note">${tipTime(g.time_utc)}</span>${ms!=null?`<span class="note">Line ${esc(g.line)}${g.total?` · total ${g.total}`:''}</span>`:''}</div>
       <div class="gteams"><div class="gside"><span class="gpct">${Math.round((1-g.ph)*100)}%</span><span class="tname">${g.away}</span><span class="note">away</span></div>
       <span class="at">at</span><div class="gside"><span class="gpct">${Math.round(g.ph*100)}%</span><span class="tname">${g.home}</span><span class="note">home</span></div></div>
       <div class="pbar" aria-hidden="true"><span style="width:${(1-g.ph)*100}%"></span></div>
-      <div class="note gsub">JIMBO: ${fav} by ${Math.abs(g.sp).toFixed(1)}${ms!=null?` · market ${ms>=0?g.home:g.away} by ${Math.abs(ms).toFixed(1)} · <b class="${Math.abs(g.sp-ms)>=3?'mv':''}">gap ${fmt(g.sp-ms)} for ${g.home}</b>`:''}</div></div>`; }).join('')+'</div>';
+      <div class="note gsub">JIMBO: ${fav} by ${Math.abs(g.sp).toFixed(1)}${ms!=null?` · market ${ms>=0?g.home:g.away} by ${Math.abs(ms).toFixed(1)} · <b class="${Math.abs(g.sp-ms)>=3?'mv':''}">gap ${fmt(g.sp-ms)} for ${g.home}</b>`:''}</div><div class="gdet">How the odds are built, rotations ›</div></div>`; }).join('')+'</div>';
   h+=`<p class="note">Win chances use tonight's expected rotation: injury-report players who are out count zero, day-to-day players half, and your edits apply. Lines from ESPN when posted.</p>`;
   $('tonight').innerHTML=h;
 }
+// ---------- game detail page (app): tap a game on Tonight
+let gvKey=null, gvScroll=0, gvPushed=false;
+$('tonight')&&$('tonight').addEventListener('click',e=>{ const c=e.target.closest('[data-g]'); if(c) openGame(+c.dataset.g); });
+$('tonight')&&$('tonight').addEventListener('keydown',e=>{ const c=e.target.closest('[data-g]'); if(c&&e.target===c&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); openGame(+c.dataset.g); } });
+function openGame(id){
+  if(!gvKey){ gvScroll=window.scrollY; try{ history.pushState({gv:id},''); gvPushed=true; }catch(e){ gvPushed=false; } }
+  gvKey=id; document.body.classList.add('gvopen'); $('gv').hidden=false; renderGV();
+  const top=$('gv').getBoundingClientRect().top+window.scrollY-10; window.scrollTo(0,Math.max(0,top)); $('gvBack')&&$('gvBack').focus({preventScroll:true});
+}
+function closeGame(){ gvKey=null; gvPushed=false; document.body.classList.remove('gvopen'); $('gv').hidden=true; $('gv').innerHTML=''; window.scrollTo(0,gvScroll); }
+const mTxt=(v,g)=>Math.abs(v)<0.05?'even':`${v>0?g.home:g.away} by ${Math.abs(v).toFixed(1)}`;
+function distSVG(g,ms){ // home margin ~ Normal(spread, sig)
+  const sd=M.sig, X0=-40, X1=40, W=Math.max(300,Math.min(760,(($('gv').clientWidth||640)-40))), H=W<500?170:190, L=12, R=12, T=26, B=30, y0=H-B;
+  const x=v=>L+(Math.max(X0,Math.min(X1,v))-X0)/(X1-X0)*(W-L-R), pdf=v=>Math.exp(-0.5*((v-g.sp)/sd)**2), yv=v=>y0-pdf(v)*(y0-T);
+  const area=(a,b)=>{ let d=`M${x(a)},${y0}`; for(let v=a;v<=b+1e-9;v+=0.5) d+=`L${x(v).toFixed(1)},${yv(v).toFixed(1)}`; return d+`L${x(b)},${y0}Z`; };
+  let s=`<path d="${area(X0,0)}" fill="var(--purple)" opacity=".85"/><path d="${area(0,X1)}" fill="var(--yellow)" stroke="var(--black)" stroke-width="0"/>`;
+  s+=`<line x1="${L}" x2="${W-R}" y1="${y0}" y2="${y0}" stroke="var(--black)" stroke-width="1.5"/>`;
+  for(let v=-30;v<=30;v+=10) s+=`<line x1="${x(v)}" x2="${x(v)}" y1="${y0}" y2="${y0+4}" stroke="var(--black)"/><text x="${x(v)}" y="${y0+17}" text-anchor="middle">${v===0?'0':(W<500?'':(v<0?g.away:g.home)+' ')+'+'+Math.abs(v)}</text>`;
+  s+=`<line x1="${x(0)}" x2="${x(0)}" y1="${T-6}" y2="${y0}" stroke="var(--black)" stroke-width="1.5"/>`;
+  s+=`<line x1="${x(g.sp)}" x2="${x(g.sp)}" y1="${yv(g.sp)}" y2="${y0}" stroke="var(--magenta)" stroke-width="2.5" stroke-dasharray="5 3"/><text class="lab" x="${x(g.sp)}" y="${T-10}" text-anchor="middle">JIMBO ${esc(mTxt(g.sp,g))}</text>`;
+  if(ms!=null) s+=`<path d="M${x(ms)-6},${y0+1} L${x(ms)+6},${y0+1} L${x(ms)},${y0-10} Z" fill="var(--ink)"/><text x="${x(ms)}" y="${y0-14}" text-anchor="middle" class="lab">market</text>`;
+  s+=`<text x="${L+4}" y="${T+4}">${g.away} wins</text><text x="${W-R-4}" y="${T+4}" text-anchor="end">${g.home} wins</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Distribution of the final margin">${s}</svg>`;
+}
+function rotHTML(Q,g){
+  const list=Q.rot.slice().sort((a,b)=>b.em-a.em||b.r.tot-a.r.tot), on=list.filter(q=>q.em>=0.5), off=list.filter(q=>q.em<0.5);
+  const reg=on.filter(q=>q.em>=8), spot=on.filter(q=>q.em<8), spotMin=spot.reduce((a,q)=>a+q.em,0);
+  const why=r=>{ const z=r.z; if(r.o.g===0) return 'your edit: not playing';
+    if(z&&z.status){ const d=z.ret?new Date(z.ret+'T12:00:00'):null; return `${esc(z.status)}${z.inj?`: ${esc(z.inj.toLowerCase())}`:''}${d&&!isNaN(d)?` · expected back ${d.toLocaleDateString(undefined,{month:'short',day:'numeric'})}`:''}`; }
+    return 'outside the expected rotation'; };
+  const row=(q,zero)=>{ const r=q.r, ch=Object.keys(r.o).length>0, add=r.tot*q.em/48;
+    return `<tr class="pr" data-pv="${esc(r.p.k)}"><td class="l"><span class="nm pvlink">${esc(r.p.n)}</span>${ch?'<span class="flag">edited</span>':''}${injBadge(r)}<span class="tm">${POS5(r.p.ps)}</span>${zero?`<span class="why">${why(r)}</span>`:''}</td>
+      <td class="num ${r.o.mpg!=null||r.o.g!=null?'ov':''}">${zero?'0':Math.round(q.em)}</td><td class="num ${r.o.r!=null?'ov':cls(r.tot)}">${fmt(r.tot)}</td><td class="num ${zero?'muted':cls(add)}">${zero?'–':fmt(add,2)}</td>
+      <td><button class="edit" data-edit="${esc(r.p.k)}">Edit</button></td></tr>`; };
+  const tot=on.reduce((a,q)=>a+q.r.tot*q.em/48,0);
+  return `<div><h4>${Q.t} <span class="note">${Q===g.H?'home':'away'}</span></h4><div class="tbl"><table><thead><tr><th class="l">Player</th><th title="Expected minutes tonight">Min</th><th title="Player rating, pts per 100 vs average">Rtg</th><th title="Rating × share of the 240 minutes">Adds</th><th></th></tr></thead><tbody>
+    ${reg.map(q=>row(q,false)).join('')}
+    ${spot.length?`<tr class="offhd"><td colspan="5">Spot minutes (${spot.length} players, ${Math.round(spotMin)} of the 240): expected averages, so a few minutes each</td></tr>`+spot.map(q=>row(q,false)).join(''):''}
+    <tr class="teamtot"><td class="l">Team, per 100 possessions</td><td class="num">240</td><td></td><td class="num ${cls(tot)}">${fmt(tot,2)}</td><td></td></tr>
+    ${off.length?`<tr class="offhd"><td colspan="5">Not expected to play (${off.length})</td></tr>`+off.map(q=>row(q,true)).join(''):''}
+    </tbody></table></div></div>`;
+}
+function renderGV(){
+  if(!gvKey||!P) return;
+  const g=tonightGames().find(x=>x.game===gvKey); if(!g){ closeGame(); return; }
+  const H=g.H, A=g.A, ms=mktSpread(g), pace=SZ.pace, day=new Date(SZ.game_day+'T12:00:00');
+  const ds=day.toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'}), tip=tipTime(g.time_utc);
+  const rec=x=>ANYPLAYED?` · ${x.w}-${x.l}`:'';
+  let h=`<div class="pvtop"><button class="back" id="gvBack">← Back</button><span class="note">${ds}${tip?` · ${tip}`:''}</span></div>
+  <div class="gvh"><div class="gside"><span class="gpct">${Math.round((1-g.ph)*100)}%</span><span class="gvteam">${g.away}</span><span class="note">away${rec(A.x)}</span></div>
+    <span class="at">at</span><div class="gside"><span class="gpct">${Math.round(g.ph*100)}%</span><span class="gvteam">${g.home}</span><span class="note">home${rec(H.x)}</span></div></div>
+  <div class="pbar" aria-hidden="true"><span style="width:${(1-g.ph)*100}%"></span></div>
+  <div class="cards gvcards">
+    <div class="card"><div class="k">JIMBO spread</div><div class="v">${esc(mTxt(g.sp,g))}</div><div class="s">model alone: ${esc(mTxt(g.spm,g))}</div></div>
+    <div class="card"><div class="k">Market</div><div class="v">${ms!=null?esc(g.line):'–'}</div><div class="s">${ms!=null?`${esc(mTxt(ms,g))}${g.total?` · total ${g.total}`:''}`:'line not posted yet'}</div></div>
+    ${ms!=null?`<div class="card"><div class="k">JIMBO vs market</div><div class="v ${Math.abs(g.sp-ms)>=3?cls(g.sp-ms):''}">${fmt(g.sp-ms)}</div><div class="s">points, for ${g.home}</div></div>`:''}
+  </div>`;
+  // uncertainty
+  const pH10=1-E.Phi((10-g.sp)/M.sig), pA10=E.Phi((-10-g.sp)/M.sig), lo=g.sp-1.2816*M.sig, hi=g.sp+1.2816*M.sig;
+  h+=`<div class="pvsec"><h3>How the game could go</h3><p class="note">Final margin from ${g.home}'s side: centered on JIMBO's spread, with the spread of real NBA results around a pregame forecast (standard deviation ${M.sig} points).</p>
+    <div class="dist">${distSVG(g,ms)}</div>
+    <div class="rk2"><div>${g.home} wins by 10+ <b>${pct(pH10)}</b></div><div>${g.away} wins by 10+ <b>${pct(pA10)}</b></div><div>Within 5 either way <b>${pct(E.Phi((5-g.sp)/M.sig)-E.Phi((-5-g.sp)/M.sig))}</b></div><div>80% of outcomes <b>${esc(mTxt(Math.round(lo),g)).replace('.0','')} to ${esc(mTxt(Math.round(hi),g)).replace('.0','')}</b></div></div></div>`;
+  // waterfall
+  const r3=(lab,d,a,hm,df,c)=>`<tr class="${c||''}"><td class="l">${lab}${d?`<span class="d">${d}</span>`:''}</td><td class="num">${a==null?'':fmt(a,1)}</td><td class="num">${hm==null?'':fmt(hm,1)}</td><td class="num ${c==='sub'?'':cls(df)}">${fmt(df,1)}</td></tr>`;
+  const offD=ANYPLAYED?'Results beyond what the player ratings explain (shrunk; grows with games played)':'Zero until games are played';
+  const decTxt=Math.abs(H.dec-A.dec)<0.005?`${Math.round(H.dec*100)}%`:`${Math.round(A.dec*100)}% / ${Math.round(H.dec*100)}%`;
+  h+=`<div class="pvsec"><h3>How the odds are built</h3><p class="note">Points per game unless noted. Edge = ${g.home} minus ${g.away}; the edges add up to the expected margin.</p>
+    <div class="tbl"><table class="wf"><colgroup><col><col class="c"><col class="c"><col class="c"></colgroup><thead><tr><th class="l">Step</th><th>${g.away}</th><th>${g.home}</th><th title="${g.home} minus ${g.away}">Edge</th></tr></thead><tbody>
+    ${r3('Lineup strength tonight','Net rating per 100 possessions vs the league, from the expected rotations below',A.lin,H.lin,H.lin-A.lin,'sub')}
+    ${r3('Lineup strength in points',`× league pace ${pace.toFixed(1)} possessions ÷ 100`,A.pts,H.pts,H.pts-A.pts)}
+    ${r3('In-season team adjustment',offD,A.off,H.off,H.off-A.off)}
+    ${r3('Forecast blend',`Pull toward the market's season view and roster age, weight ${decTxt} now (fades as games are played)`,A.bl,H.bl,H.bl-A.bl)}
+    ${r3('Home court','',null,M.hca,M.hca)}
+    ${r3(`Expected margin: ${esc(mTxt(g.sp,g))}`,'',null,null,g.sp,'tot')}
+    </tbody></table></div>
+    <p class="note" style="margin-top:8px">Win chance = Φ(margin ÷ ${M.sig}) = <b>${pct(g.ph)}</b> for ${g.home}. The model alone (no forecast blend) gives ${g.home} ${pct(g.phm)}.</p></div>`;
+  // rotations
+  h+=`<div class="pvsec"><h3>Expected rotations</h3><p class="note">Expected minutes tonight: this season's playing time blended with the preseason projection, injury report applied (out = 0, day-to-day = half), your edits included, scaled to 240 per team. These are minute shares, not a starting lineup; starters are announced about 30 minutes before tip. Tap a player for his page; Edit changes tonight's odds right away.</p>
+    <div class="gvrot">${rotHTML(A,g)}${rotHTML(H,g)}</div></div>`;
+  // context
+  const T=Object.fromEntries(SZ.teams.map(t=>[t.t,t]));
+  const rest=v=>v==null?'first game of the season':v<=1?'1 day (back-to-back)':`${v} days`;
+  const l10=t=>{ const L=(T[t]&&T[t].l10)||[]; if(!L.length) return '<p class="note">No games yet.</p>'; const w=L.filter(x=>x[3]>x[4]).length;
+    return `<div class="note" style="margin:0">${w}-${L.length-w} in the last ${L.length}</div><div class="chips">${L.slice().reverse().map(x=>`<span class="chip ${x[3]>x[4]?'w':'l'}" title="${String(x[0]).slice(4,6)}/${String(x[0]).slice(6)}">${x[3]>x[4]?'W':'L'} ${x[2]==='H'?'vs':'@'} ${x[1]} ${x[3]}-${x[4]}</span>`).join('')}</div>`; };
+  const mt=(g.meet||[]).map(x=>`<span class="chip">${String(x[0]).slice(4,6)}/${String(x[0]).slice(6)}: ${x[2]} ${x[4]} at ${x[1]} ${x[3]}</span>`).join('');
+  h+=`<div class="pvsec"><h3>Context</h3><p class="note">For reference only. JIMBO doesn't use rest, travel or schedule; results reach it only through the player ratings and the team adjustment above.</p>
+    <div class="ctxgrid"><div><h4>Rest</h4><div>${g.away}: ${rest(g.rest_a)}</div><div>${g.home}: ${rest(g.rest_h)}</div>
+      <h4>Earlier meetings this season</h4>${mt?`<div class="chips">${mt}</div>`:'<p class="note">None yet.</p>'}</div>
+      <div><h4>${g.away} recent results</h4>${l10(g.away)}<h4>${g.home} recent results</h4>${l10(g.home)}</div></div></div>`;
+  // pace
+  h+=`<div class="pvsec"><h3>Pace</h3><p class="note" style="margin:0">JIMBO uses one league pace (${pace.toFixed(1)} possessions per team per game) for every game, so pace only scales the margin. Team-specific pace isn't modeled, so there's no JIMBO total${g.total?`; the market total is ${g.total}`:''}.</p></div>`;
+  $('gv').innerHTML=h;
+}
+$('gv').addEventListener('click',e=>{ if(e.target.closest('#gvBack')){ gvPushed?history.back():closeGame(); return; }
+  const b=e.target.closest('[data-edit]'); if(b){ openEditor(b.dataset.edit); return; }
+  const pr=e.target.closest('[data-pv]'); if(pr) openPlayer(pr.dataset.pv); });
 // ---------- forecast history chart (app)
 function histChart(t){
   const H=APP&&APP.hist; if(!H) return '';
@@ -973,7 +1117,7 @@ if(SEASON){ $('t-tn').hidden=false;
   $('fresh').hidden=false; $('fresh').textContent=`Nightly update ${gen&&!isNaN(gen)?gen.toLocaleString(undefined,{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):SZ.asof} · ${SZ.games_final?SZ.games_final+' games played':'season starts '+new Date('2026-10-20T12:00:00').toLocaleDateString(undefined,{month:'long',day:'numeric'})}`; }
 if(APP){ document.body.classList.add('app'); $('bnav').hidden=false;
   $('bnav').addEventListener('click',e=>{ const b=e.target.closest('[data-go]'); if(!b) return;
-    if(pvKey) (pvPushed?history.back():closePlayer());
+    if(gvKey){ if(pvKey) closePlayer(); closeGame(); } else if(pvKey) (pvPushed?history.back():closePlayer());
     if(b.dataset.go==='set'){ document.body.classList.add('setmode'); $('settings').open=true; document.querySelectorAll('#bnav button').forEach(x=>x.toggleAttribute('aria-current',x===b)); window.scrollTo(0,0); }
     else { selectTab($(b.dataset.go)); window.scrollTo(0,0); } }); }
 tabs.forEach((tb,i)=>{ tb.addEventListener('click',()=>selectTab(tb));
@@ -989,8 +1133,8 @@ function openPlayer(k){
   const top=$('pv').getBoundingClientRect().top+window.scrollY-10; window.scrollTo(0,Math.max(0,top)); $('pvBack')&&$('pvBack').focus({preventScroll:true});
 }
 function closePlayer(){ pvKey=null; pvPushed=false; document.body.classList.remove('pvopen'); $('pv').hidden=true; $('pv').innerHTML=''; window.scrollTo(0,pvScroll); }
-window.addEventListener('popstate',()=>{ if(pvKey) closePlayer(); });
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&pvKey&&!ed.open){ pvPushed?history.back():closePlayer(); } });
+window.addEventListener('popstate',()=>{ if(pvKey) closePlayer(); else if(gvKey) closeGame(); });
+document.addEventListener('keydown',e=>{ if(e.key!=='Escape'||ed.open) return; if(pvKey){ pvPushed?history.back():closePlayer(); } else if(gvKey){ gvPushed?history.back():closeGame(); } });
 const seasonLbl=y=>`${y}-${String((y+1)%100).padStart(2,'0')}`;
 function histSeasons(p,m){ // per-season box contributions under current weights (post-slope), grouped by component
   const h=D.hist[p.k]; if(!h) return [];
@@ -1153,7 +1297,7 @@ function renderAcc(){
 }
 function renderSetSum(){ const nw=Object.keys(DEF).filter(k=>Math.abs((S[k]==null?DEF[k]:S[k])-DEF[k])>(k==='bm'?0.004:1e-9)).length, np=Object.keys(OV).length;
   $('setSum').innerHTML=(nw||np)?[nw?`<b>${nw} slider${nw>1?'s':''} changed</b>`:'Default weights',np?`<b>${np} player change${np>1?'s':''}</b>`:'no player changes'].join(' · '):'Default weights · no player changes · tap to adjust sliders'; }
-function renderAll(){ renderStandings(); renderPlayers(); renderH2H(); renderChanges(); renderAcc(); renderPV(); renderSetSum(); renderTonight(); }
+function renderAll(){ renderStandings(); renderPlayers(); renderH2H(); renderChanges(); renderAcc(); renderPV(); renderSetSum(); renderTonight(); renderGV(); }
 
 // ---------- saving: shared dashboard storage when available, otherwise this browser
 let db=null, saveTimer=0; const LS='nba27-dash-state';
@@ -1195,7 +1339,7 @@ if(window.claude&&window.claude.use){
   const hdr=t=>({Authorization:`Bearer ${t}`, Accept:'application/vnd.github+json'});
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
   let D, SZ, hist=null, remote=null;
-  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=10a38d303c',{}), getJSON('data/latest.json')]); }
+  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=fc2866729d',{}), getJSON('data/latest.json')]); }
   catch(e){ say('Could not load data. Check your connection and reopen.'); return; }
   try{ hist=await getJSON('data/history.json'); }catch(e){}
   async function fetchRemote(){
