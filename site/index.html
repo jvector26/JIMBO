@@ -310,6 +310,18 @@ th .axis span{color:#fff;opacity:.85}
 /* app: freshness, injuries, tonight, history, bottom nav */
 .fresh{font-size:13.5px;font-weight:600;color:var(--purple);margin:0 0 8px}
 .inj.dtd{background:#E8A200}
+tr.benchhd td{text-align:left;background:var(--soft);color:var(--muted);font-size:13px;font-weight:600;padding:8px 8px 6px;border-top:2px solid var(--line)}
+td.muted{color:var(--muted)}
+@media (max-width:760px){ /* team detail stays on screen while the wide standings table scrolls sideways */
+  tr.detail > td > .roster, tr.detail > td > .hist{position:sticky;left:0;width:calc(100vw - 58px);overflow-x:auto}
+  .roster table{min-width:0 !important;width:100%}
+  .roster table td.l{white-space:normal;min-width:0}
+  .roster td.l .tm{display:block;margin-left:0;font-size:12px}
+  .roster td,.roster th{padding-left:3px;padding-right:3px}
+  .roster .num{font-size:15px}
+  .roster th{font-size:11px;white-space:normal;line-height:1.15}
+  .roster td:nth-child(7),.roster th:nth-child(7){display:none}
+  tr.benchhd td{white-space:normal} }
 .inj{display:inline-block;font-size:11px;font-weight:700;color:#fff;background:var(--neg);border-radius:3px;padding:0 5px;margin-left:6px;vertical-align:1px;text-transform:uppercase}
 .games{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;margin:6px 0 14px}
 .game{border:2px solid var(--black);padding:10px 12px;box-shadow:4px 4px 0 var(--shadow2);background:var(--surface)}
@@ -733,10 +745,14 @@ function seasonOverlay(P){
     if(Math.abs(d)>1e-9){ r.parts.season=d; r.mtot+=d; if(r.o.r==null){ r.tot+=d; r.off+=d/2; r.def+=d/2; } }
     r.t=r.o.t||(z?z.t:r.p.t);
     const gr=GR[r.t]||0, me=z?z.me:(r.p.mpg||0), av=z?z.av:Math.min(1,(r.p.g||0)/82);
-    r.me=me; r.gp=z?z.gp:0; r.mpgS=z?z.mpg:0;
+    r.me=me; r.gp=z?z.gp:0; r.mpgS=z?z.mpg:0; r.mraw=r.t==='FA'?0:(z&&z.mr!=null?z.mr:(r.p.mm||0)/82);
     if(r.o.g!=null||r.o.mpg!=null){ const g=r.o.g!=null?r.o.g:82*av, mp=r.o.mpg!=null?r.o.mpg:me; r.want=g/82*gr*mp; r.lock=true; }
-    else { r.want=r.t==='FA'?0:Math.max(0,gr-(z?z.miss:0))*av*me; r.lock=false; }
+    else r.lock=false;
     if(byT[r.t]) byT[r.t].roster.push(r); });
+  // nightly minutes rule: expected minutes per team game (this season's usage blended with preseason), rescaled to 240 per team
+  P.team.forEach(x=>{ const tot=x.roster.reduce((a,r)=>a+r.mraw,0), gr=GR[x.t]||0;
+    x.roster.forEach(r=>{ r.mtg=tot>0?r.mraw*240/tot:0; if(!r.lock) r.want=Math.max(0,gr-(r.z?r.z.miss:0))*r.mtg; }); });
+  P.rows.forEach(r=>{ if(r.t==='FA'&&!r.lock) r.want=0; });
   P.team.forEach(x=>{ const gr=GR[x.t]; x.over=gr>0?allocS(x.roster,240*gr,3000/82*gr):0; if(!(gr>0)) x.roster.forEach(r=>r.min=0);
     const den=48*Math.max(gr,1); let n=0,o=0,d=0; x.roster.forEach(r=>{ n+=r.tot*r.min/den; o+=r.off*r.min/den; d+=r.def*r.min/den; }); x.net=n; x.off=o; x.def=d; });
   const zs=k=>{ const m=P.team.reduce((a,x)=>a+x[k],0)/NT; P.team.forEach(x=>x[k]-=m); };
@@ -755,7 +771,7 @@ function gmv(r){ // games, minutes when playing, season minutes, value added to 
 }
 function tonightGames(){
   if(!SEASON||!SZ.tonight) return [];
-  const st={}; P.team.forEach(x=>{ let w=0; const per=x.roster.map(r=>{ const m=r.o.g===0?0:r.o.mpg!=null?r.o.mpg:r.me*statusMult(r.z); w+=m; return m; });
+  const st={}; P.team.forEach(x=>{ let w=0; const per=x.roster.map(r=>{ const m=r.o.g===0?0:r.o.mpg!=null?r.o.mpg:(r.mtg||0)*statusMult(r.z); w+=m; return m; });
     st[x.t]=w>0?x.roster.reduce((a,r,i)=>a+r.tot*per[i]*240/w,0)/48:0; });
   const mean=Object.values(st).reduce((a,b)=>a+b,0)/NT, T=Object.fromEntries(P.team.map(x=>[x.t,x]));
   const mg=t=>(st[t]-mean)*SZ.pace/100+ZT[t].offset+T[t].gap*ZT[t].dec;
@@ -788,16 +804,16 @@ function axisHead(){ let s=''; for(let v=20;v<=60;v+=10) s+=`<span style="left:$
 function gm(r){ const v=gmv(r), c=r.o.g!=null||r.o.mpg!=null?'ov':'';
   return `<td class="num ${c}">${Math.round(v.g)}</td><td class="num ${c}">${v.mpg.toFixed(1)}</td>`; }
 function rosterHTML(x){
-  const list=x.roster.filter(r=>r.min>0.5||r.o.t||r.o.g!=null).sort((a,b)=>b.min-a.min);
-  const rows=list.map(r=>{ const ch=Object.keys(r.o).length>0;
+  const inRot=r=>r.min>0.5||r.o.g!=null||r.o.mpg!=null;
+  const rot=x.roster.filter(inRot).sort((a,b)=>b.min-a.min), bench=x.roster.filter(r=>!inRot(r)).sort((a,b)=>b.tot-a.tot);
+  const row=r=>{ const ch=Object.keys(r.o).length>0, z0=!inRot(r);
     return `<tr class="pr" data-pv="${esc(r.p.k)}"><td class="l"><span class="nm pvlink">${esc(r.p.n)}</span>${ch?'<span class="flag">edited</span>':''}${injBadge(r)}${r.p.note?`<span class="tm">${esc(r.p.note)}</span>`:''}</td>
-    <td class="num hide-s">${r.p.a!=null?Math.floor(r.p.a):'–'}</td>${gm(r)}<td class="num hide-s">${Math.round(gmv(r).smin).toLocaleString()}</td>
-    <td class="num ${r.o.r!=null?'ov':cls(r.tot)}">${fmt(r.tot)}</td><td class="num ${cls(gmv(r).add)}">${fmt(gmv(r).add,2)}</td>
-    <td><button class="edit" data-edit="${esc(r.p.k)}">Edit</button></td></tr>`; }).join('');
-  const bench=x.roster.length-list.length;
+    <td class="num hide-s">${r.p.a!=null?Math.floor(r.p.a):'–'}</td>${z0?'<td class="num muted">–</td><td class="num muted">–</td>':gm(r)}<td class="num hide-s">${Math.round(gmv(r).smin).toLocaleString()}</td>
+    <td class="num ${r.o.r!=null?'ov':cls(r.tot)}">${fmt(r.tot)}</td><td class="num ${z0?'muted':cls(gmv(r).add)}">${fmt(gmv(r).add,2)}</td>
+    <td><button class="edit" data-edit="${esc(r.p.k)}">Edit</button></td></tr>`; };
+  const rows=rot.map(row).join('')+(bench.length?`<tr class="benchhd"><td colspan="8">No projected minutes (${bench.length}): the roster has more players than minutes. Tap Edit to give someone a role.</td></tr>`+bench.map(row).join(''):'');
   return `${histChart(x.t)}<div class="roster"><div class="rsum"><span>Net rating <b class="${cls(x.net)}">${fmt(x.net)}</b></span><span>Offense <b>${fmt(x.off)}</b></span><span>Defense <b>${fmt(x.def)}</b></span><span>Minutes-weighted age <b>${x.age.toFixed(1)}</b></span></div>
     <table><thead><tr><th class="l">Player</th><th class="hide-s">Age</th><th>Games</th><th>Min when playing</th><th class="hide-s">Season min</th><th>Rating</th><th title="Rating times share of team minutes">Adds to team</th><th></th></tr></thead><tbody>${rows}</tbody></table>
-    ${bench?`<p class="note" style="margin:6px 2px 0">${bench} more on the roster with no projected minutes.</p>`:''}
     ${x.over>0?`<p class="warn">Your minutes for this team add up to ${Math.round((SEASON?240*x.gr:19680)+x.over).toLocaleString()}, more than the ${(SEASON?240*x.gr:19680).toLocaleString()} ${SEASON?'left this season':'a season allows'}. Everyone else is at zero.</p>`:''}</div>`;
 }
 function renderStandings(){
@@ -1177,7 +1193,7 @@ if(window.claude&&window.claude.use){
   const hdr=t=>({Authorization:`Bearer ${t}`, Accept:'application/vnd.github+json'});
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
   let D, SZ, hist=null, remote=null;
-  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=4ad280b3aa',{}), getJSON('data/latest.json')]); }
+  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=9e7fd8f464',{}), getJSON('data/latest.json')]); }
   catch(e){ say('Could not load data. Check your connection and reopen.'); return; }
   try{ hist=await getJSON('data/history.json'); }catch(e){}
   async function fetchRemote(){

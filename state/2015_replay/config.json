@@ -1,5 +1,5 @@
 {
- "season": 2026,
+ "season": 2015,
  "slope": 1.0501,
  "unrated": -4.3129117003967625,
  "Wo": {
@@ -36,10 +36,8 @@
  "tau_mid": 2.0,
  "tau_late": 1.8,
  "gap_k": 20.0,
+ "mpg_k": 10.0,
+ "avail_k": 20.0,
  "out_default_games": 10,
- "notes": "M4 update (inseason_bt.py). Minutes: m = w*(0.5*last10 + 0.5*season) + (1-w)*preseason per team game, w=n/(n+5), DNPs 0, rescaled to 240 (inseason_minutes.py; 9-season nightly replay 2026-09-21). tau_* and gap_k PROVISIONAL.",
- "min_k": 5,
- "min_rec": 0.5,
- "min_streak": 999,
- "min_alloc": "rescale"
+ "notes": "M4 update (inseason_bt.py). tau_* and gap_k / mpg_k / avail_k are PROVISIONAL (in-season minutes and uncertainty backtest not yet run)."
 }
