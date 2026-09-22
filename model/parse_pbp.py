@@ -12,9 +12,8 @@ Game dates and home/away come from the shotdetail files.
 import re, sys, tarfile, os
 import numpy as np, pandas as pd
 
-RAW = "/home/claude/raw"
-OUT = "/home/claude/data"
-os.makedirs(OUT, exist_ok=True)
+RAW = os.environ.get("JIMBO_RAW", "/home/claude/raw")
+OUT = os.environ.get("JIMBO_DATA", "/home/claude/data")
 
 TECH_RE = re.compile(r"T\.FOUL|T\.Foul|Technical|Taunt|Non-Unsport|Def\. 3 Sec|DOUBLE TECH|Delay Tech", re.I)
 
@@ -314,11 +313,13 @@ ZONE = {"Restricted Area": 1, "In The Paint (Non-RA)": 2, "Mid-Range": 3, "Left 
         "Above the Break 3": 5, "Backcourt": 6}
 
 
-def shooter_pcts(season):
+def shooter_pcts(season, out=None):
     """Shrunk season 3P% and FT% per shooter, used to replace made/missed 3s and FTs with expected values in stints."""
-    f = f"{OUT}/player_games_{season}.parquet"
+    f = f"{out or OUT}/player_games_{season}.parquet"
     if os.path.exists(f):
         t = pd.read_parquet(f).groupby("player")[["fg3m", "fg3a", "ftm", "fta"]].sum()
+    elif not os.path.exists(f"{OUT}/player_seasons.parquet"):  # live pipeline, first pass: league-average shooters
+        return {}, 0.36, 0.78
     else:  # fresh rebuild: same season totals from player_seasons (no second parse pass needed)
         ps = pd.read_parquet(f"{OUT}/player_seasons.parquet")
         t = ps[ps.season == season].groupby("player")[["fg3m", "fg3a", "ftm", "fta"]].sum()
@@ -356,7 +357,7 @@ def run(season, cdn_df=None, meta=None, xy_zones=False, out=None, quiet=False):
         ev = ev.merge(sdz[["game", "evn", "zone"]], on=["game", "evn"], how="left")
     ev.loc[~ev["kind"].isin(["FGM", "FGX"]), "zone"] = 0
     ev["zone"] = ev["zone"].fillna(0)
-    xpct, lg3, lgft = shooter_pcts(season)
+    xpct, lg3, lgft = shooter_pcts(season, out)
     pg_rows, stint_rows, game_rows = [], [], []
     cols = ["period", "t", "kind", "team", "player", "val", "zone", "astd"]
     for g, gdf in ev.groupby("game", sort=False):

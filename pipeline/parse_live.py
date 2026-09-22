@@ -18,8 +18,12 @@ def load(season):
 
 
 def parse(season, out):
+    """Parse every fetched game of the season. Two passes on a fresh output dir: the stint luck adjustment uses
+    each shooter's season 3P%/FT%, taken from the first pass's player totals."""
     df, meta = load(season)
-    P.run(season, cdn_df=df, meta=meta[["game", "date", "htm", "vtm"]], xy_zones=True, out=out)
+    first = not os.path.exists(os.path.join(out, f"player_games_{season}.parquet"))
+    for _ in range(2 if first else 1):
+        P.run(season, cdn_df=df, meta=meta[["game", "date", "htm", "vtm"]], xy_zones=True, out=out)
 
 
 if __name__ == "__main__":

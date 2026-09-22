@@ -1,0 +1,45 @@
+name: nightly
+# JIMBO nightly update: fetch last night's games + injuries + lines from NBA.com/ESPN, update ratings,
+# re-simulate the rest of the season, publish site/data/latest.json (+ history.json).
+on:
+  schedule:
+    - cron: "0 11 * * *"    # 7:00 ET (6:00 in winter): after all games are final
+    - cron: "0 21 * * *"    # 17:00 ET: refresh injuries and tonight's lines before tip-off
+  workflow_dispatch:
+    inputs:
+      asof:
+        description: "Run as of date YYYY-MM-DD (blank = today, US Eastern)"
+        required: false
+permissions:
+  contents: write
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install curl_cffi requests pandas pyarrow scipy numpy
+      - name: Fetch schedule, final games, injuries, lines
+        run: |
+          python pipeline/nba_fetch.py schedule --season 2026
+          python pipeline/nba_fetch.py games --season 2026
+          python pipeline/nba_fetch.py injuries --season 2026
+          python pipeline/nba_fetch.py odds --season 2026 --date $(TZ=America/New_York date +%Y%m%d) || true
+      - name: Update model and simulate
+        run: |
+          ASOF="${{ github.event.inputs.asof }}"
+          python pipeline/nightly.py --season 2026 ${ASOF:+--asof $ASOF}
+      - name: Commit
+        run: |
+          git config user.name "jimbo-bot"
+          git config user.email "jimbo-bot@users.noreply.github.com"
+          git add live site overrides.json
+          git commit -m "nightly $(TZ=America/New_York date +%F_%H%M)" || { echo "nothing to commit"; exit 0; }
+          for i in 1 2 3; do git pull --rebase -q && git push -q && break; sleep 5; done

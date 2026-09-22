@@ -1,0 +1,5 @@
+{
+ "_note": "User overrides applied by the nightly run (and later by the app). players: key -> {t: team, g: games of 82, mpg, r: rating}. Keys: p<NBA player id> or n:<name>|<team>. Migrated from the claude.ai dashboard (settings/current) 2026-09-21: no player overrides, all sliders at defaults.",
+ "players": {},
+ "sliders": {}
+}
