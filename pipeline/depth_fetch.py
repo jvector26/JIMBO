@@ -10,14 +10,18 @@ URL = "https://basketball.realgm.com/nba/depth-charts"
 os.makedirs(f"live/{a.season}/depth", exist_ok=True)
 log = []; html = None
 def ok(b): return b is not None and b"Depth Chart</h2>" in b or (b is not None and b"depth_starters" in b)
-for imp in ("chrome", "chrome120", "safari17_0", "firefox"):
-    try:
-        from curl_cffi import requests as cr
-        r = cr.get(URL, impersonate=imp, timeout=60)
-        log.append(f"curl_cffi {imp} {r.status_code} {len(r.content)} {r.content[:120]!r}")
-        if r.status_code == 200 and ok(r.content): html = r.content; break
-    except Exception as e: log.append(f"curl_cffi {imp} error {e}")
-    time.sleep(3)
+# Cloudflare challenges runner IPs intermittently (2026-09-23: one run all 403, the next 200) -> 3 rounds, 60 s apart
+for rnd in range(3):
+    for imp in ("chrome", "chrome120", "safari17_0", "firefox"):
+        try:
+            from curl_cffi import requests as cr
+            r = cr.get(URL, impersonate=imp, timeout=60)
+            log.append(f"round {rnd} curl_cffi {imp} {r.status_code} {len(r.content)} {r.content[:60]!r}")
+            if r.status_code == 200 and ok(r.content): html = r.content; break
+        except Exception as e: log.append(f"curl_cffi {imp} error {e}")
+        time.sleep(3)
+    if html is not None: break
+    if rnd < 2: time.sleep(60)
 if html is None:
     import requests
     for ua in ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36", "JIMBO"):
