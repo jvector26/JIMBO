@@ -109,7 +109,7 @@ k = cfg.get("mpg_k", 10); P["mpg_est"] = (k * P.mpg_pre.fillna(10) + P.gp * P.mp
 #   m = w*(RW*last10 + (1-RW)*season_to_date) + (1-w)*preseason, w = n/(n+K), n = team games since joining, DNPs count 0;
 #   (optional, off by default: no injury-report entry but absent K_STREAK+ straight -> x0.5); team rescaled to 240 per game.
 K_MIN, RW, K_STREAK = cfg.get("min_k", 5), cfg.get("min_rec", 0.5), cfg.get("min_streak", 999)  # streak fallback off: hurt player minutes in 9-season replay; injury reports cover absences
-P["n_tm"] = 0.0; P["std_tg"] = 0.0; P["l10_tg"] = 0.0; P["streak"] = 0.0
+P["n_tm"] = 0.0; P["std_tg"] = 0.0; P["l10_tg"] = 0.0; P["streak"] = 0.0; P["np_c"] = 0.0; P["std_p"] = 0.0; P["l5_p"] = 0.0
 if pg is not None and len(pg) and games is not None and len(games):
     tgm = pd.concat([games[["game", "date", "home"]].rename(columns={"home": "t"}),
                      games[["game", "date", "away"]].rename(columns={"away": "t"})]).sort_values(["date", "game"])
@@ -119,10 +119,12 @@ if pg is not None and len(pg) and games is not None and len(games):
     rows_ = {}
     for p_, xp in xq.groupby("player"):
         n_ = int(xp.k.max()) + 1; mk = xp.groupby("k")["min"].sum(); n10 = min(10, n_)
-        rows_[p_] = (n_, mk.sum() / n_, mk[mk.index < n10].sum() / n10, float(mk.index.min()))
-    R_ = pd.DataFrame.from_dict(rows_, orient="index", columns=["n", "std", "l10", "streak"])
+        pl_ = mk[mk > 0].sort_index()                                # played games only, most recent first
+        rows_[p_] = (n_, mk.sum() / n_, mk[mk.index < n10].sum() / n10, float(mk.index.min()),
+                     len(pl_), pl_.mean() if len(pl_) else 0.0, pl_.iloc[:5].mean() if len(pl_) else 0.0)
+    R_ = pd.DataFrame.from_dict(rows_, orient="index", columns=["n", "std", "l10", "streak", "np", "std_p", "l5_p"])
     hit = P.pid.isin(R_.index)
-    for c_, cc in (("n_tm", "n"), ("std_tg", "std"), ("l10_tg", "l10"), ("streak", "streak")):
+    for c_, cc in (("n_tm", "n"), ("std_tg", "std"), ("l10_tg", "l10"), ("streak", "streak"), ("np_c", "np"), ("std_p", "std_p"), ("l5_p", "l5_p")):
         P.loc[hit, c_] = P.loc[hit, "pid"].map(R_[cc]).values
     ngm = tgm.groupby("t").size()
     P.loc[~hit, "streak"] = P.loc[~hit, "team"].map(ngm).fillna(0).values   # on a roster, not appeared yet
@@ -232,12 +234,54 @@ for mode, mg in (("forecast", fc_m), ("model", model_m - model_m.mean())):
     out[mode] = dict(mean=W.mean(0), p10=np.percentile(W, 10, 0), p90=np.percentile(W, 90, 0), **post,
                      over=np.array([(W[:, i] > TP.line.get(t, 99)).mean() for i, t in enumerate(SIM.TEAMS)]))
 # ------------------------------------------------------------------ today's games
-def game_strength(t):
+# tonight's minutes (session 13, code/game_minutes_active_score.py): minutes WHEN PLAYING, not season averages with missed
+# games baked in. c = w*(0.5*last5 played + 0.5*season played) + (1-w)*preseason mpg when playing, w = np/(np+GK), np = games
+# played for the current team; preseason prior = mpg when playing WITHOUT the age multiplier (better calibrated). Injury report: out 0, day-to-day x0.5; team trimmed to 240 from the bottom of the rotation
+# (scaled up if short). Backtest 2014-25: game margin RMSE 13.265 -> 13.225 (t -3.0, both halves), player-game min RMSE 7.53 -> 7.08.
+GK = cfg.get("game_k", 5)
+_wg = P.np_c / (P.np_c + GK)
+_pre_c = (P.mpg_wp if "mpg_wp" in P else P.mpg_pre).fillna(P.mpg_pre).fillna(10.0).clip(0, 40)
+P["m_c"] = (_wg * (0.5 * P.l5_p + 0.5 * P.std_p) + (1 - _wg) * _pre_c).where(P.team != "FA", 0).fillna(0)
+P["c_lock"] = False
+for kk, o in OV.items():   # user edits: g = 0 -> not playing; mpg -> his minutes when playing (kept by the trim)
+    m = P.key == kk
+    if m.any() and o.get("g", None) == 0: P.loc[m, "m_c"] = 0.0
+    elif m.any() and "mpg" in o: P.loc[m, "m_c"] = float(o["mpg"]); P.loc[m, "c_lock"] = True
+def trim240(per, lock=None, total=240.0):
+    """Bottom-trim the rotation to 240 (smallest expected minutes cut first); scale up if short. Edited (locked) players keep
+    their minutes unless the edits alone exceed 240."""
+    per = per.clip(lower=0).astype(float); lock = pd.Series(False, index=per.index) if lock is None else lock.reindex(per.index).fillna(False).astype(bool)
+    L = per[lock].sum(); out = per.copy()
+    if L >= total:
+        out[lock] = per[lock] * total / L if L > 0 else 0; out[~lock] = 0; return out
+    R = total - L; fr = per[~lock]; U = fr.sum()
+    if U <= 0: return out
+    if U < R: out[~lock] = (fr * R / U).clip(upper=48); return out
+    ex = U - R
+    for i in fr.sort_values().index:
+        cut = min(ex, out[i]); out[i] -= cut; ex -= cut
+        if ex <= 0: break
+    return out
+def tonight_minutes(t):
+    """Expected minutes tonight: out = 0; each day-to-day player plays (full minutes) with prob 0.5 -> average the trimmed
+    rotation over those scenarios (a DTD star is not treated as a 17-minute bench player)."""
     m = (P.team == t)
-    per = (P.m_tg * np.where(P.status.str.lower().str.startswith("out"), 0, np.where(P.status.str.lower().str.contains("day"), .5, 1)) * m).where(m, 0)
+    st = P.status.fillna("").str.lower()[m]
+    lk = P.c_lock[m]
+    base = P.m_c[m].where(lk | ~(st.str.startswith("out") | st.str.contains("suspen")), 0.0)
+    dtd = list(base.index[st.str.contains("day") & (base > 0) & ~lk])[:8]
+    if not dtd: return trim240(base, lk)
+    acc = base * 0.0
+    for mask in range(1 << len(dtd)):
+        b = base.copy()
+        for j, i in enumerate(dtd):
+            if not (mask >> j) & 1: b[i] = 0.0
+        acc += trim240(b, lk)
+    return acc / (1 << len(dtd))
+def game_strength(t):
+    per = tonight_minutes(t)
     if per.sum() <= 0: return 0.0
-    per = per * 240 / per.sum()
-    return float((P.rating * per).sum() / 48)
+    return float((P.rating[per.index] * per).sum() / 48)
 game_day = asof_i
 if not (sched.date == asof_i).any() and (sched.date > asof_i).any():
     game_day = int(sched.date[sched.date > asof_i].min())   # no games today: show the next game day
@@ -284,7 +328,7 @@ players = [{"k": row.key, "n": row["name"], "t": row.team, "pos": round(float(ro
             "r": round(float(row.rating), 2), "r_pre": round(float(row.rating_pre), 2), "gp": int(row.gp),
             "mpg": round(float(row.mpg_season), 1), "min_rem": round(float(row.min_rem)), "status": row.status or "",
             # app fields: pre-allocation minutes wanted, mpg estimate, availability, games out
-            "mw": round(float(row.min_want)), "me": round(float(row.mpg_est), 2), "mg": round(float(row.m_tg), 3), "mr": round(float(row.m_raw), 3), "av": round(float(row.avail), 3),
+            "mw": round(float(row.min_want)), "me": round(float(row.mpg_est), 2), "mg": round(float(row.m_tg), 3), "mr": round(float(row.m_raw), 3), "mc": round(float(row.m_c), 2), "av": round(float(row.avail), 3),
             "miss": round(float(row.miss), 1), **({"inj": row.inj, "ret": row.ret} if row.status else {})}
            for _, row in pl.sort_values("rating", ascending=False).iterrows() if row.team != "FA" or row.gp > 0]   # every rostered player (injured ones carry their status to the app)
 latest = {"asof": asof, "season": S, "games_final": n_done, "games_parsed": n_parsed, "pace": round(pace, 1), "tau": round(float(tau), 2),

@@ -49,9 +49,11 @@ if not REPLAY:
     P["key"] = [f"p{int(p)}" if pd.notna(p) else f"n:{n}|{t}" for p, n, t in zip(P.player, P["name"], P.team)]
     P["avail_pre"] = (P.exp_games / 82).fillna(70 / 82).clip(0, 1)
     P["mpg_pre"] = P.min_model / (82 * P.avail_pre)   # so avail x mpg x 82 = project.py's min_model (pre-allocation)
+    # raw minutes WHEN PLAYING (no age multiplier) = prior for tonight's minutes (session 13 game-minutes backtest)
+    P["mpg_wp"] = P.mpg_when_playing.where(P.mpg_when_playing.notna(), P.min_proj.fillna(P.min_model) / 70)
     P = P.rename(columns={"rating": "rating_pre", "off": "off_pre", "def": "def_pre"})
     P["team"] = P.team.fillna("FA")
-    keep = ["key", "player", "name", "team", "role", "rating_pre", "off_pre", "def_pre", "mpg_pre", "avail_pre", "min_proj",
+    keep = ["key", "player", "name", "team", "role", "rating_pre", "off_pre", "def_pre", "mpg_pre", "mpg_wp", "avail_pre", "min_proj",
             "age", "pos_est", "hustle", "note"]
     P = P[keep]
     T = pd.read_csv(f"{D}/teams_proj_2026.csv", index_col=0)
@@ -65,7 +67,7 @@ else:
     pp = pd.read_parquet(f"{D}/pre_P_{S}.parquet").drop_duplicates("player")
     P = pd.DataFrame({"key": "p" + pp.player.astype(int).astype(str), "player": pp.player, "name": pp.player.map(nm),
                       "team": pp.team, "role": "", "rating_pre": pp.rating, "off_pre": pp.rating / 2, "def_pre": pp.rating / 2,
-                      "mpg_pre": pp.min_proj / 70, "avail_pre": 70 / 82, "min_proj": pp.min_proj, "age": np.nan,
+                      "mpg_pre": pp.min_proj / 70, "mpg_wp": pp.min_proj / 70, "avail_pre": 70 / 82, "min_proj": pp.min_proj, "age": np.nan,
                       "pos_est": 3.0, "hustle": 0.0, "note": ""})
     T = pd.read_parquet(f"{D}/pre_T_{S}.parquet").set_index("team")
     L = pd.read_csv(f"{D}/hist_lines.csv"); L = L[L.season == S].set_index("team"); L["mkt_mean"] = L.line

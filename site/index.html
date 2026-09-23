@@ -809,10 +809,25 @@ function gmv(r){ // games, minutes when playing, season minutes, value added to 
     return {g, mpg:mp, smin:r.min+r.gp*r.mpgS, add:gr>0?r.tot*r.min/(48*gr):0}; }
   const g=r.o.g!=null?r.o.g:r.p.g; return {g, mpg:g>0?r.min/g:0, smin:r.min, add:r.tot*r.min/3936};
 }
-function gameStrength(){ // per team: tonight's expected rotation (m_tg x injury status; edits apply) rescaled to 240 minutes
+function trim240(v, lock){ // bottom-trim the rotation to 240 (smallest cut first), scale up if short; edited (locked) minutes kept
+  let L=0, U=0; v.forEach((x,i)=>{ if(lock[i]) L+=x; else U+=x; }); const out=v.slice();
+  if(L>=240){ v.forEach((x,i)=>{ out[i]=lock[i]&&L>0?x*240/L:0; }); return out; }
+  const R=240-L; if(U<=0) return out;
+  if(U<R){ v.forEach((x,i)=>{ if(!lock[i]) out[i]=Math.min(48,x*R/U); }); return out; }
+  let ex=U-R; const idx=v.map((x,i)=>i).filter(i=>!lock[i]).sort((a,b)=>v[a]-v[b]);
+  for(const i of idx){ const c=Math.min(ex,out[i]); out[i]-=c; ex-=c; if(ex<=0) break; }
+  return out;
+}
+function gameStrength(){ // per team: tonight's expected rotation = minutes WHEN PLAYING (nightly z.mc), injury report applied
+  // (out 0; each day-to-day player plays with prob 0.5: average over those scenarios), edits kept, bottom-trimmed to 240
   const st={}, rot={};
-  P.team.forEach(x=>{ let w=0; const per=x.roster.map(r=>{ const m=r.o.g===0?0:r.o.mpg!=null?r.o.mpg:(r.mtg||0)*statusMult(r.z); w+=m; return m; });
-    rot[x.t]=x.roster.map((r,i)=>({r, em:w>0?per[i]*240/w:0}));
+  P.team.forEach(x=>{ const R=x.roster, lock=R.map(r=>r.o.g!==0&&r.o.mpg!=null);
+    const base=R.map((r,i)=>{ if(r.o.g===0) return 0; if(lock[i]) return r.o.mpg; const s=(r.z&&r.z.status||'').toLowerCase();
+      if(s.startsWith('out')||s.includes('suspen')) return 0; return r.z&&r.z.mc!=null?r.z.mc:(r.me||0); });
+    const dtd=R.map((r,i)=>i).filter(i=>!lock[i]&&base[i]>0&&/day/i.test(R[i].z&&R[i].z.status||'')).slice(0,8);
+    const em=new Array(R.length).fill(0), n=1<<dtd.length;
+    for(let m=0;m<n;m++){ const b=base.slice(); dtd.forEach((i,j)=>{ if(!((m>>j)&1)) b[i]=0; }); trim240(b,lock).forEach((v,i)=>em[i]+=v/n); }
+    rot[x.t]=R.map((r,i)=>({r, em:em[i], ifp:dtd.includes(i)?trim240(base,lock)[i]:null}));
     st[x.t]=rot[x.t].reduce((a,q)=>a+q.r.tot*q.em,0)/48; });
   return {st, rot, mean:Object.values(st).reduce((a,b)=>a+b,0)/NT};
 }
@@ -990,7 +1005,7 @@ function renderTonight(){
       <span class="at">at</span><div class="gside"><span class="gpct">${Math.round(g.ph*100)}%</span><span class="tname">${g.home}</span><span class="note">home</span></div></div>
       <div class="pbar" aria-hidden="true"><span style="width:${(1-g.ph)*100}%"></span></div>
       <div class="note gsub">JIMBO: ${fav} by ${Math.abs(g.sp).toFixed(1)}${ms!=null?` · market ${ms>=0?g.home:g.away} by ${Math.abs(ms).toFixed(1)} · <b class="${Math.abs(g.sp-ms)>=3?'mv':''}">gap ${fmt(g.sp-ms)} for ${g.home}</b>`:''}</div><div class="gdet">How the odds are built, rotations ›</div></div>`; }).join('')+'</div>';
-  h+=`<p class="note">Win chances use tonight's expected rotation: injury-report players who are out count zero, day-to-day players half, and your edits apply. Lines from ESPN when posted.</p>`;
+  h+=`<p class="note">Win chances use tonight's expected rotation: each player's minutes when he plays, out players zero, day-to-day players a coin flip, and your edits apply. Lines from ESPN when posted.</p>`;
   $('tonight').innerHTML=h;
 }
 // ---------- game detail page (app): tap a game on Tonight
@@ -1024,7 +1039,7 @@ function rotHTML(Q,g){
     if(z&&z.status){ const d=z.ret?new Date(z.ret+'T12:00:00'):null; return `${esc(z.status)}${z.inj?`: ${esc(z.inj.toLowerCase())}`:''}${d&&!isNaN(d)?` · expected back ${d.toLocaleDateString(undefined,{month:'short',day:'numeric'})}`:''}`; }
     return 'outside the expected rotation'; };
   const row=(q,zero)=>{ const r=q.r, ch=Object.keys(r.o).length>0, add=r.tot*q.em/48;
-    return `<tr class="pr" data-pv="${esc(r.p.k)}"><td class="l"><span class="nm pvlink">${esc(r.p.n)}</span>${ch?'<span class="flag">edited</span>':''}${injBadge(r)}<span class="tm">${POS5(r.p.ps)}</span>${zero?`<span class="why">${why(r)}</span>`:''}</td>
+    return `<tr class="pr" data-pv="${esc(r.p.k)}"><td class="l"><span class="nm pvlink">${esc(r.p.n)}</span>${ch?'<span class="flag">edited</span>':''}${injBadge(r)}<span class="tm">${POS5(r.p.ps)}</span>${zero?`<span class="why">${why(r)}</span>`:''}${!zero&&q.ifp!=null?`<span class="why">${Math.round(q.ifp)} min if he plays</span>`:''}</td>
       <td class="num ${r.o.mpg!=null||r.o.g!=null?'ov':''}">${zero?'0':Math.round(q.em)}</td><td class="num ${r.o.r!=null?'ov':cls(r.tot)}">${fmt(r.tot)}</td><td class="num ${zero?'muted':cls(add)}">${zero?'–':fmt(add,2)}</td>
       <td><button class="edit" data-edit="${esc(r.p.k)}">Edit</button></td></tr>`; };
   const tot=on.reduce((a,q)=>a+q.r.tot*q.em/48,0);
@@ -1070,7 +1085,7 @@ function renderGV(){
     </tbody></table></div>
     <p class="note" style="margin-top:8px">Win chance = Φ(margin ÷ ${M.sig}) = <b>${pct(g.ph)}</b> for ${g.home}. The model alone (no forecast blend) gives ${g.home} ${pct(g.phm)}.</p></div>`;
   // rotations
-  h+=`<div class="pvsec"><h3>Expected rotations</h3><p class="note">Expected minutes tonight: this season's playing time blended with the preseason projection, injury report applied (out = 0, day-to-day = half), your edits included, scaled to 240 per team. These are minute shares, not a starting lineup; starters are announced about 30 minutes before tip. Tap a player for his page; Edit changes tonight's odds right away.</p>
+  h+=`<div class="pvsec"><h3>Expected rotations</h3><p class="note">Expected minutes tonight: each player's minutes in the games he plays (this season blended with the preseason projection; season averages would wrongly count games he missed), trimmed to 240 per team from the end of the bench. Out = 0; a day-to-day player plays or sits with equal odds, so his number is the average and his full minutes if he plays are noted. Your edits included. This is the expected rotation, not a starting lineup; starters are announced about 30 minutes before tip. Tap a player for his page; Edit changes tonight's odds right away.</p>
     <div class="gvrot">${rotHTML(A,g)}${rotHTML(H,g)}</div></div>`;
   // context
   const T=Object.fromEntries(SZ.teams.map(t=>[t.t,t]));
@@ -1336,7 +1351,7 @@ if(window.claude&&window.claude.use){
   const hdr=t=>({Authorization:`Bearer ${t}`, Accept:'application/vnd.github+json'});
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
   let D, SZ, hist=null, remote=null;
-  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=e592dc71d0',{}), getJSON('data/latest.json')]); }
+  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=72cc19a372',{}), getJSON('data/latest.json')]); }
   catch(e){ say('Could not load data. Check your connection and reopen.'); return; }
   try{ hist=await getJSON('data/history.json'); }catch(e){}
   async function fetchRemote(){
