@@ -581,7 +581,7 @@ function makeEngine(D){
     if(p>1-0.02425){q=Math.sqrt(-2*Math.log(1-p)); return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
     q=p-0.5; r=q*q; return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
   }
-  const featMult=S=>F.map(x=>S[compOf[x]]*(EFF.has(x)?S.eff:1));
+  const featMult=S=>F.map(x=>S[compOf[x]]);
   function rawRating(p,m,S){ // model rating before league re-centering, with its parts
     if(p.fx!=null) return {off:p.fx/2, def:p.fx/2, parts:{base:p.fx}, dreb:null, dstop:null};
     const parts={}; let off=0, def=0;
@@ -706,7 +706,7 @@ const LABEL={three_pt:'Three-point shooting', rim_finishing:'Rim finishing', pul
 const PARTS=COMPS.concat(['hustle','aging','returner','base','season']);
 const GROUPS=[['Offense',['three_pt','rim_finishing','pullup_mid','foul_drawing','self_creation','playmaking','ball_security','off_rebounding']],
   ['Defense',['def_rebounding','rim_protection','perimeter_def']],['Beyond the box score',['lineup_o','lineup_d']]];
-const DEF={}; M.components.forEach(c=>DEF[c]=1); DEF.lineup_o=M.lw_o; DEF.lineup_d=M.lw_d; DEF.eff=1; DEF.age=1; DEF.bm=M.blend.wm;
+const DEF={}; M.components.forEach(c=>DEF[c]=1); DEF.lineup_o=M.lw_o; DEF.lineup_d=M.lw_d; DEF.age=1; DEF.bm=M.blend.wm;
 let S={...DEF}, OV={};
 const byKey=new Map(D.players.map(p=>[p.k,p]));
 const $=id=>document.getElementById(id);
@@ -731,9 +731,6 @@ function slider(key,label,color,min,max,step){
 GROUPS.forEach(([g,cs])=>{ const h=document.createElement('h3'); h.textContent=g; box.appendChild(h);
   cs.forEach(c=>slider(c,LABEL[c],c.startsWith('lineup')?'lineup':c,0,c.startsWith('lineup')?1.5:2)); });
 { const p=document.createElement('p'); p.className='note'; p.textContent='What lineups show beyond the box score. Defaults (offense 0.60, defense 0.80) predicted past seasons best: the box score captures offense well, so lineup evidence adds more on defense.'; box.appendChild(p);
-  const h=document.createElement('h3'); h.textContent='Shooting efficiency emphasis'; box.appendChild(h);
-  slider('eff','Efficiency, not volume',null,0,2);
-  const q=document.createElement('p'); q.className='note'; q.textContent='Scales only the accuracy part of three-point, rim, pull-up and free-throw shooting. Volume keeps its weight.'; box.appendChild(q);
   const h2=document.createElement('h3'); h2.textContent='Age curve'; box.appendChild(h2);
   slider('age','Age adjustment','aging',0,2);
   const q2=document.createElement('p'); q2.className='note'; q2.textContent='Scales every age-group adjustment (0 turns the age curve off). The curve was refit on 2026-09-20 from how players\u2019 own ratings actually changed the following season: young players gain (under 21 +0.88), players over 30 lose (36+ −0.83).'; box.appendChild(q2);
@@ -1182,7 +1179,7 @@ function chartSVG(rows, proj, mode){
 function renderPV(){
   if(!pvKey||!P) return;
   const k=pvKey, p=byKey.get(k), r=P.rows.find(x=>x.p.k===k); if(!r){ closePlayer(); return; }
-  const m=M.feats.map(x=>S[M.comp_of[x]]*(EFFS.has(x)?S.eff:1));
+  const m=M.feats.map(x=>S[M.comp_of[x]]);
   const rostered=P.rows.filter(x=>x.t!=='FA').sort((a,b)=>b.tot-a.tot), rank=rostered.findIndex(x=>x.p.k===k)+1;
   const gv=gmv(r), g=gv.g, mpg=gv.mpg, rook=D.rook[k], hist=histSeasons(p,m);
   const nextAge=p.a!=null?Math.floor(p.a):null;
@@ -1302,7 +1299,7 @@ function renderAll(){ renderStandings(); renderPlayers(); renderH2H(); renderCha
 // ---------- saving: shared dashboard storage when available, otherwise this browser
 let db=null, saveTimer=0; const LS='nba27-dash-state';
 function snapshot(){ return {sliders:S, players:OV, updated:new Date().toISOString()}; }
-function load(st){ if(!st) return; st=JSON.parse(JSON.stringify(st)); /* hosted db snapshots are frozen: work on a mutable copy */ if(st.sliders){ const sl={...st.sliders}; if('lineup' in sl){ if(!('lineup_o' in sl)&&Math.abs(sl.lineup-0.6)>1e-9){ sl.lineup_o=sl.lineup; sl.lineup_d=sl.lineup; } delete sl.lineup; } S={...DEF,...sl}; } if(st.players) OV=st.players; syncSliders(); }
+function load(st){ if(!st) return; st=JSON.parse(JSON.stringify(st)); /* hosted db snapshots are frozen: work on a mutable copy */ if(st.sliders){ const sl={...st.sliders}; if('lineup' in sl){ if(!('lineup_o' in sl)&&Math.abs(sl.lineup-0.6)>1e-9){ sl.lineup_o=sl.lineup; sl.lineup_d=sl.lineup; } delete sl.lineup; } delete sl.eff; /* efficiency slider removed 2026-09-23 */ S={...DEF,...sl}; } if(st.players) OV=st.players; syncSliders(); }
 function persist(){ clearTimeout(saveTimer); saveTimer=setTimeout(async()=>{
   const snap=snapshot();
   try{ localStorage.setItem(LS,JSON.stringify(snap)); }catch(e){}
@@ -1339,7 +1336,7 @@ if(window.claude&&window.claude.use){
   const hdr=t=>({Authorization:`Bearer ${t}`, Accept:'application/vnd.github+json'});
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
   let D, SZ, hist=null, remote=null;
-  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=fc2866729d',{}), getJSON('data/latest.json')]); }
+  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=e592dc71d0',{}), getJSON('data/latest.json')]); }
   catch(e){ say('Could not load data. Check your connection and reopen.'); return; }
   try{ hist=await getJSON('data/history.json'); }catch(e){}
   async function fetchRemote(){
