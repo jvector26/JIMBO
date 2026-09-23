@@ -73,7 +73,11 @@ rem = sched[~done & sched.home.isin(SIM.TEAMS) & sched.away.isin(SIM.TEAMS)]   #
 # _tier model a[_tier] + b[_tier]*m0 (model/depth_chart.py), team allocation to 19,680. Same rules as the sandbox
 # (code/depth_apply.py + project.py), so the chart the state was built with reproduces the state's min_proj.
 # After the opener the last pre-opener chart stays in force (the backtested 'late' snapshot); games then take over.
-DEPTH = {"chart": None, "moved": [], "dropped": [], "added": []}
+DEPTH = {"chart": None, "moved": [], "dropped": [], "added": [], "user_tiers": []}
+# user role overrides (overrides.json players[key].d = S/R/L/N, set in the app's Edit screen) replace the chart tier
+_OVD = {k: o["d"] for k, o in (json.load(open(os.path.join(ROOT, "overrides.json"))).get("players", {}).items()
+                              if os.path.exists(os.path.join(ROOT, "overrides.json")) else []) if o.get("d") in ("S", "R", "L", "N")}
+PL = PL.copy(); PL["tier_chart"] = PL.get("tier")
 _DC = cfg.get("depth")
 if _DC and "m0" in PL and os.path.isdir(os.path.join(live, "depth")):
     import glob, depth_chart as DCH
@@ -96,12 +100,16 @@ if _DC and "m0" in PL and os.path.isdir(os.path.join(live, "depth")):
                     DEPTH["dropped"].append([PL.at[i_, "name"], t_]); PL.at[i_, "team"] = "FA"
             _ros = PL.team.isin(_good)
             _tier = DCH.tiers(PL[_ros], _Rg, _ex)
+            PL.loc[_ros, "tier_chart"] = _tier.values
+            for i_ in _tier.index:   # user role overrides beat the chart (and exempt X)
+                d_ = _OVD.get(PL.at[i_, "key"])
+                if d_: DEPTH["user_tiers"].append([PL.at[i_, "name"], PL.at[i_, "team"], _tier[i_], d_]); _tier[i_] = d_
             _w = pd.Series(DCH.want(PL.loc[_ros, "m0"].fillna(0), _tier, _DC["coef"]), index=_tier.index)
             _nl = PL.loc[_ros, "newc"].fillna(False).astype(bool) & (_tier == "L")
             _w[_nl] = _DC["newc_L"]; _w[_tier == "X"] = PL.loc[_tier.index[_tier == "X"], "m0"].fillna(0)
             PL.loc[_ros, "tier"] = _tier.values
             PL.loc[_ros, "min_proj"] = _w.groupby(PL.loc[_ros, "team"]).transform(lambda x: DCH.allocate(x)).values
-            PL.loc[PL.team == "FA", "tier"] = None
+            PL.loc[PL.team == "FA", ["tier", "tier_chart"]] = None
             DEPTH["chart"] = os.path.basename(_fs[-1])[7:15]
             print(f"depth chart {DEPTH['chart']}: {len(_good)} teams, moved {len(DEPTH['moved'])}, added {len(DEPTH['added'])}, "
                   f"dropped {len(DEPTH['dropped'])}", DEPTH["moved"][:10], DEPTH["added"][:10], DEPTH["dropped"][:10])
@@ -367,7 +375,9 @@ players = [{"k": row.key, "n": row["name"], "t": row.team, "pos": round(float(ro
             "mpg": round(float(row.mpg_season), 1), "min_rem": round(float(row.min_rem)), "status": row.status or "",
             # app fields: pre-allocation minutes wanted, mpg estimate, availability, games out
             "mw": round(float(row.min_want)), "me": round(float(row.mpg_est), 2), "mg": round(float(row.m_tg), 3), "mr": round(float(row.m_raw), 3), "mc": round(float(row.m_c), 2), "av": round(float(row.avail), 3),
-            "miss": round(float(row.miss), 1), **({"inj": row.inj, "ret": row.ret} if row.status else {})}
+            "miss": round(float(row.miss), 1), **({"inj": row.inj, "ret": row.ret} if row.status else {}),
+            **({"dt": row.tier} if isinstance(row.get("tier"), str) else {}),              # role tier used (chart or user)
+            **({"dc": row.tier_chart} if isinstance(row.get("tier_chart"), str) else {})}   # chart tier
            for _, row in pl.sort_values("rating", ascending=False).iterrows() if row.team != "FA" or row.gp > 0]   # every rostered player (injured ones carry their status to the app)
 latest = {"asof": asof, "season": S, "games_final": n_done, "games_parsed": n_parsed, "pace": round(pace, 1), "tau": round(float(tau), 2),
           "teams": teams, "players": players, "tonight": tonight, "sims": a.sims,

@@ -544,12 +544,14 @@ body.pvopen #gv{display:none}
     <p class="mdl" id="edModel"></p>
     <div class="fgrid">
       <label class="full">Team<select id="edTeam"></select></label>
+      <label class="full">Role<select id="edD"></select></label>
       <label>Games<input id="edG" type="number" min="0" max="82" step="1" inputmode="numeric"></label>
       <label>Minutes per game<input id="edM" type="number" min="0" max="48" step="0.5" inputmode="decimal"></label>
       <label class="full rov"><input id="edRon" type="checkbox"> Use my rating instead of the model's</label>
       <label class="full">Rating, points per 100 over average<input id="edR" type="number" min="-12" max="15" step="0.1" inputmode="decimal"></label>
     </div>
     <p class="tot" id="edTot"></p>
+    <p class="note" id="edDnote">Role sets the minutes the model starts from (starter, rotation, limited, out of the rotation); the team's minutes are re-shared around it. Games and minutes you type yourself take priority. During the season, minutes actually played gradually take over.</p>
     <div class="acts">
       <div><button class="btn" type="button" id="edOut">Out for the season</button><button class="btn" type="button" id="edReset">Use model</button></div>
       <div><button class="btn" value="cancel" formnovalidate>Cancel</button><button class="btn primary" type="button" id="edSave">Save</button></div>
@@ -593,6 +595,10 @@ function makeEngine(D){
     off+=lo+ag/2+rt/2; def+=ld+ag/2+rt/2+hu;
     return {off, def, parts, dreb, dstop};
   }
+  // role (depth-chart tier) override: want = a[tier] + b[tier] * m0, as project.py / nightly.py (L newcomers: fixed newc_L)
+  const DEP=M.depth||null;
+  function wantOf(p,o){ const d=o&&o.d; if(!d||!DEP||p.m0==null||!DEP.coef[d]) return p.mm;
+    if(p.nc&&d==='L') return DEP.newc_L; const c=DEP.coef[d]; return Math.min(3000,Math.max(0,c[0]+c[1]*p.m0)); }
   // team minutes: overridden players are locked; the rest fill 19,680 (trim from the bottom, or scale up, cap 3,000)
   function allocate(list, locked){
     const out=new Map(); let lockSum=0;
@@ -614,7 +620,7 @@ function makeEngine(D){
     const teamOver={};
     TEAMS.forEach(t=>{ const list=byTeam[t]; const locked=new Map();
       list.forEach(r=>{ if(r.o.g!=null||r.o.mpg!=null){ const g=r.o.g!=null?r.o.g:r.p.g, mp=r.o.mpg!=null?r.o.mpg:r.p.mpg; locked.set(r.p.k,Math.min(g*mp,3936)); } });
-      const a=allocate(list.map(r=>r.p), locked); list.forEach(r=>r.min=a.out.get(r.p.k)); teamOver[t]=a.over; });
+      const a=allocate(list.map(r=>({k:r.p.k, mm:wantOf(r.p,r.o)})), locked); list.forEach(r=>r.min=a.out.get(r.p.k)); teamOver[t]=a.over; });
     rows.forEach(r=>{ if(r.min==null) r.min=Math.min(r.p.mm,3000); });  // free agents: minutes if signed
     let w=0, s=0; rows.forEach(r=>{ if(r.t!=='FA'){ w+=r.min; s+=r.raw*r.min; } });
     const c=w?s/w:0;
@@ -691,7 +697,7 @@ function makeEngine(D){
     let se=0, hit=0; for(let g=0;g<NB;g++){ const f=a+b*pred[g], y=BT.margin[g]; se+=(y-f)*(y-f); if((f>0)===(y>0)) hit++; }
     return {rmse:Math.sqrt(se/NB), win:hit/NB};
   }
-  return {project, simulate, backtest, Phi, PhiInv, TEAMS, TI, rng};
+  return {project, simulate, backtest, Phi, PhiInv, TEAMS, TI, rng, wantOf, allocate};
 }
 </script>
 <script>
@@ -789,6 +795,16 @@ function seasonOverlay(P){
     if(r.o.g!=null||r.o.mpg!=null){ const g=r.o.g!=null?r.o.g:82*av, mp=r.o.mpg!=null?r.o.mpg:me; r.want=g/82*gr*mp; r.lock=true; }
     else r.lock=false;
     if(byT[r.t]) byT[r.t].roster.push(r); });
+  // role overrides the nightly has not applied yet (or removed since): the nightly's preseason share is its allocation with
+  // its tiers (z.dt); shift every teammate's preseason share (weight 1-w, w=n/(n+5)) by the preseason allocation with the
+  // app's roles minus the one with the nightly's (same bottom-trim rule as nightly.py / project.py)
+  const tier=(r,t)=>!t?r.p.mm:(t==='X'?(r.p.m0!=null?r.p.m0:r.p.mm):E.wantOf(r.p,{d:t}));
+  P.team.forEach(x=>{ const R=x.roster.filter(r=>r.z&&r.t!=='FA').sort((a,b)=>a.mraw-b.mraw);  // ties in the trim: follow the nightly's own outcome
+    if(!R.some(r=>{ const a=r.o.d||r.z.dc, b=r.z.dt; return a&&b&&a!==b; })) return;
+    const lk=new Map(); R.forEach(r=>{ if(r.lock) lk.set(r.p.k,tier(r,r.z.dt)); });
+    const A=E.allocate(R.map(r=>({k:r.p.k, mm:tier(r,r.o.d||r.z.dc||r.z.dt)})),lk).out, B=E.allocate(R.map(r=>({k:r.p.k, mm:tier(r,r.z.dt||r.o.d||r.z.dc)})),lk).out;
+    const n=(ZT[x.t]&&ZT[x.t].gp)||0, w=n/(n+5);
+    R.forEach(r=>{ if(!r.lock) r.mraw=Math.max(0,r.mraw+(1-w)*(A.get(r.p.k)-B.get(r.p.k))/82); }); });
   // nightly minutes rule: expected minutes per team game (this season's usage blended with preseason), rescaled to 240 per team
   P.team.forEach(x=>{ const tot=x.roster.reduce((a,r)=>a+r.mraw,0), gr=GR[x.t]||0;
     x.roster.forEach(r=>{ r.mtg=tot>0?r.mraw*240/tot:0; if(!r.lock) r.want=Math.max(0,gr-(r.z?r.z.miss:0))*r.mtg; }); });
@@ -862,7 +878,7 @@ function wfLegend(){ const B=M.blend, adj=P?P.team[0].padj:0;
   $('wflegend').innerHTML=`<span><b>How the forecast is built:</b> 41 + ${Math.round((S.bm==null?B.wm:S.bm)*100)}% of the model's distance from 41 + ${Math.round((1-(S.bm==null?B.wm:S.bm))*100)}% of the market's + a roster-age term (${(-B.wa).toFixed(2)} wins per year younger than the league). ${Math.abs(adj)>=0.05?`Age adj includes ${fmt(adj)} for every team so the league totals 1,230 wins.`:''}</span>
 `; }
 function axisHead(){ let s=''; for(let v=20;v<=60;v+=10) s+=`<span style="left:${ax(v)}%">${v}</span>`; return `<div class="axis">${s}</div>`; }
-function gm(r){ const v=gmv(r), c=r.o.g!=null||r.o.mpg!=null?'ov':'';
+function gm(r){ const v=gmv(r), c=r.o.g!=null||r.o.mpg!=null||r.o.d?'ov':'';
   return `<td class="num ${c}">${Math.round(v.g)}</td><td class="num ${c}">${v.mpg.toFixed(1)}</td>`; }
 function rosterHTML(x){
   const inRot=r=>r.min>0.5||r.o.g!=null||r.o.mpg!=null;
@@ -1264,12 +1280,25 @@ const ed=$('ed'); let edKey=null;
 $('edTeam').innerHTML=TEAMS.map(t=>`<option>${t}</option>`).join('')+'<option value="FA">Free agent (no team)</option>';
 function edTotal(){ const g=+$('edG').value||0, m=+$('edM').value||0; $('edTot').textContent=`${g} games × ${m} minutes = ${Math.round(g*m).toLocaleString()} season minutes. The rest of the team's minutes are re-shared around this.`; }
 let edDef=null;
+const TN={S:'Starter',R:'Rotation',L:'Limited minutes',N:'Out of rotation',X:'not tiered'};
+function chartTier(k){ const z=SEASON&&ZP?ZP.get(k):null, p=byKey.get(k); return (z&&z.dc)||p.dt||null; }
+function edFill(k){ const p=byKey.get(k), ct=chartTier(k);
+  $('edD').innerHTML=`<option value="">${ct?'Depth chart: '+TN[ct]:'Model (not on a depth chart)'}</option>`+['S','R','L','N'].map(t=>`<option value="${t}">${TN[t]}</option>`).join(''); }
+function edPreview(){ // projected games/minutes with the chosen role and team (without minute locks), unless minutes were typed
+  const p=byKey.get(edKey), o={...(OV[edKey]||{})}; delete o.g; delete o.mpg;
+  const d=$('edD').value, t=$('edTeam').value; if(d) o.d=d; else delete o.d; if(t!==p.t) o.t=t; else delete o.t;
+  const typed=Math.abs((+$('edG').value)-edDef.g)>0.01||Math.abs((+$('edM').value)-edDef.mpg)>0.01;
+  const Q=E.project(S,{...OV,[edKey]:o}); if(SEASON) seasonOverlay(Q);
+  const r=Q.rows.find(x=>x.p.k===edKey), gv=gmv({...r,o:{}}), g0=Math.round(gv.g), m0=+gv.mpg.toFixed(1);
+  if(!typed){ $('edG').value=g0; $('edM').value=m0; } edDef={g:g0,mpg:m0}; edTotal(); }
+$('edD').addEventListener('change',()=>edPreview()); $('edTeam').addEventListener('change',()=>edPreview());
 function openEditor(k){
   const p=byKey.get(k), o=OV[k]||{}, r=P.rows.find(x=>x.p.k===k); edKey=k;
   const gv=gmv({...r,o:{}}), g0=Math.round(gv.g), m0=+gv.mpg.toFixed(1); edDef={g:g0,mpg:m0};
   $('edName').textContent=p.n;
   $('edModel').textContent=(Object.keys(o).length?'Edited. ':'')+(SEASON&&ANYPLAYED?`${r.gp} games played; projected ${g0} of 82 at ${m0.toFixed(1)} minutes (${Math.round(r.min).toLocaleString()} minutes left), rating ${fmt(r.tot)}.`:`Projected ${g0} games at ${m0.toFixed(1)} minutes (${Math.round(r.min).toLocaleString()} for the season${r.t==='FA'?' if signed':''}), rating ${fmt(r.tot)}.`)+(o.r!=null?` Model rating ${fmt(r.mtot)}.`:'');
   $('edTeam').value=o.t||p.t; $('edG').value=o.g!=null?o.g:g0; $('edM').value=o.mpg!=null?o.mpg:m0;
+  edFill(k); $('edD').value=o.d||'';
   $('edRon').checked=o.r!=null; $('edR').value=(o.r!=null?o.r:r.mtot).toFixed(1); $('edR').disabled=o.r==null; edTotal();
   ed.showModal();
 }
@@ -1280,6 +1309,7 @@ $('edReset').addEventListener('click',()=>{ delete OV[edKey]; ed.close(); change
 $('edSave').addEventListener('click',()=>{
   const p=byKey.get(edKey), o={}; const t=$('edTeam').value, g=Math.max(0,Math.min(82,+$('edG').value||0)), m=Math.max(0,Math.min(48,+$('edM').value||0));
   if(t!==p.t) o.t=t;
+  const d=$('edD').value; if(d) o.d=d;
   const prev=OV[edKey]||{}; if(prev.g!=null||Math.abs(g-edDef.g)>0.01||Math.abs(m-edDef.mpg)>0.01){ o.g=g; o.mpg=m; }
   if($('edRon').checked){ const v=+$('edR').value; if(isFinite(v)) o.r=Math.max(-12,Math.min(15,v)); }
   if(Object.keys(o).length) OV[edKey]=o; else delete OV[edKey];
@@ -1287,6 +1317,7 @@ $('edSave').addEventListener('click',()=>{
 });
 function describe(k,o){ const p=byKey.get(k); const bits=[];
   if(o.t) bits.push(o.t==='FA'?'released':'to '+o.t);
+  if(o.d) bits.push('role: '+TN[o.d].toLowerCase());
   if(o.g!=null) bits.push(o.g===0?'out for season':`${o.g} g × ${o.mpg} min`);
   if(o.r!=null) bits.push('rating '+fmt(o.r));
   return `<b>${esc(p.n)}</b> ${bits.join(', ')}`; }
@@ -1351,7 +1382,7 @@ if(window.claude&&window.claude.use){
   const hdr=t=>({Authorization:`Bearer ${t}`, Accept:'application/vnd.github+json'});
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
   let D, SZ, hist=null, remote=null;
-  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=dce84ea51a',{}), getJSON('data/latest.json')]); }
+  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=2527167bea',{}), getJSON('data/latest.json')]); }
   catch(e){ say('Could not load data. Check your connection and reopen.'); return; }
   try{ hist=await getJSON('data/history.json'); }catch(e){}
   async function fetchRemote(){
@@ -1364,7 +1395,7 @@ if(window.claude&&window.claude.use){
     const t=tok();
     if(!t) return 'Saved on this device. Add a GitHub token below to send edits to the nightly run.';
     const cur=await fetchRemote();
-    const body={_note:(cur.data&&cur.data._note)||'User overrides (JIMBO app). players: key -> {t, g, mpg, r}.', players:snap.players, sliders:snap.sliders, updated:snap.updated};
+    const body={_note:(cur.data&&cur.data._note)||'User overrides (JIMBO app). players: key -> {t, g, mpg, r, d (role S/R/L/N)}.', players:snap.players, sliders:snap.sliders, updated:snap.updated};
     const r=await fetch(API,{method:'PUT',headers:{...hdr(t),'Content-Type':'application/json'},
       body:JSON.stringify({message:'app: player edits '+new Date().toISOString().slice(0,16), content:b64e(JSON.stringify(body,null,1)+'\n'), sha:cur.sha, branch:'main'})});
     if(!r.ok) throw new Error('GitHub '+r.status+(r.status===401||r.status===403?' (check the token)':''));
