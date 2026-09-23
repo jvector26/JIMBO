@@ -22,6 +22,27 @@ if html is None:
             log.append(f"requests {ua[:10]} {r.status_code} {len(r.content)} {r.content[:120]!r}")
             if r.status_code == 200 and ok(r.content): html = r.content; break
         except Exception as e: log.append(f"requests error {e}")
+def wayback_latest():
+    import requests
+    frm = (dt.datetime.utcnow() - dt.timedelta(days=10)).strftime("%Y%m%d")
+    r = requests.get("http://web.archive.org/cdx/search/cdx", params={"url": "basketball.realgm.com/nba/depth-charts", "output": "json",
+                     "from": frm, "filter": "statuscode:200", "fl": "timestamp,original"}, timeout=90)
+    rows = r.json()[1:] if r.status_code == 200 and r.text.strip() else []
+    return rows[-1] if rows else None
+if html is None:  # RealGM sits behind a Cloudflare challenge for cloud IPs -> go through the Wayback Machine
+    import requests
+    try:
+        last = wayback_latest(); log.append(f"wayback latest {last}")
+        stale = last is None or (dt.datetime.utcnow() - dt.datetime.strptime(last[0], "%Y%m%d%H%M%S")).total_seconds() > 30 * 3600
+        if stale:
+            r = requests.get("https://web.archive.org/save/" + URL, timeout=180, headers={"User-Agent": "JIMBO (github.com/jvector26/JIMBO)"})
+            log.append(f"save-page-now {r.status_code}"); time.sleep(20)
+            last = wayback_latest() or last; log.append(f"wayback latest after save {last}")
+        if last:
+            r = requests.get(f"https://web.archive.org/web/{last[0]}id_/{last[1]}", timeout=120)
+            log.append(f"wayback fetch {r.status_code} {len(r.content)}")
+            if r.status_code == 200 and ok(r.content): html = r.content; log.append(f"capture {last[0]}")
+    except Exception as e: log.append(f"wayback error {e}")
 d = dt.datetime.now(dt.timezone(dt.timedelta(hours=-4))).strftime("%Y%m%d")
 if html is not None:
     fn = f"live/{a.season}/depth/realgm_{d}.html.gz"
