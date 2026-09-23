@@ -51,10 +51,19 @@ if not REPLAY:
     P["mpg_pre"] = P.min_model / (82 * P.avail_pre)   # so avail x mpg x 82 = project.py's min_model (pre-allocation)
     # raw minutes WHEN PLAYING (no age multiplier) = prior for tonight's minutes (session 13 game-minutes backtest)
     P["mpg_wp"] = P.mpg_when_playing.where(P.mpg_when_playing.notna(), P.min_proj.fillna(P.min_model) / 70)
+    # depth chart (code/depth_apply.py + project.py, session 15): m0 = minutes before the depth-tier model, so the nightly
+    # can re-apply a newer RealGM chart (preseason only). No-history newcomers: m0 = backtest convention recal(400 x age
+    # mult); their L tier is not tiered (constant cfg depth.newc_L = recal(250)), see project.py.
+    _rc = json.load(open(f"{D}/min_recal.json")); _c, (_k1, _k2) = _rc["coef"], _rc["knots"]
+    recal = lambda m: float(np.clip(_c[0] + _c[1] * m + _c[2] * max(m - _k1, 0) + _c[3] * max(m - _k2, 0), 0, 3000))
+    _MA = B["min_age_mult"]["<=22"]
+    P["newc"] = P.note.astype(str).str.startswith("no NBA history")
+    P["m0"] = P.min_model_nodepth.where(~P.newc, recal(400 * _MA))
+    P["tier"] = P.depth_tier.where(P.team.notna() & (P.team != "FA"))
     P = P.rename(columns={"rating": "rating_pre", "off": "off_pre", "def": "def_pre"})
     P["team"] = P.team.fillna("FA")
     keep = ["key", "player", "name", "team", "role", "rating_pre", "off_pre", "def_pre", "mpg_pre", "mpg_wp", "avail_pre", "min_proj",
-            "age", "pos_est", "hustle", "note"]
+            "age", "pos_est", "hustle", "note", "m0", "tier", "newc"]
     P = P[keep]
     T = pd.read_csv(f"{D}/teams_proj_2026.csv", index_col=0)
     L = pd.read_csv(f"{D}/win_totals_2026.csv").set_index("team")
@@ -74,11 +83,18 @@ else:
     mw = 82 * norm.cdf(T.margin / SIG)
     dfe = pd.read_parquet(f"{D}/direction_features.parquet"); dfe = dfe[dfe.season == S].set_index("team")
     age_c = (dfe.mw_age - dfe.mw_age.mean()).reindex(T.index)
+if not REPLAY:
+    _dc = json.load(open(f"{D}/depth_config.json")); _R = pd.read_csv(f"{D}/rosters_2026.csv")
+    cfg["depth"] = {"coef": json.load(open(f"{D}/depth_tier.json"))["coef"], "exempt": sorted(_dc["exempt"]),
+                    "min_team_players": _dc["min_team_players"], "newc_L": recal(250.0),
+                    "state_chart": str(_R.depth_date.dropna().astype(int).max()) if "depth_date" in _R else None,
+                    "note": "nightly.py re-applies the latest RealGM chart dated before the opener: moves, drops to FA, tiers."}
 # rated players not in the table (possible mid-season signings): box-only history rating, as the backtest
 extra = hb.index.difference(P.player.dropna())
 E = pd.DataFrame({"key": "p" + pd.Series(extra).astype(int).astype(str).values, "player": extra, "name": nm.reindex(extra).values,
                   "team": "FA", "role": "", "rating_pre": cfg["slope"] * hb.reindex(extra).values, "mpg_pre": 12.0,
-                  "avail_pre": 0.6, "min_proj": 0.0, "pos_est": 3.0, "hustle": 0.0, "note": "not on an opening roster"})
+                  "avail_pre": 0.6, "min_proj": 0.0, "pos_est": 3.0, "hustle": 0.0, "note": "not on an opening roster",
+                  "m0": 12.0 * 0.6 * 82, "newc": False})
 E["off_pre"] = E.rating_pre / 2; E["def_pre"] = E.rating_pre / 2
 P = pd.concat([P, E], ignore_index=True)
 P.to_parquet(os.path.join(out, "players.parquet"), index=False)

@@ -1,5 +1,5 @@
 name: depth-fetch
-# Fetch today's RealGM depth chart (manual for now; to be folded into nightly once the minutes change is approved).
+# Fetch today's RealGM depth chart on demand (the nightly also fetches it daily until the opener, then applies it).
 on:
   workflow_dispatch:
 permissions:

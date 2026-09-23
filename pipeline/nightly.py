@@ -67,6 +67,44 @@ for h_, a_, hp, ap_ in zip(res.home, res.away, res.home_pts, res.away_pts):
     else: wins[a_] += 1; losses[h_] += 1
 played = wins + losses
 rem = sched[~done & sched.home.isin(SIM.TEAMS) & sched.away.isin(SIM.TEAMS)]   # TBD (NBA Cup) slots filled in the sim
+# ------------------------------------------------------------------ depth chart (preseason roles; session 15)
+# Re-apply the latest RealGM chart dated before the opener (live/{S}/depth, pipeline/depth_fetch.py): players on another
+# team's chart move there, rostered players on no chart go to FA (released), everyone's preseason minutes =
+# _tier model a[_tier] + b[_tier]*m0 (model/depth_chart.py), team allocation to 19,680. Same rules as the sandbox
+# (code/depth_apply.py + project.py), so the chart the state was built with reproduces the state's min_proj.
+# After the opener the last pre-opener chart stays in force (the backtested 'late' snapshot); games then take over.
+DEPTH = {"chart": None, "moved": [], "dropped": [], "added": []}
+_DC = cfg.get("depth")
+if _DC and "m0" in PL and os.path.isdir(os.path.join(live, "depth")):
+    import glob, depth_chart as DCH
+    _first = int(sched.date.min()) if len(sched) else 99999999
+    _cut = min(asof_i, _first - 1)
+    _fs = [f for f in sorted(glob.glob(os.path.join(live, "depth", "realgm_*.html.gz"))) if int(os.path.basename(f)[7:15]) <= _cut]
+    if _fs:
+        _R = DCH.load_chart(_fs[-1], S)
+        if len(_R):
+            _R = DCH.match(_R, PL[["key", "name", "team"]].assign(name=PL["name"].fillna("")))
+            _sz = _R.groupby("team").size(); _good = set(_sz[_sz >= _DC["min_team_players"]].index)
+            _Rg = _R[_R.team.isin(_good)]; _on = _Rg.dropna(subset=["key"]).set_index("key"); _ex = set(_DC["exempt"])
+            PL = PL.copy()
+            for i_, k_, t_ in zip(PL.index, PL.key, PL.team):
+                if k_ in _ex: continue
+                if k_ in _on.index:
+                    if _on.team[k_] != t_ and (t_ == "FA" or t_ in _good):
+                        (DEPTH["added"] if t_ == "FA" else DEPTH["moved"]).append([PL.at[i_, "name"], t_, _on.team[k_]]); PL.at[i_, "team"] = _on.team[k_]
+                elif t_ in _good:
+                    DEPTH["dropped"].append([PL.at[i_, "name"], t_]); PL.at[i_, "team"] = "FA"
+            _ros = PL.team.isin(_good)
+            _tier = DCH.tiers(PL[_ros], _Rg, _ex)
+            _w = pd.Series(DCH.want(PL.loc[_ros, "m0"].fillna(0), _tier, _DC["coef"]), index=_tier.index)
+            _nl = PL.loc[_ros, "newc"].fillna(False).astype(bool) & (_tier == "L")
+            _w[_nl] = _DC["newc_L"]; _w[_tier == "X"] = PL.loc[_tier.index[_tier == "X"], "m0"].fillna(0)
+            PL.loc[_ros, "tier"] = _tier.values
+            PL.loc[_ros, "min_proj"] = _w.groupby(PL.loc[_ros, "team"]).transform(lambda x: DCH.allocate(x)).values
+            PL.loc[PL.team == "FA", "tier"] = None
+            DEPTH["chart"] = os.path.basename(_fs[-1])[7:15]
+            print(f"depth chart {DEPTH['chart']}: {len(_good)} teams, moved {len(DEPTH['moved'])}, added {len(DEPTH['added'])}, "
+                  f"dropped {len(DEPTH['dropped'])}", DEPTH["moved"][:10], DEPTH["added"][:10], DEPTH["dropped"][:10])
 # ------------------------------------------------------------------ ratings
 prior = PL.dropna(subset=["player"]).drop_duplicates("player").set_index("player").rating_pre
 prior.index = prior.index.astype(np.int64)
@@ -333,7 +371,7 @@ players = [{"k": row.key, "n": row["name"], "t": row.team, "pos": round(float(ro
            for _, row in pl.sort_values("rating", ascending=False).iterrows() if row.team != "FA" or row.gp > 0]   # every rostered player (injured ones carry their status to the app)
 latest = {"asof": asof, "season": S, "games_final": n_done, "games_parsed": n_parsed, "pace": round(pace, 1), "tau": round(float(tau), 2),
           "teams": teams, "players": players, "tonight": tonight, "sims": a.sims,
-          "game_day": f"{str(game_day)[:4]}-{str(game_day)[4:6]}-{str(game_day)[6:]}",
+          "game_day": f"{str(game_day)[:4]}-{str(game_day)[4:6]}-{str(game_day)[6:]}", "depth": DEPTH,
           "cfg": {"gap_k": cfg["gap_k"], "sig": SIG, "hca": HCA},
           "rem": [f"{h}-{w}" for h, w in zip(rem.home, rem.away)],   # remaining schedule (TBD Cup slots not included)
           "generated_utc": dt.datetime.now(dt.timezone.utc).replace(tzinfo=None).strftime("%Y-%m-%dT%H:%MZ")}

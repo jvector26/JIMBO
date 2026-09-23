@@ -1,7 +1,11 @@
 """Fetch the current RealGM NBA depth chart (league page) -> live/{S}/depth/realgm_{YYYYMMDD}.html.gz.
 Writes live/{S}/depth/fetch_log.txt with every attempt (Actions logs are not readable from the sandbox)."""
 import argparse, datetime as dt, gzip, os, time
-p = argparse.ArgumentParser(); p.add_argument("--season", type=int, default=2026); a = p.parse_args()
+p = argparse.ArgumentParser(); p.add_argument("--season", type=int, default=2026)
+p.add_argument("--until", help="YYYY-MM-DD: do nothing after this date (US Eastern); nightly passes the day before the opener")
+a = p.parse_args()
+if a.until and dt.datetime.now(dt.timezone(dt.timedelta(hours=-4))).strftime("%Y-%m-%d") > a.until:
+    print(f"after {a.until}: depth chart frozen (last pre-opener chart stays in force)"); raise SystemExit(0)
 URL = "https://basketball.realgm.com/nba/depth-charts"
 os.makedirs(f"live/{a.season}/depth", exist_ok=True)
 log = []; html = None

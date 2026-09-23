@@ -1351,7 +1351,7 @@ if(window.claude&&window.claude.use){
   const hdr=t=>({Authorization:`Bearer ${t}`, Accept:'application/vnd.github+json'});
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
   let D, SZ, hist=null, remote=null;
-  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=160adc03b6',{}), getJSON('data/latest.json')]); }
+  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=dce84ea51a',{}), getJSON('data/latest.json')]); }
   catch(e){ say('Could not load data. Check your connection and reopen.'); return; }
   try{ hist=await getJSON('data/history.json'); }catch(e){}
   async function fetchRemote(){

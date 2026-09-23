@@ -42,5 +42,32 @@
  "min_rec": 0.5,
  "min_streak": 999,
  "min_alloc": "rescale",
- "game_k": 5
+ "game_k": 5,
+ "depth": {
+  "coef": {
+   "S": [
+    351.68,
+    0.8453
+   ],
+   "R": [
+    187.93,
+    0.8418
+   ],
+   "L": [
+    26.19,
+    0.8999
+   ],
+   "N": [
+    -97.1,
+    0.63
+   ]
+  },
+  "exempt": [
+   "p1631105"
+  ],
+  "min_team_players": 13,
+  "newc_L": 308.6275017357719,
+  "state_chart": "20260923",
+  "note": "nightly.py re-applies the latest RealGM chart dated before the opener: moves, drops to FA, tiers."
+ }
 }

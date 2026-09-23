@@ -32,6 +32,9 @@ jobs:
           python pipeline/nba_fetch.py games --season 2026
           python pipeline/nba_fetch.py injuries --season 2026
           python pipeline/nba_fetch.py odds --season 2026 --date $(TZ=America/New_York date +%Y%m%d) || true
+      - name: Depth chart (RealGM, preseason only; failures don't stop the run)
+        continue-on-error: true
+        run: python pipeline/depth_fetch.py --season 2026 --until 2026-10-19
       - name: Update model and simulate
         run: |
           ASOF="${{ github.event.inputs.asof }}"
