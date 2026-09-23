@@ -2,7 +2,7 @@
  "_note": "User overrides applied by the nightly run (and later by the app). players: key -> {t: team, g: games of 82, mpg, r: rating}. Keys: p<NBA player id> or n:<name>|<team>. Migrated from the claude.ai dashboard (settings/current) 2026-09-21: no player overrides, all sliders at defaults.",
  "players": {
   "p203084": {
-   "g": 66,
+   "g": 0,
    "mpg": 5
   }
  },
@@ -23,5 +23,5 @@
   "age": 1,
   "bm": 0.37290551766215724
  },
- "updated": "2026-09-23T14:59:10.146Z"
+ "updated": "2026-09-23T14:59:49.944Z"
 }
