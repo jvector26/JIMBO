@@ -14,7 +14,7 @@
   --c-fmodel:#5B6B85; --c-fage:#1E8A83; --pos:#13795B; --neg:#B4234A; --gold:#A87A12; --focus:#2F6DB5; --band:#C9D6E8; --east:#2F6DB5; --west:#B4502A;
   --c-three_pt:#2F6DB5; --c-rim_finishing:#D2692A; --c-pullup_mid:#8E5CC2; --c-foul_drawing:#B8962A;
   --c-self_creation:#2E8C99; --c-playmaking:#4F9D4A; --c-ball_security:#7A8797; --c-off_rebounding:#9A5A34;
-  --c-def_rebounding:#B85C8A; --c-rim_protection:#1F4E79; --c-perimeter_def:#6E8F2E; --c-lineup:#3E4757; --c-hustle:#C2410C;
+  --c-def_rebounding:#B85C8A; --c-rim_protection:#1F4E79; --c-perimeter_def:#6E8F2E; --c-lineup:#3E4757; --c-lineup_o:#A3AEC4; --c-lineup_d:#3E4757; --c-hustle:#C2410C;
   --c-aging:#C9A227; --c-returner:#B5546B; --c-base:#9AA3B2;
   --cond:"Barlow Condensed","Arial Narrow","Roboto Condensed",sans-serif;
   --text:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -124,6 +124,8 @@ body.pvopen .tabs, body.pvopen .panel{display:none}
 .ctab td,.ctab th{font-size:14px}
 .ctab tr.low td{color:var(--muted)}
 .ctab tr.proj td{font-weight:700;background:var(--soft)}
+.ctab .sh{display:none}
+@media (max-width:640px){ .ctab .lg{display:none} .ctab .sh{display:inline} .ctab td,.ctab th{padding-left:4px;padding-right:4px} }
 .rk2{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 16px;font-size:14px}
 .rk2 b{font-family:var(--cond);font-size:16px}
 tr.pr{cursor:pointer} tr.pr:hover td{background:var(--surface)}
@@ -201,7 +203,7 @@ footer p{max-width:100ch}
   --c-fmodel:#4B1F8C; --c-fage:#00939C; --east:#1C4FE0; --west:#E8541C;
   --c-three_pt:#1C4FE0; --c-rim_finishing:#FF5A1F; --c-pullup_mid:#9B30FF; --c-foul_drawing:#E0B000;
   --c-self_creation:#00A9AE; --c-playmaking:#2DB84B; --c-ball_security:#8C8C9E; --c-off_rebounding:#A0522D;
-  --c-def_rebounding:#F04BAE; --c-rim_protection:#0B2A8F; --c-perimeter_def:#72B300; --c-lineup:#2A2340; --c-hustle:#FF8A00;
+  --c-def_rebounding:#F04BAE; --c-rim_protection:#0B2A8F; --c-perimeter_def:#72B300; --c-lineup:#2A2340; --c-lineup_o:#A99BD6; --c-lineup_d:#2A2340; --c-hustle:#FF8A00;
   --c-aging:#F2B800; --c-returner:#C2185B; --c-base:#B8B0CC; --c-season:#00A3AD;
   --hd:#4B1F8C; --mark:#1D1636; --ring:#4B1F8C;
   --display:"Bungee",Impact,"Arial Black",sans-serif;
@@ -596,7 +598,7 @@ function makeEngine(D){
     const parts={}; let off=0, def=0;
     for(let i=0;i<NF;i++){const v=SL*p.f[i]*m[i]; const c=compOf[F[i]]; parts[c]=(parts[c]||0)+v; if(isO[i]) off+=v; else def+=v;}
     const lo=SL*S.lineup_o*p.lo, ld=SL*S.lineup_d*p.ld, ag=SL*p.ag*(S.age==null?1:S.age);
-    const rt=p.rt||0; parts.lineup=lo+ld; parts.aging=ag; if(rt) parts.returner=rt;
+    const rt=p.rt||0; parts.lineup_o=lo; parts.lineup_d=ld; parts.aging=ag; if(rt) parts.returner=rt;
     const hu=p.hu||0; if(hu) parts.hustle=hu;  // hustle stats (defense #7): post-slope, fixed
     const dreb=parts.def_rebounding||0, dstop=def-dreb+ld+hu;  // defense split: rebounding vs stops/shot prevention (box + lineup defense)
     off+=lo+ag/2+rt/2; def+=ld+ag/2+rt/2+hu;
@@ -711,7 +713,7 @@ function makeEngine(D){
 function jimboBoot(D, SZ, APP){  // SZ = nightly in-season state (app only), APP = app hooks (storage, history)
 if(SZ) seasonPrep(D, SZ);
 const E=makeEngine(D), M=D.meta, TEAMS=E.TEAMS, NSIM=APP&&APP.nsim||10000;
-const COMPS=M.components.concat(['lineup']);
+const COMPS=M.components.concat(['lineup_o','lineup_d']);
 const LABEL={three_pt:'Three-point shooting', rim_finishing:'Rim finishing', pullup_mid:'Pull-ups and midrange', foul_drawing:'Foul drawing',
   self_creation:'Self-creation', playmaking:'Playmaking', ball_security:'Ball security', off_rebounding:'Offensive rebounding',
   def_rebounding:'Defensive rebounding', rim_protection:'Rim protection', perimeter_def:'Perimeter defense', hustle:'Hustle (loose balls, 3PT contests)', lineup:'Lineup impact', lineup_o:'Lineup impact, offense', lineup_d:'Lineup impact, defense',
@@ -1218,25 +1220,26 @@ function histSeasons(p,m){ // per-season box contributions under current weights
   return h.s.map((y,i)=>{ const parts={}; let off=0, def=0;
     for(let j=0;j<NF;j++){ const v=h.v[i*NF+j]/1000*m[j]*M.slope, c=M.comp_of[M.feats[j]]; parts[c]=(parts[c]||0)+v; if(M.feats[j][0]==='o') off+=v; else def+=v; }
     const lmix=(a,b)=>a&&a[i]!=null?(a[i]*S.lineup_o+(b[i]||0)*S.lineup_d)/1000*M.slope:null, l1=lmix(h.l1o,h.l1d), lw=lmix(h.lwo,h.lwd);
+    const lpart=(a,w)=>a&&a[i]!=null?a[i]*w/1000*M.slope:null, l1o=lpart(h.l1o,S.lineup_o), l1d=lpart(h.l1d,S.lineup_d), lwo=lpart(h.lwo,S.lineup_o), lwd=lpart(h.lwd,S.lineup_d);
     const bin=ageBin(h.a[i]), ag=bin?M.aging_bins[bin]*M.slope*S.age:0;
-    return {y, tm:h.tm[i], a:h.a[i], g:h.g[i], mn:h.mn[i], parts, off, def, tot:off+def, l1, lw, ag, bin}; });
+    return {y, tm:h.tm[i], a:h.a[i], g:h.g[i], mn:h.mn[i], parts, off, def, tot:off+def, l1, lw, l1o, l1d, lwo, lwd, ag, bin}; });
 }
 function ageBin(a){ if(a==null) return ''; const k=Object.keys(M.aging_bins); for(const b of k){ if(b.startsWith('<=')){ if(a<+b.slice(2)+1) return b; } else if(b.endsWith('+')){ if(a>=+b.slice(0,-1)) return b; } else { const [lo,hi]=b.split('-').map(Number); if(a>=lo&&a<hi+1) return b; } } return ''; }
 function chartSVG(rows, proj, mode){
   const OFFC=M.components.filter(c=>M.feats.some(f=>M.comp_of[f]===c&&f[0]==='o')), DEFC=M.components.filter(c=>!OFFC.includes(c));
   const segsOf=(parts,isProj)=>{
-    if(mode==='all'){ const cs=M.components.concat(isProj?['hustle','lineup','aging','returner']:[]); return cs.map(c=>[parts[c]||0,`var(--c-${c})`,LABEL[c]]); }
-    if(mode==='od'){ const o=OFFC.reduce((a,c)=>a+(parts[c]||0),0), d=DEFC.reduce((a,c)=>a+(parts[c]||0),0);
-      const r=[[o,'var(--focus)','Offense (box)'],[d,'var(--c-perimeter_def)','Defense (box)']]; if(isProj) r.push([(parts.lineup||0)+(parts.aging||0)+(parts.returner||0),'var(--muted)','Lineup, age, return']); return r; }
+    if(mode==='all'){ const cs=M.components.concat(isProj?['hustle','lineup_o','lineup_d','aging','returner']:[]); return cs.map(c=>[parts[c]||0,`var(--c-${c})`,LABEL[c]]); }
+    if(mode==='od'){ const o=OFFC.reduce((a,c)=>a+(parts[c]||0),0), d=DEFC.reduce((a,c)=>a+(parts[c]||0),0)+(parts.hustle||0);
+      const r=[[o,'var(--focus)','Offense, box score'],[d,'var(--c-perimeter_def)','Defense, box score'+(isProj&&parts.hustle?' and hustle':'')]]; if(isProj) r.push([parts.lineup_o||0,'var(--c-lineup_o)','Offense, lineup'],[parts.lineup_d||0,'var(--c-lineup_d)','Defense, lineup'],[(parts.aging||0)+(parts.returner||0),'var(--muted)','Age, return']); return r; }
     return [[parts[mode]||0,`var(--c-${mode})`,LABEL[mode]]];
   };
   const val=r=>mode==='lineup'?(r.l1||0):mode==='aging'?r.ag:mode==='all'||mode==='od'?r.tot+(r.l1||0):(r.parts[mode]||0);
   const all=rows.map(r=>({lab:"'"+String((r.y+1)%100).padStart(2,'0'), tip:`${seasonLbl(r.y)} ${r.tm}`,
-    segs:mode==='lineup'?[[r.l1||0,'var(--c-lineup)','Lineup, that season alone']]:mode==='aging'?[[r.ag,'var(--c-aging)',`Age adjustment (group ${r.bin})`]]:
-      segsOf(r.parts,false).concat(mode==='all'?[[r.l1||0,'var(--c-lineup)','Lineup impact']]:mode==='od'?[[r.l1||0,'var(--muted)','Lineup impact']]:[]),
+    segs:mode==='lineup'?[[r.l1o||0,'var(--c-lineup_o)','Lineup offense, that season alone'],[r.l1d||0,'var(--c-lineup_d)','Lineup defense, that season alone']]:mode==='aging'?[[r.ag,'var(--c-aging)',`Age adjustment (group ${r.bin})`]]:
+      segsOf(r.parts,false).concat(mode==='all'||mode==='od'?[[r.l1o||0,'var(--c-lineup_o)','Lineup impact, offense'],[r.l1d||0,'var(--c-lineup_d)','Lineup impact, defense']]:[]),
     low:r.mn<250, net:val(r), line:mode==='lineup'?r.lw:null}));
-  if(proj) all.push({lab:'Proj', tip:'2026-27 projection', segs:mode==='lineup'||mode==='aging'?[[proj.parts[mode]||0,`var(--c-${mode})`,LABEL[mode]]]:segsOf(proj.parts,true), proj:true,
-    net:mode==='lineup'||mode==='aging'?(proj.parts[mode]||0):mode==='all'||mode==='od'?proj.net:(proj.parts[mode]||0)});
+  if(proj) all.push({lab:'Proj', tip:'2026-27 projection', segs:mode==='lineup'?[[proj.parts.lineup_o||0,'var(--c-lineup_o)','Lineup offense, 3-season'],[proj.parts.lineup_d||0,'var(--c-lineup_d)','Lineup defense, 3-season']]:mode==='aging'?[[proj.parts[mode]||0,`var(--c-${mode})`,LABEL[mode]]]:segsOf(proj.parts,true), proj:true,
+    net:mode==='lineup'?(proj.parts.lineup_o||0)+(proj.parts.lineup_d||0):mode==='aging'?(proj.parts[mode]||0):mode==='all'||mode==='od'?proj.net:(proj.parts[mode]||0)});
   let hi=1, lo=-1; all.forEach(b=>{ if(b.line!=null){ hi=Math.max(hi,b.line); lo=Math.min(lo,b.line); } if(b.low) return; let p=0,n=0; b.segs.forEach(([v])=>{ if(v>0)p+=v; else n+=v; }); hi=Math.max(hi,p,b.net); lo=Math.min(lo,n,b.net); });
   const step=(hi-lo)>12?4:(hi-lo)>6?2:1; hi=Math.ceil(hi/step)*step; lo=Math.floor(lo/step)*step;
   const CW=Math.max(300,($('pv').clientWidth||600)-30), L=34, n=Math.max(all.length,1);
@@ -1249,7 +1252,7 @@ function chartSVG(rows, proj, mode){
       bars+=`<rect x="${x}" y="${y0}" width="${bw}" height="${Math.max(0.5,y1-y0)}" fill="${col}"><title>${esc(b.tip)}: ${esc(lab)} ${fmt(v,2)}</title></rect>`; });
     g+=`<g opacity="${b.low?0.35:1}">${bars}</g>`;
     if(b.proj) g+=`<rect x="${x-2}" y="${T-2}" width="${bw+4}" height="${H-T-B+4}" fill="none" stroke="var(--ink)" stroke-dasharray="3 3" rx="3"/>`;
-    if(mode!=='lineup'&&mode!=='aging') g+=`<circle cx="${x+bw/2}" cy="${y(b.net)}" r="${Math.min(4.5,bw/3.2)}" fill="var(--ink)" stroke="var(--surface)" stroke-width="1.5" opacity="${b.low?0.5:1}"><title>${esc(b.tip)}: ${fmt(b.net,2)}</title></circle>`;
+    if(mode!=='aging') g+=`<circle cx="${x+bw/2}" cy="${y(b.net)}" r="${Math.min(4.5,bw/3.2)}" fill="var(--ink)" stroke="var(--surface)" stroke-width="1.5" opacity="${b.low?0.5:1}"><title>${esc(b.tip)}: ${fmt(b.net,2)}</title></circle>`;
     if(slot>=26||i%2===(all.length-1)%2||b.proj) g+=`<text x="${x+bw/2}" y="${H-7}" text-anchor="middle"${b.proj?' style="font-weight:700;fill:var(--ink)"':''}>${b.lab}</text>`; });
   if(mode==='lineup'){ const pts=all.map((b,i)=>b.line!=null?[L+gap/2+i*(bw+gap)+bw/2, y(b.line), b]:null).filter(Boolean);
     if(pts.length){ g+=`<polyline points="${pts.map(p=>p[0]+','+p[1]).join(' ')}" fill="none" stroke="var(--gold)" stroke-width="2.5" stroke-linejoin="round"/>`;
@@ -1279,7 +1282,8 @@ function renderPV(){
     rowsB+=`<tr><td>${rook?'Rookie baseline':'Newcomer baseline (no NBA or college data)'}</td><td class="num ${cls(p.fx)}">${fmt(p.fx,2)}</td></tr>`;
   } else {
     rowsB+=`<tr><td>Box score, recent seasons${yrs?` (${yrs}; newest counts most)`:''}</td><td class="num ${cls(box)}">${fmt(box,2)}</td></tr>
-      <tr><td>Lineup results beyond the box score (weights: offense ${S.lineup_o.toFixed(2)}, defense ${S.lineup_d.toFixed(2)})</td><td class="num ${cls(pa.lineup)}">${fmt(pa.lineup||0,2)}</td></tr>
+      <tr><td>Lineup results beyond the box score, offense (weight ${S.lineup_o.toFixed(2)})</td><td class="num ${cls(pa.lineup_o)}">${fmt(pa.lineup_o||0,2)}</td></tr>
+      <tr><td>Lineup results beyond the box score, defense (weight ${S.lineup_d.toFixed(2)})</td><td class="num ${cls(pa.lineup_d)}">${fmt(pa.lineup_d||0,2)}</td></tr>
       <tr><td>Age adjustment (age ${nextAge}, group ${ageBin(p.a)}${S.age!==1?`, scaled ×${S.age.toFixed(2)}`:''})</td><td class="num ${cls(pa.aging)}">${fmt(pa.aging||0,2)}</td></tr>
       ${pa.returner?`<tr><td>Return from a missed season</td><td class="num neg">${fmt(pa.returner,2)}</td></tr>`:''}`;
   }
@@ -1303,19 +1307,30 @@ function renderPV(){
   const proj=p.fx==null?{parts:pa,net:r.mtot}:{parts:{},net:r.mtot};
   if(hist.length){
     const opts=[['all','All components'],['od','Offense vs defense'],['lineup','Lineup effect'],['aging','Age adjustment']].concat(M.components.map(c=>[c,LABEL[c]]));
-    const legC=pvMode==='all'?M.components.concat(['lineup','aging']).map(c=>`<span><i style="background:var(--c-${c})"></i>${LABEL[c]}</span>`).join(''):
-      pvMode==='lineup'?`<span><i style="background:var(--c-lineup)"></i>That season alone</span><span><i style="background:var(--gold)"></i>3-season weighted average (what the next season's projection used)</span>`:
+    const legC=pvMode==='all'?M.components.concat(['lineup_o','lineup_d','aging']).map(c=>`<span><i style="background:var(--c-${c})"></i>${LABEL[c]}</span>`).join(''):
+      pvMode==='lineup'?`<span><i style="background:var(--c-lineup_o)"></i>Offense, that season</span><span><i style="background:var(--c-lineup_d)"></i>Defense, that season</span><span><i style="background:var(--gold)"></i>3-season weighted total (what the next season's projection used)</span>`:
       pvMode==='aging'?`<span><i style="background:var(--c-aging)"></i>Age adjustment for a player his age that season</span>`:
-      pvMode==='od'?`<span><i style="background:var(--focus)"></i>Offense (box)</span><span><i style="background:var(--c-perimeter_def)"></i>Defense (box)</span><span><i style="background:var(--muted)"></i>Lineup, age, return (projection only)</span>`:`<span><i style="background:var(--c-${pvMode})"></i>${LABEL[pvMode]}</span>`;
-    h+=`<div class="pvsec"><h3>Career by season</h3><p class="note">${pvMode==='lineup'?'Lineup effect by season.':pvMode==='aging'?'Age adjustment by season.':"Each season on its own, vs that season's league average, at your slider weights: box-score skills plus that season's own lineup effect. Dots are the season total."} Faded bars: under 250 minutes. The dashed bar is the 2026-27 projection${pvMode==='all'||pvMode==='od'?', which uses the 3-season lineup average and adds age':''}.</p>
+      pvMode==='od'?`<span><i style="background:var(--focus)"></i>Offense, box score</span><span><i style="background:var(--c-lineup_o)"></i>Offense, lineup</span><span><i style="background:var(--c-perimeter_def)"></i>Defense, box score</span><span><i style="background:var(--c-lineup_d)"></i>Defense, lineup</span><span><i style="background:var(--muted)"></i>Age, return (projection only)</span>`:`<span><i style="background:var(--c-${pvMode})"></i>${LABEL[pvMode]}</span>`;
+    const nc=(v,dp)=>v==null?'<td class="num">–</td>':`<td class="num ${cls(v)}">${fmt(v,dp)}</td>`;
+    const two=(a,b)=>`<span class="lg">${a}</span><span class="sh">${b}</span>`, LO=two('Lineup<br>off','L off'), LD=two('Lineup<br>def','L def');
+    const headCols={od:['Off',LO,'Def',LD,'Total'], lineup:['Box',LO,LD,two('3-season<br>off','3y off'),two('3-season<br>def','3y def')], all:['Box',LO,LD,'Total'], aging:['Box','Age group','Age adj']}[pvMode]||['Box',LABEL[pvMode]];
+    const projCells=()=>pvMode==='od'?nc(r.off)+nc(pa.lineup_o||0)+nc(r.def)+nc(pa.lineup_d||0)+nc(r.tot):
+      pvMode==='lineup'?nc(pbox)+nc(null)+nc(null)+nc(pa.lineup_o||0,2)+nc(pa.lineup_d||0,2):
+      pvMode==='all'?nc(pbox)+nc(pa.lineup_o||0,2)+nc(pa.lineup_d||0,2)+nc(r.tot):
+      pvMode==='aging'?nc(pbox)+`<td class="num">${ageBin(p.a)}</td>`+nc(pa.aging||0,2):nc(pbox)+nc(pa[pvMode]||0,2);
+    const rowCells=x=>pvMode==='od'?nc(x.off+(x.l1o||0))+nc(x.l1o)+nc(x.def+(x.l1d||0))+nc(x.l1d)+nc(x.tot+(x.l1||0)):
+      pvMode==='lineup'?nc(x.tot)+nc(x.l1o,2)+nc(x.l1d,2)+nc(x.lwo,2)+nc(x.lwd,2):
+      pvMode==='all'?nc(x.tot)+nc(x.l1o,2)+nc(x.l1d,2)+nc(x.tot+(x.l1||0)):
+      pvMode==='aging'?nc(x.tot)+`<td class="num">${x.bin||'–'}</td>`+nc(x.ag,2):nc(x.tot)+nc(x.parts[pvMode]||0,2);
+    h+=`<div class="pvsec"><h3>Career by season</h3><p class="note">${pvMode==='lineup'?'Lineup effect by season, offense and defense; dots are the season total.':pvMode==='aging'?'Age adjustment by season.':"Each season on its own, vs that season's league average, at your slider weights: box-score skills plus that season's own lineup effect. Dots are the season total."} Faded bars: under 250 minutes. The dashed bar is the 2026-27 projection${pvMode==='all'||pvMode==='od'?', which uses the 3-season lineup average and adds age':''}.</p>
       <div class="chartbar"><label for="pvMode" class="note" style="margin:0">Show</label><select id="pvMode">${opts.map(([v,l])=>`<option value="${v}"${v===pvMode?' selected':''}>${l}</option>`).join('')}</select></div>
-      <div class="cchart">${chartSVG(hist,proj,pvMode)}</div><div class="cleg">${legC}${pvMode!=='lineup'&&pvMode!=='aging'?'<span><i style="background:var(--ink);border-radius:50%"></i>Net</span>':''}</div>
+      <div class="cchart">${chartSVG(hist,proj,pvMode)}</div><div class="cleg">${legC}${pvMode!=='aging'?'<span><i style="background:var(--ink);border-radius:50%"></i>Net</span>':''}</div>
       ${pvMode==='lineup'?`<p class="note" style="margin-top:4px">How his lineups did beyond what his box score predicts, at your lineup weights (offense ${S.lineup_o.toFixed(2)}, defense ${S.lineup_d.toFixed(2)}) and the ×${M.slope.toFixed(3)} calibration. Single seasons are noisy; the projection uses the 3-season weighted average (newest season counts most), shrunk toward 0. No trend is extrapolated.</p>`:''}
       ${pvMode==='aging'?`<p class="note" style="margin-top:4px">The league-wide age curve, not measured for him: the average extra change players of that age showed beyond their recent ratings. The projection uses his age group for 2026-27.</p>`:''}
-      <div class="tbl" style="margin:10px 0 4px"><table class="ctab"><thead><tr><th class="l">Season</th><th class="l">Team</th><th>Age</th><th>Games</th><th>Min/g</th>${pvMode==='od'?'<th>Off</th><th>Def</th>':''}<th>Box</th>${pvMode==='lineup'?'<th>Lineup, season</th><th>Lineup, 3-season</th>':pvMode==='aging'?'<th>Age group</th><th>Age adj</th>':pvMode==='all'||pvMode==='od'?'<th>Lineup</th><th>Total</th>':`<th>${LABEL[pvMode]}</th>`}</tr></thead><tbody>
-      ${p.fx==null?`<tr class="proj"><td class="l">2026-27 proj.</td><td class="l">${r.t}</td><td class="num">${nextAge??'–'}</td><td class="num">${Math.round(g)}</td><td class="num">${mpg.toFixed(1)}</td>${pvMode==='od'?`<td class="num ${cls(r.off)}">${fmt(r.off)}</td><td class="num ${cls(r.def)}">${fmt(r.def)}</td>`:''}<td class="num ${cls(pbox)}">${fmt(pbox)}</td>${pvMode==='lineup'?`<td class="num">–</td><td class="num ${cls(pa.lineup||0)}">${fmt(pa.lineup||0,2)}</td>`:pvMode==='aging'?`<td class="num">${ageBin(p.a)}</td><td class="num ${cls(pa.aging||0)}">${fmt(pa.aging||0,2)}</td>`:pvMode==='all'||pvMode==='od'?`<td class="num ${cls(pa.lineup||0)}">${fmt(pa.lineup||0,2)}</td><td class="num ${cls(r.tot)}">${fmt(r.tot)}</td>`:`<td class="num">${fmt(pa[pvMode]||0,2)}</td>`}</tr>`:''}
-      ${hist.slice().reverse().map(x=>`<tr class="${x.mn<250?'low':''}"><td class="l">${seasonLbl(x.y)}</td><td class="l">${esc(x.tm)}</td><td class="num">${x.a!=null?Math.floor(x.a):'–'}</td><td class="num">${x.g}</td><td class="num">${x.g?(x.mn/x.g).toFixed(1):'–'}</td>${pvMode==='od'?`<td class="num ${cls(x.off)}">${fmt(x.off)}</td><td class="num ${cls(x.def)}">${fmt(x.def)}</td>`:''}<td class="num ${cls(x.tot)}">${fmt(x.tot)}</td>${pvMode==='lineup'?`<td class="num ${cls(x.l1||0)}">${x.l1!=null?fmt(x.l1,2):'–'}</td><td class="num ${cls(x.lw||0)}">${x.lw!=null?fmt(x.lw,2):'–'}</td>`:pvMode==='aging'?`<td class="num">${x.bin||'–'}</td><td class="num ${cls(x.ag)}">${fmt(x.ag,2)}</td>`:pvMode==='all'||pvMode==='od'?`<td class="num ${cls(x.l1||0)}">${x.l1!=null?fmt(x.l1,2):'–'}</td><td class="num ${cls(x.tot+(x.l1||0))}">${fmt(x.tot+(x.l1||0))}</td>`:`<td class="num ${cls(x.parts[pvMode]||0)}">${fmt(x.parts[pvMode]||0,2)}</td>`}</tr>`).join('')}
-      </tbody></table></div><p class="note">Season rows: that season alone (Total = box + that season's lineup effect, at your lineup weight). The projection row uses the 3-season averages and its Total also includes the age adjustment${pa.returner?', the return-from-injury adjustment':''} and league re-centering.</p></div>`;
+      <div class="tbl" style="margin:10px 0 4px"><table class="ctab"><thead><tr><th class="l"><span class="lg">Season</span><span class="sh">Yr</span></th><th class="l">Team</th><th class="hide-s">Age</th><th class="hide-s">Games</th><th class="hide-s">Min/g</th>${headCols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>
+      ${p.fx==null?`<tr class="proj"><td class="l"><span class="lg">2026-27 proj.</span><span class="sh">Proj</span></td><td class="l">${r.t}</td><td class="num hide-s">${nextAge??'–'}</td><td class="num hide-s">${Math.round(g)}</td><td class="num hide-s">${mpg.toFixed(1)}</td>${projCells()}</tr>`:''}
+      ${hist.slice().reverse().map(x=>`<tr class="${x.mn<250?'low':''}"><td class="l"><span class="lg">${seasonLbl(x.y)}</span><span class="sh">'${String((x.y+1)%100).padStart(2,'0')}</span></td><td class="l">${esc(x.tm)}</td><td class="num hide-s">${x.a!=null?Math.floor(x.a):'–'}</td><td class="num hide-s">${x.g}</td><td class="num hide-s">${x.g?(x.mn/x.g).toFixed(1):'–'}</td>${rowCells(x)}</tr>`).join('')}
+      </tbody></table></div><p class="note">Season rows: that season alone (Total = box + that season's lineup effect, offense and defense, at your lineup weights${pvMode==='od'?'; Off and Def include their lineup part':''}). On phones, L off / L def = lineup offense / defense. The projection row uses the 3-season averages and its Total also includes the age adjustment${pa.returner?', the return-from-injury adjustment':''} and league re-centering.</p></div>`;
   } else h+=`<div class="pvsec"><h3>Career by season</h3><p class="note">No NBA seasons yet.</p></div>`;
   $('pv').innerHTML=h;
   const cc=$('pv').querySelector('.cchart'); if(cc) cc.scrollLeft=cc.scrollWidth;
