@@ -70,6 +70,8 @@ th{font-size:13px;font-weight:600;color:var(--muted);text-align:right;padding:9p
 th.l,td.l{text-align:left}
 th button{background:none;border:0;color:inherit;font-weight:600;padding:0}
 th button[aria-sort]::after{content:" ▾"}
+.sttools{flex-wrap:nowrap} .sttools select{flex:0 1 auto;min-width:0;max-width:240px} .sttools .btn{flex:0 0 auto;white-space:nowrap}
+th button.stsort{cursor:pointer;text-align:inherit} th button.stsort.on{text-decoration:underline;text-underline-offset:3px}
 td{padding:7px 8px;border-bottom:1px solid var(--soft);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 tr.p{cursor:pointer} tr.p:hover td{background:var(--soft)}
 .rk{font-family:var(--cond);font-size:17px;color:var(--muted);width:34px}
@@ -447,6 +449,11 @@ body.pvopen #gv{display:none}
         <span class="simnote" id="simnote"></span>
       </div>
       <div class="legend" id="wflegend"></div>
+      <div class="tools sttools" id="sttools">
+        <select id="stview" aria-label="Group teams"><option value="conf">Conferences</option><option value="all">All teams</option></select>
+        <select id="stsort" aria-label="Sort teams by"></select>
+        <button class="btn" id="stdir" type="button" aria-label="Reverse sort order" title="Reverse sort order">↓ High to low</button>
+      </div>
       <div id="standings"></div>
     </div>
 
@@ -897,25 +904,63 @@ function rosterHTML(x){
     <table><thead><tr><th class="l">Player</th><th class="hide-s">Age</th><th>Games</th><th>Min when playing</th><th class="hide-s">Season min</th><th>Rating</th><th title="Rating times share of team minutes">Adds to team</th><th></th></tr></thead><tbody>${rows}</tbody></table>
     ${x.over>0?`<p class="warn">Your minutes for this team add up to ${Math.round((SEASON?240*x.gr:19680)+x.over).toLocaleString()}, more than the ${(SEASON?240*x.gr:19680).toLocaleString()} ${SEASON?'left this season':'a season allows'}. Everyone else is at zero.</p>`:''}</div>`;
 }
+// sortable standings: tap a column header (again to reverse), or use the Sort by menu; grouping by conference or league-wide.
+// The sorted column is always shown, even where it is normally hidden on small screens.
+const ST_COLS=[
+  {k:'rec', lab:'Record', l:1, only:()=>ANYPLAYED, v:(x)=>x.w+x.l?x.w/(x.w+x.l):0.5, td:x=>`${x.w}-${x.l}`},
+  {k:'bw', lab:'Forecast', v:x=>x.bw, td:x=>`<span class="val">${x.bw.toFixed(1)}</span>`, raw:1},
+  {k:'mw', lab:'Model', tip:'The model alone', v:x=>x.mw, td:x=>x.mw.toFixed(1)},
+  {k:'line', lab:'Line', tip:'Vegas win-total line', v:x=>x.line, td:x=>x.line},
+  {k:'agea', lab:'Age adj', tip:'Roster-age adjustment in the forecast (younger rosters have beaten the market), including the league re-centering', v:x=>x.pa+x.padj, td:x=>fmt(x.pa+x.padj), c:x=>cls(x.pa+x.padj)},
+  {k:'edge', lab:'Model vs line', tip:'Model alone minus the line', v:x=>x.mw-x.line, td:x=>fmt(x.mw-x.line), c:x=>Math.abs(x.mw-x.line)>=3?cls(x.mw-x.line):''},
+  {k:'pover', lab:'Over line', tip:'Chance the forecast finishes over the betting line', hide:'hide-m', v:(x,s)=>s?s.pover:-1, td:(x,s)=>s?pct(s.pover):'–'},
+  {k:'po', lab:'Playoffs', v:(x,s)=>s?s.po:-1, td:(x,s)=>s?pct(s.po):'–'},
+  {k:'title', lab:'Title', hide:'hide-s', v:(x,s)=>s?s.title:-1, td:(x,s)=>s?pct(s.title):'–'},
+  {k:'net', lab:'Net rtg', tip:'Team rating, points per 100 possessions vs average', hide:'hide-m', v:x=>x.net, td:x=>fmt(x.net), c:x=>cls(x.net)},
+  {k:'off', lab:'Off rtg', tip:'Offensive part of the team rating, points per 100 vs average', hide:'hide-m', v:x=>x.off, td:x=>fmt(x.off), c:x=>cls(x.off)},
+  {k:'def', lab:'Def rtg', tip:'Defensive part of the team rating, points per 100 vs average (higher = better defense)', hide:'hide-m', v:x=>x.def, td:x=>fmt(x.def), c:x=>cls(x.def)},
+  {k:'age', lab:'Avg age', tip:'Minutes-weighted roster age', hide:'hide-m', v:x=>x.age, td:x=>x.age.toFixed(1)}];
+let ST={view:'conf', k:'bw', dir:-1};
+try{ const q=JSON.parse(localStorage.getItem('jimbo-standings-sort')||'null'); if(q&&ST_COLS.some(c=>c.k===q.k)) ST={...ST,...q}; }catch(e){}
+function stSave(){ try{ localStorage.setItem('jimbo-standings-sort',JSON.stringify(ST)); }catch(e){} }
+function stCtl(){
+  const cols=ST_COLS.filter(c=>!c.only||c.only());
+  if(!cols.some(c=>c.k===ST.k)) ST.k='bw';
+  $('stview').value=ST.view;
+  $('stsort').innerHTML=cols.map(c=>`<option value="${c.k}">Sort by ${c.lab.toLowerCase()}</option>`).join('');
+  $('stsort').value=ST.k; const nw=window.matchMedia('(max-width:640px)').matches;
+  $('stdir').textContent=ST.dir<0?(nw?'↓':'↓ High to low'):(nw?'↑':'↑ Low to high'); }
+window.matchMedia('(max-width:640px)').addEventListener('change',()=>renderStandings());
 function renderStandings(){
   if(!P) return;
+  stCtl();
+  const cols=ST_COLS.filter(c=>!c.only||c.only()), sc=cols.find(c=>c.k===ST.k), std=ST.k==='bw'&&ST.dir<0;
+  const hid=c=>c.k===ST.k?'':(c.hide||'');
+  const narrow=window.matchMedia('(max-width:640px)').matches, front=narrow&&ST.k!=='bw'?sc:null;
+  const pre=cols.filter(c=>c.l&&c!==front), post=cols.filter(c=>!c.l&&c!==front), fr=front?[front]:[];
+  const head=`<th class="l">#</th><th class="l">Team</th>${fr.map(c=>th(c)).join('')}${pre.map(c=>th(c)).join('')}<th class="l stripcell">${axisHead()}</th>${post.map(c=>th(c)).join('')}`;
+  function th(c){ const on=c.k===ST.k; return `<th class="${c.l?'l ':''}${hid(c)}"${c.tip?` title="${c.tip}"`:''}${on?` aria-sort="${ST.dir<0?'descending':'ascending'}"`:''}><button type="button" class="stsort${on?' on':''}" data-stsort="${c.k}">${c.lab}${on?(ST.dir<0?' ▾':' ▴'):''}</button></th>`; }
+  const ncol=2+cols.length+1;
+  const groups=ST.view==='all'?[['A','All 30 teams',P.team]]:[['E','Eastern Conference',P.team.filter(x=>x.conf==='E')],['W','Western Conference',P.team.filter(x=>x.conf==='W')]];
   let html='';
-  for(const cf of ['E','W']){
-    const ts=P.team.filter(x=>x.conf===cf).sort((a,b)=>b.bw-a.bw);
-    html+=`<div class="conf"><h2>${cf==='E'?'Eastern':'Western'} Conference</h2></div><div class="tbl"><table class="st"><thead><tr>
-      <th class="l">#</th><th class="l">Team</th>${ANYPLAYED?'<th class="l">Record</th>':''}<th class="l stripcell">${axisHead()}</th><th>Forecast</th><th title="The model alone">Model</th><th title="Vegas win-total line">Line</th><th title="Roster-age adjustment in the forecast (younger rosters have beaten the market), including the league re-centering">Age adj</th>
-      <th title="Model alone minus the line">Model vs line</th><th class="hide-m" title="Chance the forecast finishes over the betting line">Over line</th><th>Playoffs</th><th class="hide-s">Title</th><th class="hide-m">Net rtg</th></tr></thead><tbody>`;
-    ts.forEach((x,k)=>{ const s=SIMB&&SIMB[x.i]; const op=openTeams.has(x.t); const edge=x.mw-x.line;
-      html+=`<tr class="p${k===5||k===9?' cut':''}" tabindex="0" data-team="${x.t}" aria-expanded="${op}"><td class="l rk">${k+1}</td><td class="l"><span class="tname">${x.t}</span></td>${ANYPLAYED?`<td class="l num">${x.w}-${x.l}</td>`:''}
-        <td class="l stripcell">${strip(x,s)}</td><td><span class="val">${x.bw.toFixed(1)}</span></td><td class="num">${x.mw.toFixed(1)}</td><td class="num">${x.line}</td><td class="num ${cls(x.pa+x.padj)}">${fmt(x.pa+x.padj)}</td>
-        <td class="num ${Math.abs(edge)>=3?cls(edge):''}">${fmt(edge)}</td><td class="num hide-m">${s?pct(s.pover):'–'}</td><td class="num">${s?pct(s.po):'–'}</td>
-        <td class="num hide-s">${s?pct(s.title):'–'}</td><td class="num hide-m ${cls(x.net)}">${fmt(x.net)}</td></tr>`;
-      if(op) html+=`<tr class="detail"><td colspan="${ANYPLAYED?13:12}">${rosterHTML(x)}</td></tr>`; });
+  for(const [cf,name,list] of groups){
+    const ts=list.slice().sort((a,b)=>{ const d=ST.dir*(sc.v(a,SIMB&&SIMB[a.i])-sc.v(b,SIMB&&SIMB[b.i])); return d||b.bw-a.bw; });
+    html+=`<div class="conf"><h2>${name}</h2></div><div class="tbl"><table class="st"><thead><tr>${head}</tr></thead><tbody>`;
+    ts.forEach((x,k)=>{ const s=SIMB&&SIMB[x.i]; const op=openTeams.has(x.t);
+      const cut=std&&ST.view==='conf'&&(k===5||k===9);
+      const cell=c=>`<td class="${c.l?'l ':''}${c.raw?'':'num '}${hid(c)} ${c.c?c.c(x,s):''}">${c.td(x,s)}</td>`;
+      html+=`<tr class="p${cut?' cut':''}" tabindex="0" data-team="${x.t}" aria-expanded="${op}"><td class="l rk">${k+1}</td><td class="l"><span class="tname">${x.t}</span>${ST.view==='all'?` <span class="note">${x.conf}</span>`:''}</td>${fr.map(cell).join('')}${pre.map(cell).join('')}
+        <td class="l stripcell">${strip(x,s)}</td>${post.map(cell).join('')}</tr>`;
+      if(op) html+=`<tr class="detail"><td colspan="${ncol}">${rosterHTML(x)}</td></tr>`; });
     html+='</tbody></table></div>';
   }
   $('standings').innerHTML=html; wfLegend();
 }
-$('standings').addEventListener('click',e=>{ const b=e.target.closest('[data-edit]'); if(b){ openEditor(b.dataset.edit); return; }
+$('stview').addEventListener('change',e=>{ ST.view=e.target.value; stSave(); renderStandings(); });
+$('stsort').addEventListener('change',e=>{ ST.k=e.target.value; ST.dir=-1; stSave(); renderStandings(); });
+$('stdir').addEventListener('click',()=>{ ST.dir=-ST.dir; stSave(); renderStandings(); });
+$('standings').addEventListener('click',e=>{ const hs=e.target.closest('[data-stsort]'); if(hs){ const k=hs.dataset.stsort; if(k===ST.k) ST.dir=-ST.dir; else { ST.k=k; ST.dir=-1; } stSave(); renderStandings(); return; }
+  const b=e.target.closest('[data-edit]'); if(b){ openEditor(b.dataset.edit); return; }
   const pr=e.target.closest('[data-pv]'); if(pr){ openPlayer(pr.dataset.pv); return; }
   const tr=e.target.closest('tr.p'); if(tr){ const t=tr.dataset.team; openTeams.has(t)?openTeams.delete(t):openTeams.add(t); renderStandings(); } });
 $('standings').addEventListener('keydown',e=>{ const tr=e.target.closest('tr.p'); if(tr&&(e.key==='Enter'||e.key===' ')&&e.target===tr){ e.preventDefault(); tr.click(); } });
@@ -1386,7 +1431,7 @@ if(window.claude&&window.claude.use){
   const hdr=t=>({Authorization:`Bearer ${t}`, Accept:'application/vnd.github+json'});
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
   let D, SZ, hist=null, remote=null;
-  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=cae0019791',{}), getJSON('data/latest.json')]); }
+  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=698d2f259c',{}), getJSON('data/latest.json')]); }
   catch(e){ say('Could not load data. Check your connection and reopen.'); return; }
   try{ hist=await getJSON('data/history.json'); }catch(e){}
   async function fetchRemote(){
