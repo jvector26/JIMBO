@@ -1,9 +1,5 @@
-2026-09-23T23:24:50.034563Z
-round 0 curl_cffi chrome 403 5993 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
+2026-09-24T13:14:50.283131Z
+round 0 curl_cffi chrome 403 6014 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
 round 0 curl_cffi chrome120 403 5993 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
-round 0 curl_cffi safari17_0 403 5801 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
-round 0 curl_cffi firefox 403 5779 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
-round 1 curl_cffi chrome 403 5993 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
-round 1 curl_cffi chrome120 403 5993 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
-round 1 curl_cffi safari17_0 200 218513 b'<!DOCTYPE html>\r\n<!--[if lt IE 7]>      <html lang="en" clas'
-saved live/2026/depth/realgm_20260923.html.gz 218513
+round 0 curl_cffi safari17_0 200 219004 b'<!DOCTYPE html>\r\n<!--[if lt IE 7]>      <html lang="en" clas'
+saved live/2026/depth/realgm_20260924.html.gz 219004
