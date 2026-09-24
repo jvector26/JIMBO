@@ -821,7 +821,11 @@ function seasonOverlay(P){
   P.team.forEach((x,i)=>{ const z=ZT[x.t]; x.mw=eM[i]; x.bw=eB[i]; x.w=z.w; x.l=z.l; x.gr=GR[x.t]; });
 }
 function gmv(r){ // games, minutes when playing, season minutes, value added to team
-  if(SEASON){ const mp=r.o.mpg!=null?r.o.mpg:r.me, g=r.o.g!=null?r.o.g:Math.round(r.gp+(mp>0?r.min/mp:0)), gr=GR[r.t]||0;
+  if(SEASON){ // games left he plays = (team games left - games out) x availability; minutes changes (roles, teammates) show in mpg
+    const gr=GR[r.t]||0, av=r.z?r.z.av:Math.min(1,(r.p.g||0)/82), miss=r.z?r.z.miss:0;
+    let gl=r.o.g!=null?r.o.g/82*gr:Math.max(0,gr-miss)*av;
+    if(gl<0.5&&r.min>0.5) gl=r.min/Math.max(r.me||0,1);
+    const mp=r.o.mpg!=null?r.o.mpg:(gl>0?r.min/gl:0), g=r.o.g!=null?r.o.g:Math.min(82,Math.round(r.gp+gl));
     return {g, mpg:mp, smin:r.min+r.gp*r.mpgS, add:gr>0?r.tot*r.min/(48*gr):0}; }
   const g=r.o.g!=null?r.o.g:r.p.g; return {g, mpg:g>0?r.min/g:0, smin:r.min, add:r.tot*r.min/3936};
 }
@@ -1382,7 +1386,7 @@ if(window.claude&&window.claude.use){
   const hdr=t=>({Authorization:`Bearer ${t}`, Accept:'application/vnd.github+json'});
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
   let D, SZ, hist=null, remote=null;
-  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=2527167bea',{}), getJSON('data/latest.json')]); }
+  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=cae0019791',{}), getJSON('data/latest.json')]); }
   catch(e){ say('Could not load data. Check your connection and reopen.'); return; }
   try{ hist=await getJSON('data/history.json'); }catch(e){}
   async function fetchRemote(){
