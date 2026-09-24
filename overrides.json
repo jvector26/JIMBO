@@ -2,7 +2,9 @@
  "_note": "User overrides applied by the nightly run (and later by the app). players: key -> {t: team, g: games of 82, mpg, r: rating}. Keys: p<NBA player id> or n:<name>|<team>. Migrated from the claude.ai dashboard (settings/current) 2026-09-21: no player overrides, all sliders at defaults.",
  "players": {
   "n:Brayden Burries|MIL": {
-   "d": "R"
+   "d": "S",
+   "g": 82,
+   "mpg": 17.5
   }
  },
  "sliders": {
@@ -22,5 +24,5 @@
   "age": 1,
   "bm": 0.37290551766215724
  },
- "updated": "2026-09-24T13:17:47.900Z"
+ "updated": "2026-09-24T13:17:57.969Z"
 }
