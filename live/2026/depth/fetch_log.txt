@@ -1,11 +1,7 @@
-2026-09-24T23:45:10.033127Z
-round 0 curl_cffi chrome 403 6014 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
+2026-09-25T15:45:28.626270Z
+round 0 curl_cffi chrome 403 5993 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
 round 0 curl_cffi chrome120 403 5993 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
-round 0 curl_cffi safari17_0 403 5822 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
+round 0 curl_cffi safari17_0 403 5801 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
 round 0 curl_cffi firefox 403 5779 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
-round 1 curl_cffi chrome 403 6014 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
-round 1 curl_cffi chrome120 403 5993 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
-round 1 curl_cffi safari17_0 403 5801 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
-round 1 curl_cffi firefox 403 5779 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
-round 2 curl_cffi chrome 200 219114 b'<!DOCTYPE html>\r\n<!--[if lt IE 7]>      <html lang="en" clas'
-saved live/2026/depth/realgm_20260924.html.gz 219114
+round 1 curl_cffi chrome 200 220077 b'<!DOCTYPE html>\r\n<!--[if lt IE 7]>      <html lang="en" clas'
+saved live/2026/depth/realgm_20260925.html.gz 220077
