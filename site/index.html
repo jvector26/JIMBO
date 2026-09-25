@@ -544,7 +544,7 @@ body.pvopen #gv{display:none}
   <button data-go="set"><span class="ic" aria-hidden="true">⚙️</span>Settings</button>
 </nav>
 <footer>
-  <p>How it works. Each player's rating is points per 100 possessions over an average player: box-score evidence for twelve skills plus hustle stats (loose balls, 3-point contests), weighted by how much each has historically moved scoring margin, plus what lineup results show beyond the box score (counted at 0.6 on offense and 0.8 on defense by default, where past seasons predicted best), then adjusted for age (the age curve has its own slider). Minutes come from each player's history and age; team minutes always total 82 games of 240. The forecast blends the model with the betting market and roster age, the mix that best predicted 330 past preseasons, with the model and market shares adding to 100% (average miss 8.2 wins, against 8.4 for the betting line alone and 8.7 for the model alone). Weight sliders change the model; at the default mix the forecast moves about 0.35 wins for every model win (the model-vs-Vegas slider changes that). The accuracy box replays 2014-15 through 2025-26 with each season's ratings predicting the next using who actually played. Rosters and lines as of <span id="asof"></span>.</p>
+  <p>How it works. Each player's rating is points per 100 possessions over an average player: box-score evidence for twelve skills plus hustle stats (loose balls, 3-point contests), weighted by how much each has historically moved scoring margin, plus what lineup results show beyond the box score (raw lineup results count 60% on offense and 80% on defense, where past seasons predicted best; the lineup sliders scale from there), then adjusted for age (the age curve has its own slider). Minutes come from each player's history and age; team minutes always total 82 games of 240. The forecast blends the model with the betting market and roster age, the mix that best predicted 330 past preseasons, with the model and market shares adding to 100% (average miss 8.2 wins, against 8.4 for the betting line alone and 8.7 for the model alone). Weight sliders change the model; at the default mix the forecast moves about 0.35 wins for every model win (the model-vs-Vegas slider changes that). The accuracy box replays 2014-15 through 2025-26 with each season's ratings predicting the next using who actually played. Rosters and lines as of <span id="asof"></span>.</p>
 </footer>
 
 <dialog id="ed" aria-labelledby="edName">
@@ -734,18 +734,20 @@ $('asof').textContent=new Date(M.asof+'T12:00:00').toLocaleDateString(undefined,
 // ---------- sliders
 const box=$('sliders');
 function slider(key,label,color,min,max,step){
+  /* lineup sliders are shown relative to their calibrated defaults (1.00 = M.lw_o / M.lw_d); S keeps the effective weight */
+  const sc=key.startsWith('lineup')?DEF[key]:1;
   const d=document.createElement('div'); d.className='sl'; const id='s_'+key;
   d.innerHTML=(color?`<span class="sw" style="background:var(--c-${color})"></span>`:'<span></span>')+
-    `<label for="${id}">${label}</label><output id="o_${key}" for="${id}"></output><input id="${id}" type="range" min="${min}" max="${max}" step="${step||0.05}" value="${S[key]}">`;
+    `<label for="${id}">${label}</label><output id="o_${key}" for="${id}"></output><input id="${id}" type="range" min="${min}" max="${max}" step="${step||0.05}" value="${S[key]/sc}">`;
   box.appendChild(d);
   const inp=d.querySelector('input'), out=d.querySelector('output');
-  const show=()=>{ out.textContent=key==='bm'?Math.round(+inp.value*100)+'%':key.startsWith('lineup')?(+inp.value).toFixed(2):'×'+(+inp.value).toFixed(2); out.classList.toggle('changed',Math.abs((key==='bm'?S[key]:+inp.value)-DEF[key])>(key==='bm'?0.004:1e-9)); };
-  inp.addEventListener('input',()=>{ S[key]=+inp.value; show(); changed(true); });
-  inp._sync=()=>{ inp.value=S[key]; show(); }; show();
+  const show=()=>{ out.textContent=key==='bm'?Math.round(+inp.value*100)+'%':'×'+(+inp.value).toFixed(2); out.classList.toggle('changed',Math.abs(S[key]-DEF[key])>(key==='bm'?0.004:1e-9)); };
+  inp.addEventListener('input',()=>{ S[key]=Math.abs(+inp.value-1)<1e-9?DEF[key]:+inp.value*sc; show(); changed(true); });
+  inp._sync=()=>{ inp.value=S[key]/sc; show(); }; show();
 }
 GROUPS.forEach(([g,cs])=>{ const h=document.createElement('h3'); h.textContent=g; box.appendChild(h);
-  cs.forEach(c=>slider(c,LABEL[c],c.startsWith('lineup')?'lineup':c,0,c.startsWith('lineup')?1.5:2)); });
-{ const p=document.createElement('p'); p.className='note'; p.textContent='What lineups show beyond the box score. Defaults (offense 0.60, defense 0.80) predicted past seasons best: the box score captures offense well, so lineup evidence adds more on defense.'; box.appendChild(p);
+  cs.forEach(c=>slider(c,LABEL[c],c.startsWith('lineup')?'lineup':c,0,2)); });
+{ const p=document.createElement('p'); p.className='note'; p.textContent=`What lineups show beyond the box score. ×1.00 is the calibrated default: raw lineup results count ${Math.round(M.lw_o*100)}% on offense and ${Math.round(M.lw_d*100)}% on defense, the mix that predicted past seasons best (the box score already captures offense well, so lineup evidence adds more on defense).`; box.appendChild(p);
   const h2=document.createElement('h3'); h2.textContent='Age curve'; box.appendChild(h2);
   slider('age','Age adjustment','aging',0,2);
   const q2=document.createElement('p'); q2.className='note'; q2.textContent='Scales every age-group adjustment (0 turns the age curve off). The curve was refit on 2026-09-20 from how players\u2019 own ratings actually changed the following season: young players gain (under 21 +0.88), players over 30 lose (36+ −0.83).'; box.appendChild(q2);
@@ -1282,8 +1284,8 @@ function renderPV(){
     rowsB+=`<tr><td>${rook?'Rookie baseline':'Newcomer baseline (no NBA or college data)'}</td><td class="num ${cls(p.fx)}">${fmt(p.fx,2)}</td></tr>`;
   } else {
     rowsB+=`<tr><td>Box score, recent seasons${yrs?` (${yrs}; newest counts most)`:''}</td><td class="num ${cls(box)}">${fmt(box,2)}</td></tr>
-      <tr><td>Lineup results beyond the box score, offense (weight ${S.lineup_o.toFixed(2)})</td><td class="num ${cls(pa.lineup_o)}">${fmt(pa.lineup_o||0,2)}</td></tr>
-      <tr><td>Lineup results beyond the box score, defense (weight ${S.lineup_d.toFixed(2)})</td><td class="num ${cls(pa.lineup_d)}">${fmt(pa.lineup_d||0,2)}</td></tr>
+      <tr><td>Lineup results beyond the box score, offense (×${(S.lineup_o/M.lw_o).toFixed(2)})</td><td class="num ${cls(pa.lineup_o)}">${fmt(pa.lineup_o||0,2)}</td></tr>
+      <tr><td>Lineup results beyond the box score, defense (×${(S.lineup_d/M.lw_d).toFixed(2)})</td><td class="num ${cls(pa.lineup_d)}">${fmt(pa.lineup_d||0,2)}</td></tr>
       <tr><td>Age adjustment (age ${nextAge}, group ${ageBin(p.a)}${S.age!==1?`, scaled ×${S.age.toFixed(2)}`:''})</td><td class="num ${cls(pa.aging)}">${fmt(pa.aging||0,2)}</td></tr>
       ${pa.returner?`<tr><td>Return from a missed season</td><td class="num neg">${fmt(pa.returner,2)}</td></tr>`:''}`;
   }
@@ -1325,7 +1327,7 @@ function renderPV(){
     h+=`<div class="pvsec"><h3>Career by season</h3><p class="note">${pvMode==='lineup'?'Lineup effect by season, offense and defense; dots are the season total.':pvMode==='aging'?'Age adjustment by season.':"Each season on its own, vs that season's league average, at your slider weights: box-score skills plus that season's own lineup effect. Dots are the season total."} Faded bars: under 250 minutes. The dashed bar is the 2026-27 projection${pvMode==='all'||pvMode==='od'?', which uses the 3-season lineup average and adds age':''}.</p>
       <div class="chartbar"><label for="pvMode" class="note" style="margin:0">Show</label><select id="pvMode">${opts.map(([v,l])=>`<option value="${v}"${v===pvMode?' selected':''}>${l}</option>`).join('')}</select></div>
       <div class="cchart">${chartSVG(hist,proj,pvMode)}</div><div class="cleg">${legC}${pvMode!=='aging'?'<span><i style="background:var(--ink);border-radius:50%"></i>Net</span>':''}</div>
-      ${pvMode==='lineup'?`<p class="note" style="margin-top:4px">How his lineups did beyond what his box score predicts, at your lineup weights (offense ${S.lineup_o.toFixed(2)}, defense ${S.lineup_d.toFixed(2)}) and the ×${M.slope.toFixed(3)} calibration. Single seasons are noisy; the projection uses the 3-season weighted average (newest season counts most), shrunk toward 0. No trend is extrapolated.</p>`:''}
+      ${pvMode==='lineup'?`<p class="note" style="margin-top:4px">How his lineups did beyond what his box score predicts, at your lineup weights (offense ×${(S.lineup_o/M.lw_o).toFixed(2)}, defense ×${(S.lineup_d/M.lw_d).toFixed(2)}) and the ×${M.slope.toFixed(3)} calibration. Single seasons are noisy; the projection uses the 3-season weighted average (newest season counts most), shrunk toward 0. No trend is extrapolated.</p>`:''}
       ${pvMode==='aging'?`<p class="note" style="margin-top:4px">The league-wide age curve, not measured for him: the average extra change players of that age showed beyond their recent ratings. The projection uses his age group for 2026-27.</p>`:''}
       <div class="tbl" style="margin:10px 0 4px"><table class="ctab"><thead><tr><th class="l"><span class="lg">Season</span><span class="sh">Yr</span></th><th class="l">Team</th><th class="hide-s">Age</th><th class="hide-s">Games</th><th class="hide-s">Min/g</th>${headCols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>
       ${p.fx==null?`<tr class="proj"><td class="l"><span class="lg">2026-27 proj.</span><span class="sh">Proj</span></td><td class="l">${r.t}</td><td class="num hide-s">${nextAge??'–'}</td><td class="num hide-s">${Math.round(g)}</td><td class="num hide-s">${mpg.toFixed(1)}</td>${projCells()}</tr>`:''}
