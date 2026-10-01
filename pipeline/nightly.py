@@ -79,40 +79,47 @@ _OVD = {k: o["d"] for k, o in (json.load(open(os.path.join(ROOT, "overrides.json
                               if os.path.exists(os.path.join(ROOT, "overrides.json")) else []) if o.get("d") in ("S", "R", "L", "N")}
 PL = PL.copy(); PL["tier_chart"] = PL.get("tier")
 _DC = cfg.get("depth")
-if _DC and "m0" in PL and os.path.isdir(os.path.join(live, "depth")):
-    import glob, depth_chart as DCH
-    _first = int(sched.date.min()) if len(sched) else 99999999
-    _cut = min(asof_i, _first - 1)
-    _fs = [f for f in sorted(glob.glob(os.path.join(live, "depth", "realgm_*.html.gz"))) if int(os.path.basename(f)[7:15]) <= _cut]
-    if _fs:
-        _R = DCH.load_chart(_fs[-1], S)
-        if len(_R):
-            _R = DCH.match(_R, PL[["key", "name", "team"]].assign(name=PL["name"].fillna("")))
-            _sz = _R.groupby("team").size(); _good = set(_sz[_sz >= _DC["min_team_players"]].index)
-            _Rg = _R[_R.team.isin(_good)]; _on = _Rg.dropna(subset=["key"]).set_index("key"); _ex = set(_DC["exempt"])
-            PL = PL.copy()
-            for i_, k_, t_ in zip(PL.index, PL.key, PL.team):
-                if k_ in _ex: continue
-                if k_ in _on.index:
-                    if _on.team[k_] != t_ and (t_ == "FA" or t_ in _good):
-                        (DEPTH["added"] if t_ == "FA" else DEPTH["moved"]).append([PL.at[i_, "name"], t_, _on.team[k_]]); PL.at[i_, "team"] = _on.team[k_]
-                elif t_ in _good:
-                    DEPTH["dropped"].append([PL.at[i_, "name"], t_]); PL.at[i_, "team"] = "FA"
-            _ros = PL.team.isin(_good)
-            _tier = DCH.tiers(PL[_ros], _Rg, _ex)
-            PL.loc[_ros, "tier_chart"] = _tier.values
-            for i_ in _tier.index:   # user role overrides beat the chart (and exempt X)
-                d_ = _OVD.get(PL.at[i_, "key"])
-                if d_: DEPTH["user_tiers"].append([PL.at[i_, "name"], PL.at[i_, "team"], _tier[i_], d_]); _tier[i_] = d_
-            _w = pd.Series(DCH.want(PL.loc[_ros, "m0"].fillna(0), _tier, _DC["coef"]), index=_tier.index)
-            _nl = PL.loc[_ros, "newc"].fillna(False).astype(bool) & (_tier == "L")
-            _w[_nl] = _DC["newc_L"]; _w[_tier == "X"] = PL.loc[_tier.index[_tier == "X"], "m0"].fillna(0)
-            PL.loc[_ros, "tier"] = _tier.values
-            PL.loc[_ros, "min_proj"] = _w.groupby(PL.loc[_ros, "team"]).transform(lambda x: DCH.allocate(x)).values
-            PL.loc[PL.team == "FA", ["tier", "tier_chart"]] = None
-            DEPTH["chart"] = os.path.basename(_fs[-1])[7:15]
-            print(f"depth chart {DEPTH['chart']}: {len(_good)} teams, moved {len(DEPTH['moved'])}, added {len(DEPTH['added'])}, "
-                  f"dropped {len(DEPTH['dropped'])}", DEPTH["moved"][:10], DEPTH["added"][:10], DEPTH["dropped"][:10])
+# a bad chart must never stop the nightly (2026-09-30: duplicate match crashed two runs) -> fall back to state minutes
+_PL_pre_depth = PL.copy()
+try:
+    if _DC and "m0" in PL and os.path.isdir(os.path.join(live, "depth")):
+        import glob, depth_chart as DCH
+        _first = int(sched.date.min()) if len(sched) else 99999999
+        _cut = min(asof_i, _first - 1)
+        _fs = [f for f in sorted(glob.glob(os.path.join(live, "depth", "realgm_*.html.gz"))) if int(os.path.basename(f)[7:15]) <= _cut]
+        if _fs:
+            _R = DCH.load_chart(_fs[-1], S)
+            if len(_R):
+                _R = DCH.match(_R, PL[["key", "name", "team"]].assign(name=PL["name"].fillna("")))
+                _sz = _R.groupby("team").size(); _good = set(_sz[_sz >= _DC["min_team_players"]].index)
+                _Rg = _R[_R.team.isin(_good)]; _on = _Rg.dropna(subset=["key"]).set_index("key"); _ex = set(_DC["exempt"])
+                PL = PL.copy()
+                for i_, k_, t_ in zip(PL.index, PL.key, PL.team):
+                    if k_ in _ex: continue
+                    if k_ in _on.index:
+                        if _on.team[k_] != t_ and (t_ == "FA" or t_ in _good):
+                            (DEPTH["added"] if t_ == "FA" else DEPTH["moved"]).append([PL.at[i_, "name"], t_, _on.team[k_]]); PL.at[i_, "team"] = _on.team[k_]
+                    elif t_ in _good:
+                        DEPTH["dropped"].append([PL.at[i_, "name"], t_]); PL.at[i_, "team"] = "FA"
+                _ros = PL.team.isin(_good)
+                _tier = DCH.tiers(PL[_ros], _Rg, _ex)
+                PL.loc[_ros, "tier_chart"] = _tier.values
+                for i_ in _tier.index:   # user role overrides beat the chart (and exempt X)
+                    d_ = _OVD.get(PL.at[i_, "key"])
+                    if d_: DEPTH["user_tiers"].append([PL.at[i_, "name"], PL.at[i_, "team"], _tier[i_], d_]); _tier[i_] = d_
+                _w = pd.Series(DCH.want(PL.loc[_ros, "m0"].fillna(0), _tier, _DC["coef"]), index=_tier.index)
+                _nl = PL.loc[_ros, "newc"].fillna(False).astype(bool) & (_tier == "L")
+                _w[_nl] = _DC["newc_L"]; _w[_tier == "X"] = PL.loc[_tier.index[_tier == "X"], "m0"].fillna(0)
+                PL.loc[_ros, "tier"] = _tier.values
+                PL.loc[_ros, "min_proj"] = _w.groupby(PL.loc[_ros, "team"]).transform(lambda x: DCH.allocate(x)).values
+                PL.loc[PL.team == "FA", ["tier", "tier_chart"]] = None
+                DEPTH["chart"] = os.path.basename(_fs[-1])[7:15]
+                print(f"depth chart {DEPTH['chart']}: {len(_good)} teams, moved {len(DEPTH['moved'])}, added {len(DEPTH['added'])}, "
+                      f"dropped {len(DEPTH['dropped'])}", DEPTH["moved"][:10], DEPTH["added"][:10], DEPTH["dropped"][:10])
+except Exception as e:
+    import traceback; traceback.print_exc()
+    print(f"WARNING depth chart skipped: {e!r}")
+    PL = _PL_pre_depth; DEPTH = {"chart": None, "moved": [], "dropped": [], "added": [], "user_tiers": [], "error": repr(e)[:200]}
 # ------------------------------------------------------------------ ratings
 prior = PL.dropna(subset=["player"]).drop_duplicates("player").set_index("player").rating_pre
 prior.index = prior.index.astype(np.int64)

@@ -56,16 +56,23 @@ def match(R, people):
     pp = people.assign(nk=people["name"].map(norm))
     by = {k: g for k, g in pp.groupby("nk")}
     pp["last"] = pp["name"].astype(str).str.split().map(lambda w: norm([x for x in w if norm(x)][-1]) if len(w) else "")
-    keys = []
+    keys, how = [], []
     for nk, tm, slug in zip(R.nk, R.team, R.slug):
         g = by.get(nk)
         if g is not None and len(g) > 1: g = g[g.team == tm] if (g.team == tm).any() else g.iloc[:1]
-        if g is not None and len(g): keys.append(g.key.iloc[0]); continue
+        if g is not None and len(g): keys.append(g.key.iloc[0]); how.append(0); continue
         parts = [w for w in slug.split("-") if not re.fullmatch(r"(jr|sr|ii|iii|iv)", w.lower())]
         ln = norm(parts[-1]) if parts else ""
         c = pp[(pp["last"] == ln) & (pp.team == tm)]
-        keys.append(c.key.iloc[0] if len(c) == 1 else None)
-    return R.assign(key=keys)
+        keys.append(c.key.iloc[0] if len(c) == 1 else None); how.append(1)
+    # one chart row per key (2026-09-30: new camp signing Kobe Johnson matched Jalen Johnson by last name ->
+    # duplicate key -> nightly crashed). Exact-name matches win; a last-name match never takes a key already used.
+    exact = {k for k, h in zip(keys, how) if h == 0 and k is not None}
+    seen = set(); out = []
+    for k, h in zip(keys, how):
+        if k is None or (h == 1 and k in exact) or k in seen: out.append(None); continue
+        seen.add(k); out.append(k)
+    return R.assign(key=out)
 
 
 def tiers(P, R, exempt=()):
