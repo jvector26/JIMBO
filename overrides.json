@@ -11,7 +11,7 @@
  "sliders": {
   "three_pt": 1,
   "rim_finishing": 1,
-  "pullup_mid": 1,
+  "pullup_mid": 1.65,
   "foul_drawing": 1,
   "self_creation": 1,
   "playmaking": 1,
@@ -25,5 +25,5 @@
   "age": 1,
   "bm": 0.37290551766215724
  },
- "updated": "2026-10-02T13:46:26.404Z"
+ "updated": "2026-10-02T15:43:51.236Z"
 }
