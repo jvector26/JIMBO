@@ -1,13 +1,12 @@
-2026-10-04T15:42:08.311408Z
-round 0 curl_cffi chrome 403 6014 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
-round 0 curl_cffi chrome120 403 6015 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
-round 0 curl_cffi safari17_0 403 5822 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
-round 0 curl_cffi firefox 403 5801 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
-round 1 curl_cffi chrome 403 6014 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
+2026-10-04T23:48:23.639635Z
+round 0 curl_cffi chrome 403 5993 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
+round 0 curl_cffi chrome120 403 5993 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
+round 0 curl_cffi safari17_0 403 5801 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
+round 0 curl_cffi firefox 403 5779 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
+round 1 curl_cffi chrome 403 5993 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
 round 1 curl_cffi chrome120 403 5993 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
-round 1 curl_cffi safari17_0 403 5822 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
-round 1 curl_cffi firefox 403 5801 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
-round 2 curl_cffi chrome 403 6014 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
-round 2 curl_cffi chrome120 403 6015 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
-round 2 curl_cffi safari17_0 200 228555 b'<!DOCTYPE html>\r\n<!--[if lt IE 7]>      <html lang="en" clas'
-saved live/2026/depth/realgm_20261004.html.gz 228555
+round 1 curl_cffi safari17_0 403 5801 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
+round 1 curl_cffi firefox 403 5779 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
+round 2 curl_cffi chrome 403 5993 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
+round 2 curl_cffi chrome120 200 228626 b'<!DOCTYPE html>\r\n<!--[if lt IE 7]>      <html lang="en" clas'
+saved live/2026/depth/realgm_20261004.html.gz 228626
