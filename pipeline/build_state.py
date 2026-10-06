@@ -49,6 +49,9 @@ if not REPLAY:
     P["key"] = [f"p{int(p)}" if pd.notna(p) else f"n:{n}|{t}" for p, n, t in zip(P.player, P["name"], P.team)]
     P["avail_pre"] = (P.exp_games / 82).fillna(70 / 82).clip(0, 1)
     P["mpg_pre"] = P.min_model / (82 * P.avail_pre)   # so avail x mpg x 82 = project.py's min_model (pre-allocation)
+    # players projected for 0 games (e.g. James Johnson IND, missed 2025-26) -> avail 0 gave mpg_pre = inf, which wrote
+    # "Infinity" into latest.json and broke the app (2026-10-06). Treat them as 0 mpg.
+    P.loc[~np.isfinite(P.mpg_pre.astype(float)) | (P.avail_pre <= 0), "mpg_pre"] = 0.0
     # raw minutes WHEN PLAYING (no age multiplier) = prior for tonight's minutes (session 13 game-minutes backtest)
     P["mpg_wp"] = P.mpg_when_playing.where(P.mpg_when_playing.notna(), P.min_proj.fillna(P.min_model) / 70)
     # depth chart (code/depth_apply.py + project.py, session 15): m0 = minutes before the depth-tier model, so the nightly

@@ -392,12 +392,18 @@ latest = {"asof": asof, "season": S, "games_final": n_done, "games_parsed": n_pa
           "cfg": {"gap_k": cfg["gap_k"], "sig": SIG, "hca": HCA},
           "rem": [f"{h}-{w}" for h, w in zip(rem.home, rem.away)],   # remaining schedule (TBD Cup slots not included)
           "generated_utc": dt.datetime.now(dt.timezone.utc).replace(tzinfo=None).strftime("%Y-%m-%dT%H:%MZ")}
-json.dump(latest, open(os.path.join(a.out, "latest.json"), "w"), separators=(",", ":"))
+def _finite(o):   # browsers reject NaN/Infinity in JSON (2026-10-06 outage): write them as null
+    if isinstance(o, float): return o if np.isfinite(o) else None
+    if isinstance(o, dict): return {k: _finite(v) for k, v in o.items()}
+    if isinstance(o, (list, tuple)): return [_finite(v) for v in o]
+    return o
+latest = _finite(latest)
+json.dump(latest, open(os.path.join(a.out, "latest.json"), "w"), separators=(",", ":"), allow_nan=False)
 if not a.no_history:
     hf = os.path.join(a.out, "history.json")
     hist = json.load(open(hf)) if os.path.exists(hf) else {}
     hist[asof] = {t["t"]: [t["proj_w"], t["playoffs"], t["title"], t["w"], t["l"]] for t in teams}
-    json.dump(hist, open(hf, "w"), separators=(",", ":"))
+    json.dump(_finite(hist), open(hf, "w"), separators=(",", ":"), allow_nan=False)
 tb = pd.DataFrame(teams).set_index("t").sort_values("proj_w", ascending=False)
 print(tb[["w", "l", "proj_w", "model_w", "pre_w", "playoffs", "title", "offset"]].head(8).to_string())
 print(f"pace {pace:.1f} tau {tau:.2f}; players out: {(P.status.str.lower().str.startswith('out')).sum()}; overrides {len(OV)}")
