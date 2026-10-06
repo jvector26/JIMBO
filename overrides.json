@@ -35,10 +35,10 @@
   "def_rebounding": 1,
   "rim_protection": 1,
   "perimeter_def": 1,
-  "lineup_o": 0.3,
-  "lineup_d": 0.4,
+  "lineup_o": 0,
+  "lineup_d": 0,
   "age": 1,
   "bm": 0.37290551766215724
  },
- "updated": "2026-10-06T17:22:16.519Z"
+ "updated": "2026-10-06T17:22:35.796Z"
 }
