@@ -19,10 +19,10 @@ cfg = {"season": S, "slope": float(cal["slope"]), "unrated": float(cal["unrated"
        "Wo": {k: 0.5 * v for k, v in Wp["Wo"].items()}, "Wd": {k: 0.5 * v for k, v in Wp["Wd"].items()},
        "lam": 6000.0, "dS": 1.0, "H0": 2000.0, "lam_t": 80.0, "min_games": 15, "hca": 2.6, "sig": SIG,
        "pace": float(json.load(open(f"{D}/pace_2025.json"))["pace"]),
-       "tau_pre": B["tau_blend"], "tau_mid": 2.0, "tau_late": 1.8,
+       "tau_pre": B["tau_blend"], "tau_mid": 2.5, "tau_late": 1.8,   # tau_mid 2.0 -> 2.5 (session 21 replay)
        "gap_k": 20.0, "mpg_k": 10.0, "avail_k": 20.0, "out_default_games": 10,
-       "notes": "M4 update (inseason_bt.py). tau_* and gap_k / mpg_k / avail_k are PROVISIONAL (in-season minutes and "
-                "uncertainty backtest not yet run)."}
+       "notes": "M4 update (inseason_bt.py). gap_k 20 and tau curve (pre = calibrated tau_blend, mid 2.5, late 1.8) tuned on the "
+                "12-season nightly replay 2026-10-06 (RESEARCH_LOG 'IN-SEASON TUNING')."}
 # keep hand-tuned settings already in an existing config (e.g. in-season minutes rule min_k/min_rec/min_alloc, notes);
 # model-derived values (slope, unrated, W, pace, tau_pre) are refreshed. (session 12: build_state used to drop them)
 _cf = os.path.join(out, "config.json")
@@ -30,7 +30,7 @@ if os.path.exists(_cf):
     _old = json.load(open(_cf))
     for _k in ("mpg_k", "avail_k"): cfg.pop(_k, None) if _k not in _old else None
     for _k, _v in _old.items():
-        if _k not in ("slope", "unrated", "Wo", "Wd", "pace", "tau_pre", "season"): cfg[_k] = _v
+        if _k not in ("slope", "unrated", "Wo", "Wd", "pace", "tau_pre", "tau_mid", "season"): cfg[_k] = _v
 # history window (box part of ratings), for the box update
 F = pd.read_parquet(f"{D}/features.parquet")
 fw = F[F.season.between(N - 2, N)].copy(); BOX_DECAY = (0.1, 0.4, 1.0)  # = production.py box decay (session 12; was .3/.6/1)
