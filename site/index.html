@@ -586,7 +586,7 @@ body.pvopen #gv{display:none}
   <button data-go="set"><span class="ic" aria-hidden="true">⚙️</span>Settings</button>
 </nav>
 <footer>
-  <p>How it works. Each player's rating is points per 100 possessions over an average player: box-score evidence for twelve skills plus hustle stats (loose balls, 3-point contests), weighted by how much each has historically moved scoring margin, plus what lineup results show beyond the box score (raw lineup results count 60% on offense and 80% on defense, where past seasons predicted best; the lineup sliders scale from there), then adjusted for age (the age curve has its own slider). Minutes come from each player's history and age; team minutes always total 82 games of 240. The forecast blends the model with the betting market and roster age, the mix that best predicted 330 past preseasons, with the model and market shares adding to 100% (average miss 8.2 wins, against 8.4 for the betting line alone and 8.7 for the model alone). Weight sliders change the model; at the default mix the forecast moves about 0.35 wins for every model win (the model-vs-Vegas slider changes that). The accuracy box replays 2014-15 through 2025-26 with each season's ratings predicting the next using who actually played. Rosters and lines as of <span id="asof"></span>.</p>
+  <p>How it works. Each player's rating is points per 100 possessions over an average player: box-score evidence for twelve skills plus hustle stats (loose balls, 3-point contests), weighted by how much each has historically moved scoring margin, plus what lineup results show beyond the box score (raw lineup results count 60% on offense and 80% on defense, where past seasons predicted best; the lineup sliders scale from there), then adjusted for age (the age curve has its own slider). Minutes come from each player's history and age; team minutes always total 82 games of 240. The forecast blends the model with the betting market and roster age, the mix that best predicted 330 past preseasons, with the model and market shares adding to 100% (average miss 8.2 wins, against 8.4 for the betting line alone and 8.7 for the model alone). Weight sliders change the model; at the default mix the forecast moves about 0.35 wins for every model win (the model-vs-Vegas slider changes that). Playoff games use playoff minutes (stars play more, the rotation shortens; half weight) and a bigger home-court edge, 4 points, as in past playoffs. The accuracy box replays 2014-15 through 2025-26 with each season's ratings predicting the next using who actually played. Rosters and lines as of <span id="asof"></span>.</p>
 </footer>
 
 <dialog id="ed" aria-labelledby="edName">
@@ -619,6 +619,7 @@ function seasonPrep(D, SZ){ // app: players in the nightly state but not in the 
 }
 function makeEngine(D){
   const M=D.meta, F=M.feats, NF=F.length, compOf=M.comp_of, EFF=new Set(M.eff), SL=M.slope, SIG=M.sig, HCA=M.hca;
+  const PO=M.po||null, HPO=PO?PO.hca_po:HCA;  // playoffs (session 21): playoff-shaped minutes + series home court
   const TEAMS=D.teams.map(t=>t.t), NT=TEAMS.length, TI={}; TEAMS.forEach((t,i)=>TI[t]=i);
   const isO=F.map(x=>x.startsWith('o_'));
   function erf(x){const s=x<0?-1:1; x=Math.abs(x); const t=1/(1+0.3275911*x);
@@ -703,19 +704,34 @@ function makeEngine(D){
   const TB=new Float64Array(12001); for(let i=0;i<=12000;i++) TB[i]=Phi((i/100-60)/SIG);
   const pg=d=>{ const u=(d+60)*100; if(u<=0) return TB[0]; if(u>=12000) return TB[12000]; const i=u|0, f=u-i; return TB[i]+(TB[i+1]-TB[i])*f; };
   const CI={E:[],W:[]}; D.teams.forEach((t,i)=>CI[t.conf].push(i));
+  // playoff strength change per team: stars play more, rotation shortens (gh/model/jimbo_sim.py po_delta, same curve)
+  // items: {t, r (rating), m (minutes over G team games), g (games he plays of G), G}
+  function poDelta(items, pace){ const out=new Float64Array(NT); if(!PO) return out; const by={};
+    items.forEach(z=>{ if(!(z.m>0)||!(z.G>0)||TI[z.t]==null) return; (by[z.t]=by[z.t]||[]).push(z); });
+    const c=PO.coef, k=PO.knots;
+    for(const t in by){ const L=by[t];
+      const mb=L.map(z=>{ const gl=Math.min(Math.max(z.g,1),z.G), mp=Math.min(z.m/gl,48), av=gl/z.G;
+        let v=c[0]+c[1]*mp; for(let j=0;j<k.length;j++) v+=c[2+j]*Math.max(mp-k[j],0); return Math.min(Math.max(av*v,0),PO.cap); });
+      const tb=mb.reduce((a,b)=>a+b,0), ta=L.reduce((a,z)=>a+z.m,0); if(!(tb>0)||!(ta>0)) continue;
+      let d=0; L.forEach((z,i)=>{ d+=z.r*(mb[i]*240/tb-z.m*240/ta); }); d=d/48*pace/100;
+      if(PO.clip) d=Math.min(Math.max(d,PO.clip[0]),PO.clip[1]);
+      out[TI[t]]=d*(PO.weight!=null?PO.weight:1); }
+    return out; }
   function simulate(margins, tau, n, opt){ // opt (app, in season): {sched: Int32Array home,away pairs of REMAINING games, w0: current wins}
-    opt=opt||{}; const sch=opt.sched||SCH, ng=sch.length/2, w0=opt.w0||null, rec=!opt.sched, post=!opt.noPost;  // noPost: regular season only (win distribution)
+    opt=opt||{}; const sch=opt.sched||SCH, ng=sch.length/2, w0=opt.w0||null, rec=!opt.sched, post=!opt.noPost, pdl=opt.pd||null;  // pd: playoff strength change  // noPost: regular season only (win distribution)
     const R=rng(20261), W=new Int16Array(n*NT), acc={po:new Float64Array(NT),pin:new Float64Array(NT),top6:new Float64Array(NT),seed1:new Float64Array(NT),r2:new Float64Array(NT),cf:new Float64Array(NT),fin:new Float64Array(NT),title:new Float64Array(NT)};
     const tr=new Float64Array(NT), w=new Int16Array(NT), key=new Float64Array(NT);
     const nrm=()=>{ const u=R()||1e-12, v=R(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); };
     const pw=(a,b,home)=>pg(tr[a]-tr[b]+(home?HCA:-HCA));
-    const series=(a,b)=>R()<bo7(pw(a,b,true),pw(a,b,false))?a:b;
+    const pwS=(a,b,home)=>pg(tr[a]-tr[b]+(home?HPO:-HPO));   // playoff series: playoff home court
+    const series=(a,b)=>R()<bo7(pwS(a,b,true),pwS(a,b,false))?a:b;
     const better=(a,b)=>w[b]>w[a]?[b,a]:[a,b];
     for(let s=0;s<n;s++){
       let mu=0; for(let i=0;i<NT;i++){ tr[i]=margins[i]+tau*nrm(); mu+=tr[i]; } mu/=NT; for(let i=0;i<NT;i++){ if(rec) tr[i]-=mu; w[i]=w0?w0[i]:0; }
       for(let g=0;g<ng;g++){ const h=sch[2*g], a=sch[2*g+1]; if(R()<pg(tr[h]-tr[a]+HCA)) w[h]++; else w[a]++; }
       for(let i=0;i<NT;i++){ W[s*NT+i]=w[i]; key[i]=w[i]+R()*0.5; }
       if(!post) continue;
+      if(pdl) for(let i=0;i<NT;i++) tr[i]+=pdl[i];   // play-in + playoffs at playoff strength
       const champ={};
       for(const cf of ['E','W']){
         const o=CI[cf].slice().sort((x,y)=>key[y]-key[x]);
@@ -750,7 +766,7 @@ function makeEngine(D){
     let se=0, hit=0; for(let g=0;g<NB;g++){ const f=a+b*pred[g], y=BT.margin[g]; se+=(y-f)*(y-f); if((f>0)===(y>0)) hit++; }
     return {rmse:Math.sqrt(se/NB), win:hit/NB};
   }
-  return {project, simulate, backtest, Phi, PhiInv, TEAMS, TI, rng, wantOf, allocate};
+  return {project, simulate, backtest, Phi, PhiInv, TEAMS, TI, rng, wantOf, allocate, poDelta};
 }
 </script>
 <script>
@@ -916,10 +932,18 @@ function tonightGames(){ // spread = (lineup pts + team offset + blend adj)_home
 function injBadge(r){ const st=r.z&&r.z.status; if(!st) return ''; const lab=/^day/i.test(st)?'DTD':st.split(/[ -]/)[0];
   return `<span class="inj${lab==='DTD'?' dtd':''}" title="${esc(st)} (injury report)">${esc(lab)}</span>`; }
 function recompute(){ P=E.project(S,OV); if(SEASON) seasonOverlay(P); }
+function playoffDeltas(){  // per-team playoff strength change from the current minutes (preseason season, in season rest of season)
+  const it=[], pace=SEASON?SZ.pace:M.pace;
+  P.team.forEach(x=>{ const G=SEASON?(GR[x.t]||0):82; x.roster.forEach(r=>{ if(!(r.min>0)) return; let g;
+    if(SEASON){ const av=r.z?r.z.av:Math.min(1,(r.p.g||0)/82), miss=r.z?r.z.miss:0; g=r.o.g!=null?r.o.g/82*G:Math.max(0,G-miss)*av; }
+    else g=r.o.g!=null?r.o.g:(r.p.g||0);
+    it.push({t:x.t, r:r.tot, m:r.min, g, G}); }); });
+  return E.poDelta(it, pace); }
 function runSim(){
   $('simnote').textContent='Updating odds…';
   clearTimeout(simTimer);
-  simTimer=setTimeout(()=>{ SIMB=SEASON?E.simulate(P.team.map(x=>x.bmargin), seasonTau(), NSIM, {sched:REMF, w0:W0}):E.simulate(P.team.map(x=>x.bmargin), blendTau(), NSIM);
+  simTimer=setTimeout(()=>{ const PD=playoffDeltas(); P.team.forEach((x,i)=>x.pd=PD[i]);
+    SIMB=SEASON?E.simulate(P.team.map(x=>x.bmargin), seasonTau(), NSIM, {sched:REMF, w0:W0, pd:PD}):E.simulate(P.team.map(x=>x.bmargin), blendTau(), NSIM, {pd:PD});
     $('simnote').textContent=`${NSIM.toLocaleString()} simulated seasons`; renderStandings(); renderH2H(); renderTonight();
     // model alone (regular season only), for the win-distribution outline in the team view
     simTimer=setTimeout(()=>{ const tm=M.blend.tau_model||blendTau();
@@ -1542,7 +1566,7 @@ if(window.claude&&window.claude.use){
   const hdr=t=>({Authorization:`Bearer ${t}`, Accept:'application/vnd.github+json'});
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
   let D, SZ, hist=null, remote=null;
-  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=80c6dd70f1',{}), getJSON('data/latest.json')]); }
+  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=260a5720d8',{}), getJSON('data/latest.json')]); }
   catch(e){ say('Could not load data. Check your connection and reopen.'); return; }
   try{ hist=await getJSON('data/history.json'); }catch(e){}
   async function fetchRemote(){

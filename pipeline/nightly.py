@@ -279,11 +279,14 @@ fc_m = model_m + gap0.reindex(SIM.TEAMS).fillna(0) * decay
 fc_m = fc_m - fc_m.mean()
 avg_played = float(played.mean())
 tau = np.interp(avg_played, [0, 41, 70, 82], [cfg["tau_pre"], cfg["tau_mid"], cfg["tau_late"], cfg["tau_late"]])
+# playoff strength (session 21): stars play more and the rotation shortens in the playoffs -> per-team change in strength
+# from playoff-shaped minutes (model/po.json), added in play-in and playoff games; playoff series home court po.json hca_po
+pdelta = SIM.po_delta(P.team, P.rating, P.min_rem, (P.g_rem - P.miss).clip(lower=0) * P.avail, G_rem, pace).reindex(SIM.TEAMS).fillna(0)
 remA = np.array([[SIM.IDX[h], SIM.IDX[w]] for h, w in zip(rem.home, rem.away)], int).reshape(-1, 2)
 out = {}
 for mode, mg in (("forecast", fc_m), ("model", model_m - model_m.mean())):
     W, TRUE, rng = SIM.simulate_rest(mg.reindex(SIM.TEAMS).to_numpy(), tau, remA, wins.to_numpy(), played.to_numpy(), a.sims)
-    post = SIM.postseason(W, TRUE, rng)
+    post = SIM.postseason(W, TRUE, rng, pdelta.to_numpy(), SIM.PO["hca_po"])
     out[mode] = dict(mean=W.mean(0), p10=np.percentile(W, 10, 0), p90=np.percentile(W, 90, 0), **post,
                      over=np.array([(W[:, i] > TP.line.get(t, 99)).mean() for i, t in enumerate(SIM.TEAMS)]))
 # ------------------------------------------------------------------ today's games
@@ -374,7 +377,7 @@ for i, t in enumerate(SIM.TEAMS):
                   **{k: round(float(F[k][i]), 4) for k in ["playoffs", "playin", "top6", "seed1", "r2", "cf", "finals", "title", "over"]},
                   "margin": round(float(fc_m[t]), 2), "model_margin": round(float(model_m[t]), 2), "offset": round(float(off[t]), 2),
                   "g_rem": int(G_rem[t]), "gp": int(played[t]), "gap": round(float(gap0.get(t, 0)), 3),
-                  "dec": round(float(decay[t]), 4), "l10": last10(t)})
+                  "dec": round(float(decay[t]), 4), "pd": round(float(pdelta[t]), 2), "l10": last10(t)})
 pl = P[(P.team != "FA") | (P.gp > 0)].copy()
 pl["rating_delta"] = pl.rating - pl.rating_pre
 players = [{"k": row.key, "n": row["name"], "t": row.team, "pos": round(float(row.pos_est), 2) if pd.notna(row.pos_est) else 3.0,
@@ -389,7 +392,7 @@ players = [{"k": row.key, "n": row["name"], "t": row.team, "pos": round(float(ro
 latest = {"asof": asof, "season": S, "games_final": n_done, "games_parsed": n_parsed, "pace": round(pace, 1), "tau": round(float(tau), 2),
           "teams": teams, "players": players, "tonight": tonight, "sims": a.sims,
           "game_day": f"{str(game_day)[:4]}-{str(game_day)[4:6]}-{str(game_day)[6:]}", "depth": DEPTH,
-          "cfg": {"gap_k": cfg["gap_k"], "sig": SIG, "hca": HCA},
+          "cfg": {"gap_k": cfg["gap_k"], "sig": SIG, "hca": HCA, "hca_po": SIM.PO["hca_po"]},
           "rem": [f"{h}-{w}" for h, w in zip(rem.home, rem.away)],   # remaining schedule (TBD Cup slots not included)
           "generated_utc": dt.datetime.now(dt.timezone.utc).replace(tzinfo=None).strftime("%Y-%m-%dT%H:%MZ")}
 def _finite(o):   # browsers reject NaN/Infinity in JSON (2026-10-06 outage): write them as null

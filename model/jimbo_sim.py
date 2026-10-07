@@ -1,6 +1,7 @@
 """Rest-of-season simulation on the real schedule (results so far locked) + play-in and playoffs.
 Adapted from code/simulate.py (preseason version: formula schedule)."""
-import numpy as np
+import json, os
+import numpy as np, pandas as pd
 from scipy.stats import norm
 
 DIV = {"Atlantic": "BOS BKN NYK PHI TOR", "Central": "CHI CLE DET IND MIL", "Southeast": "ATL CHA MIA ORL WAS",
@@ -58,12 +59,41 @@ def bo7_prob(pa, pb):
     return sum(pr for (x, y), pr in dp.items() if x == 4)
 
 
-def postseason(W, TRUE, rng):
+PO = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "po.json")))
+
+
+def po_delta(team, rating, minutes, games, G, pace, po=PO):
+    """Playoff strength change per team (points per game): playoff-shaped minutes (stars play more, short rotation) minus the
+    regular-season minutes. minutes/games = each player's minutes and games played over G team games (season or rest of
+    season); teams with no minutes get 0. Session 21 playoff test (RESEARCH_LOG)."""
+    d = pd.DataFrame({"t": np.asarray(team), "r": np.asarray(rating, float), "m": np.asarray(minutes, float), "g": np.asarray(games, float)})
+    d["G"] = d.t.map(G) if hasattr(G, "get") else float(G)
+    d = d[d.t.isin(TEAMS) & (d.m > 0) & (d.G > 0)].copy()
+    out = pd.Series(0.0, index=TEAMS)
+    if not len(d): return out
+    gl = d.g.clip(lower=1).clip(upper=d.G); mpg = (d.m / gl).clip(upper=48); av = (gl / d.G).to_numpy()
+    c, k = np.array(po["coef"]), po["knots"]
+    X = np.column_stack([av, av * mpg] + [av * np.maximum(mpg.to_numpy() - kk, 0) for kk in k])
+    d["mB"] = np.clip(X @ c, 0, po["cap"])
+    d["mB"] = d.mB * 240 / d.groupby("t").mB.transform("sum").replace(0, np.nan)
+    d["mA"] = d.m * 240 / d.groupby("t").m.transform("sum")
+    v = (d.r * (d.mB.fillna(d.mA) - d.mA)).groupby(d.t).sum() / 48 * pace / 100
+    out[v.index] = v.values
+    if "clip" in po: out[out != 0] = out[out != 0].clip(*po["clip"])
+    return out * po.get("weight", 1.0)
+
+
+def postseason(W, TRUE, rng, pdelta=None, hca_po=None):
+    """pdelta: per-team playoff strength change (po_delta), added in play-in and playoff games; hca_po: home court in
+    playoff series (play-in games keep the regular-season HCA)."""
     n = len(W)
+    if pdelta is not None: TRUE = TRUE + np.asarray(pdelta, float)[None, :]
+    HP = HCA if hca_po is None else hca_po
     res = {k: np.zeros(30) for k in ["playoffs", "playin", "top6", "seed1", "r2", "cf", "finals", "title"]}
     jitter = rng.random(W.shape) * 0.5
     r = np.arange(n)
-    pwin = lambda a, b, home: norm.cdf((TRUE[r, a] - TRUE[r, b] + (HCA if home else -HCA)) / SIG)
+    pwin = lambda a, b, home: norm.cdf((TRUE[r, a] - TRUE[r, b] + (HCA if home else -HCA)) / SIG)       # play-in
+    pser = lambda a, b, home: norm.cdf((TRUE[r, a] - TRUE[r, b] + (HP if home else -HP)) / SIG)         # playoff series
     champs = {}
     for conf in "EW":
         ci = np.array([IDX[t] for t in TEAMS if conf_of[t] == conf])
@@ -78,7 +108,7 @@ def postseason(W, TRUE, rng):
         seeds = np.column_stack([order[:, :6], seed7, seed8])
         for k in range(8): np.add.at(res["playoffs"], seeds[:, k], 1)
         def series(a, b):
-            return np.where(rng.random(n) < bo7_prob(pwin(a, b, True), pwin(a, b, False)), a, b)
+            return np.where(rng.random(n) < bo7_prob(pser(a, b, True), pser(a, b, False)), a, b)
         def better(a, b):
             sw = W[r, b] > W[r, a]; return np.where(sw, b, a), np.where(sw, a, b)
         r1 = [series(*better(seeds[:, i], seeds[:, 7 - i])) for i in range(4)]
@@ -88,6 +118,6 @@ def postseason(W, TRUE, rng):
         cc = series(*better(r2[0], r2[1])); np.add.at(res["finals"], cc, 1); champs[conf] = cc
     a, b = champs["E"], champs["W"]
     hi, lo = np.where(W[r, b] > W[r, a], b, a), np.where(W[r, b] > W[r, a], a, b)
-    ch = np.where(rng.random(n) < bo7_prob(pwin(hi, lo, True), pwin(hi, lo, False)), hi, lo)
+    ch = np.where(rng.random(n) < bo7_prob(pser(hi, lo, True), pser(hi, lo, False)), hi, lo)
     np.add.at(res["title"], ch, 1)
     return {k: v / n for k, v in res.items()}

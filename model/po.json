@@ -1,0 +1,24 @@
+{
+ "coef": [
+  -2.683999,
+  0.789203,
+  0.704392,
+  0.331509,
+  -0.438235,
+  -0.705496
+ ],
+ "knots": [
+  15,
+  22,
+  28,
+  33
+ ],
+ "hca_po": 4.0,
+ "cap": 46,
+ "note": "2026-10-07 session 21 (RESEARCH_LOG 'PLAYOFF MINUTES TEST'). Expected playoff minutes per team game = avail * g(mpg when playing), g piecewise linear (basis avail*[1, m, (m-15)+, (m-22)+, (m-28)+, (m-33)+]) fit on 2014-25 playoff teams; team rescaled to 240. Playoff strength = model strength + sum rating*(m_po - m_rs)/48*pace/100. Playoff series home court 4.0 (play-in keeps 2.6). Per-team change clipped to the 2014-25 playoff-team range [0.03, 2.89] (preseason allocations spread minutes to camp players far more than real seasons; no extrapolation). Weight 0.5 (user choice 2026-10-07: the forecast is ~60% Vegas, which never had the projection's bench drag, so full strength partly double-counts).",
+ "clip": [
+  0.03,
+  2.89
+ ],
+ "weight": 0.5
+}
