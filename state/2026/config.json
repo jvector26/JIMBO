@@ -67,7 +67,7 @@
   ],
   "min_team_players": 13,
   "newc_L": 308.6275017357719,
-  "state_chart": "20261005",
+  "state_chart": "20261007",
   "note": "nightly.py re-applies the latest RealGM chart dated before the opener: moves, drops to FA, tiers."
  }
 }
