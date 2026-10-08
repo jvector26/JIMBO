@@ -3,8 +3,8 @@ name: nightly
 # re-simulate the rest of the season, publish site/data/latest.json (+ history.json).
 on:
   schedule:
-    - cron: "0 11 * * *"    # 7:00 ET (6:00 in winter): after all games are final
-    - cron: "0 21 * * *"    # 17:00 ET: refresh injuries and tonight's lines before tip-off
+    - cron: "17 10 * * *"   # ~6:17 ET: after all games are final (off :00, GitHub delays top-of-hour crons by hours)
+    - cron: "43 20 * * *"   # ~16:43 ET: refresh injuries and tonight's lines before tip-off
   workflow_dispatch:
     inputs:
       asof:
