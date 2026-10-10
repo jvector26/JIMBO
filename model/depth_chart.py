@@ -101,3 +101,31 @@ def allocate(x, total=19680.0, cap=3000.0):
             if x[room].sum() <= 0: break
             x[room] *= (total - x[~room].sum()) / x[room].sum(); x = x.clip(upper=cap)
     return x
+
+
+def balance_starters(P, chart, user, team_ov, n=5):
+    """Always five starters per team (user call 2026-10-09; the app's engine has the same rule, balanceRoles).
+    P: rows [key, team, m0] (team before user team moves); chart: chart tier per row (S/R/L/N/X); user: {key: role};
+    team_ov: {key: team} user team moves. Players with a user role keep it; players a user moved off their chart team
+    don't count. Short of five -> the best non-starter by chart (R, then L, then N; most m0, then key) moves up to S.
+    Over five -> the chart starter with the fewest m0 moves down to R. An exempt (X) player without a user role fills a
+    starter slot when the chart lists fewer than five. Returns {row index: new role} for the automatic moves only."""
+    rk = {"R": 0, "L": 1, "N": 2}; out = {}
+    df = pd.DataFrame({"key": P.key.values, "team": [team_ov.get(k, t) for k, t in zip(P.key, P.team)],
+                       "m0": pd.to_numeric(P.m0, errors="coerce").fillna(0).values,
+                       "c": [None if k in team_ov else (c if isinstance(c, str) else None) for k, c in zip(P.key, chart)],
+                       "u": [user.get(k) for k in P.key]}, index=P.index)
+    df["d"] = df.u.where(df.u.notna(), df.c)
+    for t, g in df.groupby("team"):
+        if t == "FA": continue
+        free = g[g.u.isna()]
+        nS = int((g.c == "S").sum()); nX = int(((g.c == "X") & g.u.isna()).sum())
+        target = n - min(nX, max(0, n - nS)); cur = int((g.d == "S").sum())
+        if cur < target:
+            c = free[free.c.isin(list(rk))]
+            c = c.assign(_r=c.c.map(rk)).sort_values(["_r", "m0", "key"], ascending=[True, False, True], kind="mergesort")
+            for i in c.index[:target - cur]: out[i] = "S"
+        elif cur > target:
+            c = free[free.c == "S"].sort_values(["m0", "key"], ascending=[True, True], kind="mergesort")
+            for i in c.index[:cur - target]: out[i] = "R"
+    return out

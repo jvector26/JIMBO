@@ -73,10 +73,12 @@ rem = sched[~done & sched.home.isin(SIM.TEAMS) & sched.away.isin(SIM.TEAMS)]   #
 # _tier model a[_tier] + b[_tier]*m0 (model/depth_chart.py), team allocation to 19,680. Same rules as the sandbox
 # (code/depth_apply.py + project.py), so the chart the state was built with reproduces the state's min_proj.
 # After the opener the last pre-opener chart stays in force (the backtested 'late' snapshot); games then take over.
-DEPTH = {"chart": None, "moved": [], "dropped": [], "added": [], "user_tiers": []}
+DEPTH = {"chart": None, "moved": [], "dropped": [], "added": [], "user_tiers": [], "auto_tiers": []}
 # user role overrides (overrides.json players[key].d = S/R/L/N, set in the app's Edit screen) replace the chart tier
 _OVD = {k: o["d"] for k, o in (json.load(open(os.path.join(ROOT, "overrides.json"))).get("players", {}).items()
                               if os.path.exists(os.path.join(ROOT, "overrides.json")) else []) if o.get("d") in ("S", "R", "L", "N")}
+_OVT = {k: o["t"] for k, o in (json.load(open(os.path.join(ROOT, "overrides.json"))).get("players", {}).items()
+                              if os.path.exists(os.path.join(ROOT, "overrides.json")) else []) if isinstance(o.get("t"), str)}
 PL = PL.copy(); PL["tier_chart"] = PL.get("tier")
 _DC = cfg.get("depth")
 # a bad chart must never stop the nightly (2026-09-30: duplicate match crashed two runs) -> fall back to state minutes
@@ -107,6 +109,9 @@ try:
                 for i_ in _tier.index:   # user role overrides beat the chart (and exempt X)
                     d_ = _OVD.get(PL.at[i_, "key"])
                     if d_: DEPTH["user_tiers"].append([PL.at[i_, "name"], PL.at[i_, "team"], _tier[i_], d_]); _tier[i_] = d_
+                # always five starters per team (user 2026-10-09; same rule as the app engine's balanceRoles)
+                for i_, d_ in DCH.balance_starters(PL.loc[_ros], PL.loc[_ros, "tier_chart"], _OVD, _OVT).items():
+                    DEPTH["auto_tiers"].append([PL.at[i_, "name"], PL.at[i_, "team"], _tier[i_], d_]); _tier[i_] = d_
                 _w = pd.Series(DCH.want(PL.loc[_ros, "m0"].fillna(0), _tier, _DC["coef"]), index=_tier.index)
                 _nl = PL.loc[_ros, "newc"].fillna(False).astype(bool) & (_tier == "L")
                 _w[_nl] = _DC["newc_L"]; _w[_tier == "X"] = PL.loc[_tier.index[_tier == "X"], "m0"].fillna(0)
@@ -119,7 +124,7 @@ try:
 except Exception as e:
     import traceback; traceback.print_exc()
     print(f"WARNING depth chart skipped: {e!r}")
-    PL = _PL_pre_depth; DEPTH = {"chart": None, "moved": [], "dropped": [], "added": [], "user_tiers": [], "error": repr(e)[:200]}
+    PL = _PL_pre_depth; DEPTH = {"chart": None, "moved": [], "dropped": [], "added": [], "user_tiers": [], "auto_tiers": [], "error": repr(e)[:200]}
 # ------------------------------------------------------------------ ratings
 prior = PL.dropna(subset=["player"]).drop_duplicates("player").set_index("player").rating_pre
 prior.index = prior.index.astype(np.int64)

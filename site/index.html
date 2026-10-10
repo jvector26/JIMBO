@@ -417,6 +417,9 @@ td.muted{color:var(--muted)}
   .settings .sums{flex-basis:100%;order:3}
   .lede{display:none} header{padding-top:16px} h1{margin-bottom:6px}
 }
+/* role labels (2026-10-09): your edit = bold purple, automatic five-starter move = bold italic magenta */
+.rl-u{color:var(--gold);font-weight:700}
+.rl-a{color:var(--magenta);font-weight:700;font-style:italic}
 /* game detail page (app) */
 #gv[hidden]{display:none}
 body.gvopen .tabs, body.gvopen .panel{display:none}
@@ -602,7 +605,7 @@ body.pvopen #gv{display:none}
       <label class="full">Rating, points per 100 over average<input id="edR" type="number" min="-12" max="15" step="0.1" inputmode="decimal"></label>
     </div>
     <p class="tot" id="edTot"></p>
-    <p class="note" id="edDnote">Role sets the minutes the model starts from (starter, rotation, limited, out of the rotation); the team's minutes are re-shared around it. Games and minutes you type yourself take priority. During the season, minutes actually played gradually take over.</p>
+    <p class="note" id="edDnote">Role sets the minutes the model starts from (starter, rotation, limited, out of the rotation); the team's minutes are re-shared around it. A team always has five starters: move a starter down and the next man up (by the depth chart, then projected minutes) starts in his place; move someone up and the chart starter with the fewest projected minutes goes to the rotation. Games and minutes you type yourself take priority. During the season, minutes actually played gradually take over.</p>
     <div class="acts">
       <div><button class="btn" type="button" id="edOut">Out for the season</button><button class="btn" type="button" id="edReset">Use model</button></div>
       <div><button class="btn" value="cancel" formnovalidate>Cancel</button><button class="btn primary" type="button" id="edSave">Save</button></div>
@@ -651,6 +654,22 @@ function makeEngine(D){
   const DEP=M.depth||null;
   function wantOf(p,o){ const d=o&&o.d; if(!d||!DEP||p.m0==null||!DEP.coef[d]) return p.mm;
     if(p.nc&&d==='L') return DEP.newc_L; const c=DEP.coef[d]; return Math.min(3000,Math.max(0,c[0]+c[1]*p.m0)); }
+  // always five starters (user 2026-10-09; same rule as model/depth_chart.py balance_starters in the nightly): user roles
+  // are kept; short -> best non-starter by chart (R, then L, then N; most base minutes m0) moves up to S; long -> the chart
+  // starter with the fewest m0 moves down to R. An exempt (X) player fills a starter slot when the chart lists fewer than five.
+  function balanceRoles(items){ // items: {k, c: chart tier, u: user role, m0} -> Map k -> {d, u, a}
+    const TRK={R:0,L:1,N:2}, out=new Map(); items.forEach(it=>out.set(it.k,{d:it.u||it.c||null, u:!!it.u, a:false}));
+    const nS=items.filter(it=>it.c==='S').length, nX=items.filter(it=>it.c==='X'&&!it.u).length;
+    const target=5-Math.min(nX,Math.max(0,5-nS)), m=it=>it.m0==null?0:it.m0, kc=(a,b)=>a.k<b.k?-1:a.k>b.k?1:0;
+    let cur=items.filter(it=>out.get(it.k).d==='S').length;
+    if(cur<target){ const c=items.filter(it=>!it.u&&TRK[it.c]!=null).sort((a,b)=>TRK[a.c]-TRK[b.c]||m(b)-m(a)||kc(a,b));
+      for(const it of c){ if(cur>=target) break; out.set(it.k,{d:'S',u:false,a:true}); cur++; } }
+    else if(cur>target){ const c=items.filter(it=>!it.u&&it.c==='S').sort((a,b)=>m(a)-m(b)||kc(a,b));
+      for(const it of c){ if(cur<=target) break; out.set(it.k,{d:'R',u:false,a:true}); cur--; } }
+    return out; }
+  function assignRoles(list, chartOf){ // sets r.role (S/R/L/N/X or null), r.roleU (user edit), r.roleA (automatic move)
+    const B=balanceRoles(list.map(r=>({k:r.p.k, c:chartOf(r)||null, u:r.o.d||null, m0:r.p.m0})));
+    list.forEach(r=>{ const x=B.get(r.p.k); r.role=x.d; r.roleU=x.u; r.roleA=x.a; }); }
   // team minutes: overridden players are locked; the rest fill 19,680 (trim from the bottom, or scale up, cap 3,000)
   function allocate(list, locked){
     const out=new Map(); let lockSum=0;
@@ -667,12 +686,13 @@ function makeEngine(D){
   function project(S, OV){
     const mult=featMult(S);
     const rows=D.players.map(p=>{ const o=OV[p.k]||{}; const r=rawRating(p,mult,S);
-      return {p, t:o.t||p.t, raw:r.off+r.def, off:r.off, def:r.def, dreb:r.dreb, dstop:r.dstop, parts:r.parts, o}; });
+      return {p, t:o.t||p.t, raw:r.off+r.def, off:r.off, def:r.def, dreb:r.dreb, dstop:r.dstop, parts:r.parts, o, role:o.d||null, roleU:!!o.d, roleA:false}; });
     const byTeam={}; TEAMS.forEach(t=>byTeam[t]=[]); rows.forEach(r=>{ if(byTeam[r.t]) byTeam[r.t].push(r); });
+    TEAMS.forEach(t=>assignRoles(byTeam[t], r=>r.o.t?null:r.p.dt));
     const teamOver={};
     TEAMS.forEach(t=>{ const list=byTeam[t]; const locked=new Map();
       list.forEach(r=>{ if(r.o.g!=null||r.o.mpg!=null){ const g=r.o.g!=null?r.o.g:r.p.g, mp=r.o.mpg!=null?r.o.mpg:r.p.mpg; locked.set(r.p.k,Math.min(g*mp,3936)); } });
-      const a=allocate(list.map(r=>({k:r.p.k, mm:wantOf(r.p,r.o)})), locked); list.forEach(r=>r.min=a.out.get(r.p.k)); teamOver[t]=a.over; });
+      const a=allocate(list.map(r=>({k:r.p.k, mm:wantOf(r.p,(r.roleU||r.roleA)?{d:r.role}:{})})), locked); list.forEach(r=>r.min=a.out.get(r.p.k)); teamOver[t]=a.over; });
     rows.forEach(r=>{ if(r.min==null) r.min=Math.min(r.p.mm,3000); });  // free agents: minutes if signed
     let w=0, s=0; rows.forEach(r=>{ if(r.t!=='FA'){ w+=r.min; s+=r.raw*r.min; } });
     const c=w?s/w:0;
@@ -766,7 +786,7 @@ function makeEngine(D){
     let se=0, hit=0; for(let g=0;g<NB;g++){ const f=a+b*pred[g], y=BT.margin[g]; se+=(y-f)*(y-f); if((f>0)===(y>0)) hit++; }
     return {rmse:Math.sqrt(se/NB), win:hit/NB};
   }
-  return {project, simulate, backtest, Phi, PhiInv, TEAMS, TI, rng, wantOf, allocate, poDelta};
+  return {project, simulate, backtest, Phi, PhiInv, TEAMS, TI, rng, wantOf, allocate, poDelta, assignRoles, balanceRoles};
 }
 </script>
 <script>
@@ -866,14 +886,16 @@ function seasonOverlay(P){
     if(r.o.g!=null||r.o.mpg!=null){ const g=r.o.g!=null?r.o.g:82*av, mp=r.o.mpg!=null?r.o.mpg:me; r.want=g/82*gr*mp; r.lock=true; }
     else r.lock=false;
     if(byT[r.t]) byT[r.t].roster.push(r); });
+  P.rows.forEach(r=>{ if(!byT[r.t]){ r.role=r.o.d||null; r.roleU=!!r.o.d; r.roleA=false; } });
+  P.team.forEach(x=>E.assignRoles(x.roster, r=>r.o.t?null:(r.z?r.z.dc:r.p.dt)));
   // role overrides the nightly has not applied yet (or removed since): the nightly's preseason share is its allocation with
   // its tiers (z.dt); shift every teammate's preseason share (weight 1-w, w=n/(n+5)) by the preseason allocation with the
   // app's roles minus the one with the nightly's (same bottom-trim rule as nightly.py / project.py)
   const tier=(r,t)=>!t?r.p.mm:(t==='X'?(r.p.m0!=null?r.p.m0:r.p.mm):E.wantOf(r.p,{d:t}));
   P.team.forEach(x=>{ const R=x.roster.filter(r=>r.z&&r.t!=='FA').sort((a,b)=>a.mraw-b.mraw);  // ties in the trim: follow the nightly's own outcome
-    if(!R.some(r=>{ const a=r.o.d||r.z.dc, b=r.z.dt; return a&&b&&a!==b; })) return;
+    if(!R.some(r=>{ const a=r.role||r.z.dc, b=r.z.dt; return a&&b&&a!==b; })) return;
     const lk=new Map(); R.forEach(r=>{ if(r.lock) lk.set(r.p.k,tier(r,r.z.dt)); });
-    const A=E.allocate(R.map(r=>({k:r.p.k, mm:tier(r,r.o.d||r.z.dc||r.z.dt)})),lk).out, B=E.allocate(R.map(r=>({k:r.p.k, mm:tier(r,r.z.dt||r.o.d||r.z.dc)})),lk).out;
+    const A=E.allocate(R.map(r=>({k:r.p.k, mm:tier(r,r.role||r.z.dc||r.z.dt)})),lk).out, B=E.allocate(R.map(r=>({k:r.p.k, mm:tier(r,r.z.dt||r.role||r.z.dc)})),lk).out;
     const n=(ZT[x.t]&&ZT[x.t].gp)||0, w=n/(n+5);
     R.forEach(r=>{ if(!r.lock) r.mraw=Math.max(0,r.mraw+(1-w)*(A.get(r.p.k)-B.get(r.p.k))/82); }); });
   // nightly minutes rule: expected minutes per team game (this season's usage blended with preseason), rescaled to 240 per team
@@ -967,18 +989,25 @@ function wfLegend(){ const B=M.blend, adj=P?P.team[0].padj:0;
 function axisHead(){ let s=''; for(let v=20;v<=60;v+=10) s+=`<span style="left:${ax(v)}%">${v}</span>`; return `<div class="axis">${s}</div>`; }
 function gm(r){ const v=gmv(r), c=r.o.g!=null||r.o.mpg!=null||r.o.d?'ov':'';
   return `<td class="num ${c}">${Math.round(v.g)}</td><td class="num ${c}">${v.mpg.toFixed(1)}</td>`; }
+function noteRest(n){ return String(n||'').replace(/(^|;\s*)depth chart: [a-z ]+/g,'').replace(/^;\s*/,'').trim(); }
+function roleTag(r){ const L={S:'Starter',R:'Rotation',L:'Limited minutes',N:'Out of rotation'}[r.role]; if(!L) return '';
+  if(r.roleU) return `<span class="rl rl-u" title="Your role edit">${L}</span>`;
+  if(r.roleA) return `<span class="rl rl-a" title="Moved automatically to keep five starters">${L} (auto)</span>`;
+  return `<span class="rl">${L}</span>`; }
+function roleNote(r){ const a=roleTag(r), b=noteRest(r.p.note); return a&&b?`${a} · ${esc(b)}`:a||esc(b); }
+function chNR(r){ return Object.keys(r.o).some(k=>k!=='d'); }  // edits other than role (role edits show in the role label)
 function rosterHTML(x){
   const inRot=r=>r.min>0.5||r.o.g!=null||r.o.mpg!=null;
   const rot=x.roster.filter(inRot).sort((a,b)=>b.min-a.min), bench=x.roster.filter(r=>!inRot(r)).sort((a,b)=>b.tot-a.tot);
-  const row=r=>{ const ch=Object.keys(r.o).length>0, z0=!inRot(r);
-    return `<tr class="pr" data-pv="${esc(r.p.k)}"><td class="l"><span class="nm pvlink">${esc(r.p.n)}</span>${ch?'<span class="flag">edited</span>':''}${injBadge(r)}${r.p.note?`<span class="tm">${esc(r.p.note)}</span>`:''}</td>
+  const row=r=>{ const ch=chNR(r), z0=!inRot(r), rn=roleNote(r);
+    return `<tr class="pr" data-pv="${esc(r.p.k)}"><td class="l"><span class="nm pvlink">${esc(r.p.n)}</span>${ch?'<span class="flag">edited</span>':''}${injBadge(r)}${rn?`<span class="tm">${rn}</span>`:''}</td>
     <td class="num hide-s">${r.p.a!=null?Math.floor(r.p.a):'–'}</td>${z0?'<td class="num muted">–</td><td class="num muted">–</td>':gm(r)}<td class="num hide-s">${Math.round(gmv(r).smin).toLocaleString()}</td>
     <td class="num ${r.o.r!=null?'ov':cls(r.tot)}">${fmt(r.tot)}</td><td class="num ${z0?'muted':cls(gmv(r).add)}">${fmt(gmv(r).add,2)}</td>
     <td><button class="edit" data-edit="${esc(r.p.k)}">Edit</button></td></tr>`; };
   const rows=rot.map(row).join('')+(bench.length?`<tr class="benchhd"><td colspan="8">No projected minutes (${bench.length}): the roster has more players than minutes. Tap Edit to give someone a role.</td></tr>`+bench.map(row).join(''):'');
   return `${winsHist(x)}${histChart(x.t)}<div class="roster"><div class="rsum"><span>Net rating <b class="${cls(x.net)}">${fmt(x.net)}</b></span><span>Offense <b>${fmt(x.off)}</b></span><span>Defense <b>${fmt(x.def)}</b></span><span>Minutes-weighted age <b>${x.age.toFixed(1)}</b></span></div>
     <table><thead><tr><th class="l">Player</th><th class="hide-s">Age</th><th>Games</th><th>Min when playing</th><th class="hide-s">Season min</th><th>Rating</th><th title="Rating times share of team minutes">Adds to team</th><th></th></tr></thead><tbody>${rows}</tbody></table>
-    ${x.over>0?`<p class="warn">Your minutes for this team add up to ${Math.round((SEASON?240*x.gr:19680)+x.over).toLocaleString()}, more than the ${(SEASON?240*x.gr:19680).toLocaleString()} ${SEASON?'left this season':'a season allows'}. Everyone else is at zero.</p>`:''}</div>`;
+    ${x.roster.filter(r=>r.roleU&&r.role==='S').length>5?`<p class="warn">You have set ${x.roster.filter(r=>r.roleU&&r.role==='S').length} starters for ${x.t}; a team starts five.</p>`:''}${x.over>0?`<p class="warn">Your minutes for this team add up to ${Math.round((SEASON?240*x.gr:19680)+x.over).toLocaleString()}, more than the ${(SEASON?240*x.gr:19680).toLocaleString()} ${SEASON?'left this season':'a season allows'}. Everyone else is at zero.</p>`:''}</div>`;
 }
 // win distribution: final wins across the simulated seasons (forecast = bars, model alone = outline)
 function winsHist(x){
@@ -1130,7 +1159,7 @@ function renderPlayers(){
           `<div class="drow"><span></span><span>Defense vs ${POS5(r.p.ps)}s: total ${fmt(r.def-bl(r.p.ps,'def'),2)} (rebounding ${fmt(r.dreb-bl(r.p.ps,'dreb'),2)}, stops ${fmt(r.dstop-bl(r.p.ps,'dstop'),2)})</span><b></b></div>`:'')+
         (r.parts.season!=null?`<div class="drow"><span></span><span>This season so far: ${r.gp} games, ${r.mpgS.toFixed(1)} min/g; rating moved ${fmt(r.parts.season,2)} from preseason</span><b></b></div>`:'')+
         (r.p.m25!=null?`<div class="drow"><span></span><span>Minutes played in 2025-26</span><b>${r.p.m25.toLocaleString()}</b></div>`:'')+
-        (r.p.note?`<div class="drow"><span></span><span>${esc(r.p.note)}</span><b></b></div>`:'')+`</div></td></tr>`;
+        (roleNote(r)?`<div class="drow"><span></span><span>${r.role&&r.role!=='X'?'Role: ':''}${roleNote(r)}</span><b></b></div>`:'')+`</div></td></tr>`;
     }
     return s; }).join('');
   $('more').hidden=list.length<=shown;
@@ -1387,7 +1416,7 @@ function renderPV(){
   const gv=gmv(r), g=gv.g, mpg=gv.mpg, rook=D.rook[k], hist=histSeasons(p,m);
   const nextAge=p.a!=null?Math.floor(p.a):null;
   let h=`<div class="pvtop"><button class="back" id="pvBack">← Back</button><button class="edit" data-edit="${esc(k)}">Edit</button></div>
-  <div class="pvh"><h2>${esc(p.n)}</h2><p class="pvsub">${r.t==='FA'?'Free agent':r.t}${nextAge!=null?` · age ${nextAge} for 2026-27`:''}${p.note?` · ${esc(p.note)}`:''}${Object.keys(r.o).length?' · <span class="ov">edited</span>':''}</p></div>
+  <div class="pvh"><h2>${esc(p.n)}</h2><p class="pvsub">${r.t==='FA'?'Free agent':r.t}${nextAge!=null?` · age ${nextAge} for 2026-27`:''}${roleNote(r)?` · ${roleNote(r)}`:''}${chNR(r)?' · <span class="ov">edited</span>':''}</p></div>
   <div class="cards">
     <div class="card"><div class="k">2026-27 rating</div><div class="v ${r.o.r!=null?'ov':cls(r.tot)}">${fmt(r.tot)}</div><div class="s">${rank?`#${rank} of ${rostered.length}`:'not on a roster'}</div></div>
     <div class="card"><div class="k">Offense</div><div class="v ${cls(r.off)}">${fmt(r.off)}</div><div class="s">pts/100 vs average</div></div>
@@ -1466,8 +1495,9 @@ function edTotal(){ const g=+$('edG').value||0, m=+$('edM').value||0; $('edTot')
 let edDef=null;
 const TN={S:'Starter',R:'Rotation',L:'Limited minutes',N:'Out of rotation',X:'not tiered'};
 function chartTier(k){ const z=SEASON&&ZP?ZP.get(k):null, p=byKey.get(k); return (z&&z.dc)||p.dt||null; }
-function edFill(k){ const p=byKey.get(k), ct=chartTier(k);
-  $('edD').innerHTML=`<option value="">${ct?'Depth chart: '+TN[ct]:'Model (not on a depth chart)'}</option>`+['S','R','L','N'].map(t=>`<option value="${t}">${TN[t]}</option>`).join(''); }
+function edFill(k){ const p=byKey.get(k), ct=chartTier(k), r=P.rows.find(x=>x.p.k===k);
+  const dl=r&&r.roleA?`Default: ${TN[r.role]} (auto, keeps five starters)`:ct&&ct!=='X'?'Default: '+TN[ct]:'Default: model minutes';
+  $('edD').innerHTML=`<option value="">${dl}</option>`+['S','R','L','N'].map(t=>`<option value="${t}">${TN[t]}</option>`).join(''); }
 function edPreview(){ // projected games/minutes with the chosen role and team (without minute locks), unless minutes were typed
   const p=byKey.get(edKey), o={...(OV[edKey]||{})}; delete o.g; delete o.mpg;
   const d=$('edD').value, t=$('edTeam').value; if(d) o.d=d; else delete o.d; if(t!==p.t) o.t=t; else delete o.t;
