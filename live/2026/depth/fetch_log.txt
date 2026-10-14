@@ -1,5 +1,18 @@
-2026-10-13T23:55:49.858593Z
-round 0 curl_cffi chrome 403 5982 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
-round 0 curl_cffi chrome120 403 5982 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
-round 0 curl_cffi safari17_0 200 226671 b'<!DOCTYPE html>\r\n<!--[if lt IE 7]>      <html lang="en" clas'
-saved live/2026/depth/realgm_20261013.html.gz 226671
+2026-10-14T15:17:06.755986Z
+round 0 curl_cffi chrome 403 6003 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
+round 0 curl_cffi chrome120 403 6004 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
+round 0 curl_cffi safari17_0 403 5811 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
+round 0 curl_cffi firefox 403 5790 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
+round 1 curl_cffi chrome 403 6003 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
+round 1 curl_cffi chrome120 403 6025 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
+round 1 curl_cffi safari17_0 403 5811 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
+round 1 curl_cffi firefox 403 5790 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
+round 2 curl_cffi chrome 403 6003 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
+round 2 curl_cffi chrome120 403 6004 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
+round 2 curl_cffi safari17_0 403 5811 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
+round 2 curl_cffi firefox 403 5790 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
+requests Mozilla/5. 403 5704 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title><meta http-equiv="Content-Type" content="text/htm'
+requests JIMBO 403 5470 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title><meta http-equiv="Content-Type" content="text/htm'
+wayback latest None
+save-page-now 520
+wayback latest after save None
