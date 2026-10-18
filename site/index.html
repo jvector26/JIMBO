@@ -357,6 +357,26 @@ td.muted{color:var(--muted)}
   .skb{height:13px}
   .skf{top:1px;height:10px}
   .skr.brk{margin-top:8px;padding-top:8px} }
+/* skill drill-down (2026-10-18): tap a skill bar to see the stats behind it */
+.skr.tap{cursor:pointer;border-radius:6px}
+.skr.tap:hover .skl,.skr.tap:focus-visible .skl{text-decoration:underline;text-decoration-color:var(--rule)}
+.skr.tap:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.skr .chev{display:inline-block;margin-left:6px;font-size:11px;color:var(--muted);transition:transform .15s}
+.skr.open .chev{transform:rotate(90deg)}
+.skd{list-style:none;margin:4px 0 8px;padding:8px 10px 6px;background:var(--bg);border:1px solid var(--rule);border-radius:8px;max-width:760px;overflow:hidden}
+.skd table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+.skd th,.skd td{white-space:normal;overflow-wrap:anywhere;font-family:var(--text);letter-spacing:0}
+.skd th{background:none;color:var(--muted);font-weight:600;text-align:right;padding:2px 6px 4px;font-size:11.5px;vertical-align:bottom;border-bottom:1px solid var(--rule)}
+.skd th:first-child,.skd td:first-child{text-align:left;padding-left:0}
+.skd td{padding:5px 6px 3px;text-align:right;border-top:1px solid var(--rule);border-bottom:0;vertical-align:top;background:none}
+.skd col.c2,.skd col.c3{width:5.4rem} .skd col.c4{width:40%}
+.skd td.skst{text-align:left;color:var(--ink)}
+.skd td.skst small{display:block;color:var(--muted);font-size:11.5px}
+.skd tr.tot td{font-weight:700}
+.skd tr.sr td{border-top:0;padding-top:0;text-align:left;color:var(--muted);font-size:12px}
+.skd .note{margin:6px 0 2px;font-size:12px}
+@media (max-width:640px){ .skd .skst{display:none} .skd col.c4{width:0} .skd col.c2,.skd col.c3{width:4.8rem} }
+@media (min-width:641px){ .skd tr.sr{display:none} }
 /* win distribution (team view) */
 .wh{margin:4px 0 14px;max-width:760px}
 .whhd h4{margin:0 0 2px;font-size:15px}
@@ -1347,7 +1367,7 @@ let pvKey=null, pvScroll=0, pvPushed=false, pvMode='all';
 function openPlayer(k){
   if(!byKey.has(k)) return;
   if(!pvKey){ pvScroll=window.scrollY; try{ history.pushState({pv:k},''); pvPushed=true; }catch(e){ pvPushed=false; } }
-  pvKey=k; document.body.classList.add('pvopen'); $('pv').hidden=false; renderPV();
+  if(pvKey!==k) pvSkOpen.clear(); pvKey=k; document.body.classList.add('pvopen'); $('pv').hidden=false; renderPV();
   const top=$('pv').getBoundingClientRect().top+window.scrollY-10; window.scrollTo(0,Math.max(0,top)); $('pvBack')&&$('pvBack').focus({preventScroll:true});
 }
 function closePlayer(){ pvKey=null; pvPushed=false; document.body.classList.remove('pvopen'); $('pv').hidden=true; $('pv').innerHTML=''; window.scrollTo(0,pvScroll); }
@@ -1399,14 +1419,68 @@ function chartSVG(rows, proj, mode){
   return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Rating by season">${g}</svg>`;
 }
 // strengths and weaknesses: every part of the rating, best to worst, as bars either side of zero
-function skillBars(pa){
+// skill drill-down (user request 2026-10-18): which box stats make up a skill, projection vs last season, and the actual numbers
+const SKF={o_3eff:'3PT accuracy',o_3vol:'3PT volume',o_rimeff:'Rim accuracy',o_rimvol:'Rim volume',o_mideff:'Non-rim 2s accuracy',o_midvol:'Non-rim 2s volume',
+  o_fteff:'Free-throw accuracy',o_ftvol:'Free-throw volume',o_unast:'Unassisted makes',o_ast:'Assists',o_tov:'Turnovers',o_oreb:'Offensive rebounds',
+  d_dreb:'Defensive rebounds',d_blk:'Blocks',d_opprim:"Opponents' rim finishing, on court",d_stl:'Steals',d_pf:'Fouls',d_oppxq:"Opponents' shot quality, on court"};
+const pvSkOpen=new Set();
+function skRaw(f,h){ // actual last-season stat for one feature: [text, league text]
+  const R=M.raw; if(!R||!h||!h.raw) return null; const x={}; R.cols.forEach((c,i)=>x[c]=h.raw[i]); const L=R.lg;
+  const per=(c,def)=>x[def?'poss_def':'poss_off']>0?(x[c]/x[def?'poss_def':'poss_off']*100).toFixed(1):'–';
+  const pc=(m,a)=>a>0?(m/a*100).toFixed(1)+'%':'–';
+  switch(f){
+    case 'o_3eff': return [`${pc(x.fg3m,x.fg3a)} 3P (${x.fg3m}/${x.fg3a})`,`league ${(L.p3*100).toFixed(1)}%`];
+    case 'o_3vol': return [`${per('fg3a')} 3PA per 100`,`league ${L.fg3a.toFixed(1)}`];
+    case 'o_rimeff': return [`${pc(x.rim_fgm,x.rim_fga)} at the rim (${x.rim_fgm}/${x.rim_fga})`,`league ${(L.prim*100).toFixed(1)}%`];
+    case 'o_rimvol': return [`${per('rim_fga')} rim shots per 100`,`league ${L.rim_fga.toFixed(1)}`];
+    case 'o_mideff': return [`${pc(x.mid_fgm,x.mid_fga)} on non-rim 2s (${x.mid_fgm}/${x.mid_fga})`,`league ${(L.pmid*100).toFixed(1)}%`];
+    case 'o_midvol': return [`${per('mid_fga')} non-rim 2s per 100`,`league ${L.mid_fga.toFixed(1)}`];
+    case 'o_fteff': return [`${pc(x.ftm,x.fta)} FT (${x.ftm}/${x.fta})`,`league ${(L.pft*100).toFixed(1)}%`];
+    case 'o_ftvol': return [`${per('fta')} FTA per 100`,`league ${L.fta.toFixed(1)}`];
+    case 'o_unast': return [`${x.poss_off>0?((x.fgm-x.astd_fgm)/x.poss_off*100).toFixed(1):'–'} unassisted makes per 100`,`league ${(L.fgm-L.astd_fgm).toFixed(1)}`];
+    case 'o_ast': return [`${per('ast')} assists per 100`,`league ${L.ast.toFixed(1)}`];
+    case 'o_tov': return [`${per('tov')} turnovers per 100`,`league ${L.tov.toFixed(1)}`];
+    case 'o_oreb': return [`${per('oreb')} off. rebounds per 100`,`league ${L.oreb.toFixed(1)}`];
+    case 'd_dreb': return [`${per('dreb',1)} def. rebounds per 100`,`league ${L.dreb.toFixed(1)}`];
+    case 'd_blk': return [`${per('blk',1)} blocks per 100`,`league ${L.blk.toFixed(1)}`];
+    case 'd_stl': return [`${per('stl',1)} steals per 100`,`league ${L.stl.toFixed(1)}`];
+    case 'd_pf': return [`${per('pf',1)} fouls per 100`,`league ${L.pf.toFixed(1)}`];
+    case 'd_opprim': return [`${fmt(x.d_opprim,1)} rim points allowed per 100 vs average`,'opponents finishing at the rim while he plays (lower is better)'];
+    case 'd_oppxq': return [`${fmt(x.d_oppxq,1)} expected points allowed per 100 vs average`,'from where opponents shoot while he plays (lower is better)'];
+  } return null; }
+function skDetail(c,p){
+  const pa=(P.rows.find(x=>x.p.k===p.k)||{}).parts||{}, h=D.hist[p.k], R=M.raw;
+  const li=h?h.s.indexOf(R?R.y:-1):-1, yl=R?seasonLbl(R.y):'last season';
+  const cell=v=>v==null?'<td>–</td>':`<td class="${cls(v)}">${fmt(v,2)}</td>`;
+  let rows='', sp=0, sl=0, anyL=false;
+  if(c==='hustle'){
+    const hb=p.hb||[0,0];
+    rows=[['Loose balls recovered',hb[0]],['3PT shots contested',hb[1]]].map(([n,v])=>`<tr><td>${n}</td>${cell(v)}</tr>`).join('');
+    return `<table><colgroup><col class="c1"><col class="c2"></colgroup><thead><tr><th>Stat</th><th>Projection</th></tr></thead><tbody>${rows}<tr class="tot"><td>Hustle total</td>${cell(pa.hustle||0)}</tr></tbody></table>
+      <p class="note">Tracking stats from recent seasons, per 100 possessions vs league average, weighted by how much each has moved scoring margin.</p>`; }
+  const fs=[]; for(let j=0;j<NF;j++) if(M.comp_of[M.feats[j]]===c) fs.push(j);
+  fs.forEach(j=>{ const f=M.feats[j], w=S[c];
+    const vp=M.slope*p.f[j]*w; sp+=vp;
+    const vl=li>=0?h.v[li*NF+j]/1000*w*M.slope:null; if(vl!=null){ sl+=vl; anyL=true; }
+    const rw=li>=0?skRaw(f,h):null;
+    rows+=`<tr><td>${SKF[f]||f}</td>${cell(vp)}${cell(vl)}<td class="skst">${rw?`${esc(rw[0])}<small>${esc(rw[1])}</small>`:'–'}</td></tr>`;
+    if(rw) rows+=`<tr class="sr"><td colspan="3">${esc(rw[0])} · ${esc(rw[1])}</td></tr>`; });
+  if(fs.length>1) rows+=`<tr class="tot"><td>${LABEL[c]}</td>${cell(pa[c]!=null?pa[c]:sp)}${anyL?cell(sl):'<td>–</td>'}<td class="skst"></td></tr>`;
+  const n3=c==='three_pt'?' The projection rates 3-point accuracy with a talent estimate (career shooting plus free throws), so it can differ from one season.':'';
+  const nl=li<0?` He didn't play in ${yl}.`:'';
+  const acc=['three_pt','rim_finishing','pullup_mid','foul_drawing'].includes(c)?' Accuracy counts makes above average on his attempts, so few attempts add little either way.':'';
+  return `<table><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"></colgroup><thead><tr><th>Stat</th><th>Projection</th><th>${yl}</th><th class="skst">${yl} actual</th></tr></thead><tbody>${rows}</tbody></table>
+    <p class="note">Points per 100 each stat adds. Projection: last three seasons, newest counts most. ${yl}: that season alone.${acc}${n3}${nl}</p>`;
+}
+function skillBars(pa,p){
   const cs=PARTS.filter(c=>pa[c]!=null&&Math.abs(pa[c])>=0.005).sort((a,b)=>pa[b]-pa[a]); if(!cs.length) return '';
   const mp=Math.max(0,...cs.map(c=>pa[c])), mn=Math.max(0,...cs.map(c=>-pa[c])), span=(mp+mn)||1, z=mn/span*100;
   let prevPos=null;
   const rows=cs.map(c=>{ const v=pa[c], w=Math.abs(v)/span*100, pos=v>0;
     const brk=prevPos===true&&!pos?' brk':''; prevPos=pos;
-    return `<li class="skr${brk}"><span class="skl"${c==='hustle'?` title="${LABEL[c]}"`:''}>${c==='hustle'?'Hustle (loose balls, contests)':LABEL[c]}</span><span class="skb"><span class="skz" style="left:${z}%"></span><span class="skf" style="${pos?`left:${z}%`:`left:${z-w}%`};width:${Math.max(w,0.6)}%;background:var(--c-${c})"></span></span><b class="skv ${cls(v)}">${fmt(v,2)}</b></li>`; }).join('');
-  return `<div class="skhd"><h4>Strengths and weaknesses</h4><span class="note">best to worst, in points per 100 each part adds to his rating</span></div><ol class="sk">${rows}</ol>`;
+    const tap=p&&(M.components.includes(c)&&p.f||c==='hustle'&&p.hb), op=tap&&pvSkOpen.has(c);
+    return `<li class="skr${brk}${tap?' tap':''}${op?' open':''}"${tap?` data-sk="${c}" role="button" tabindex="0" aria-expanded="${op}"`:''}><span class="skl"${c==='hustle'?` title="${LABEL[c]}"`:''}>${c==='hustle'?'Hustle (loose balls, contests)':LABEL[c]}${tap?'<span class="chev" aria-hidden="true">▸</span>':''}</span><span class="skb"><span class="skz" style="left:${z}%"></span><span class="skf" style="${pos?`left:${z}%`:`left:${z-w}%`};width:${Math.max(w,0.6)}%;background:var(--c-${c})"></span></span><b class="skv ${cls(v)}">${fmt(v,2)}</b></li>${op?`<li class="skd" data-skd="${c}">${skDetail(c,p)}</li>`:''}`; }).join('');
+  return `<div class="skhd"><h4>Strengths and weaknesses</h4><span class="note">best to worst, in points per 100 each part adds to his rating${p&&p.f?'; tap a skill for the stats behind it':''}</span></div><ol class="sk">${rows}</ol>`;
 }
 function renderPV(){
   if(!pvKey||!P) return;
@@ -1441,7 +1515,7 @@ function renderPV(){
     <tr class="tot"><td>Model rating</td><td class="num ${cls(r.mtot)}">${fmt(r.mtot,2)}</td></tr>
     ${r.o.r!=null?`<tr class="tot"><td>Your override</td><td class="num ov">${fmt(r.tot,2)}</td></tr>`:''}`;
   h+=`<div class="pvsec"><h3>How the 2026-27 rating is built</h3><p class="note">Points per 100 possessions over an average player.${p.fx==null?` Box-score, lineup and age parts include the ×${M.slope.toFixed(3)} calibration.`:''}</p><table class="build"><tbody>${rowsB}</tbody></table>`;
-  if(p.fx==null) h+=skillBars(pa);
+  if(p.fx==null) h+=skillBars(pa,p);
   h+=`</div>`;
   // rookie college profile
   if(rook){ const RV=M.rv;
@@ -1484,7 +1558,12 @@ function renderPV(){
   $('pv').innerHTML=h;
   const cc=$('pv').querySelector('.cchart'); if(cc) cc.scrollLeft=cc.scrollWidth;
 }
-$('pv').addEventListener('click',e=>{ if(e.target.closest('#pvBack')){ pvPushed?history.back():closePlayer(); return; }
+function skToggle(li){ const c=li.dataset.sk, p=byKey.get(pvKey); if(!c||!p) return;
+  const nx=li.nextElementSibling, open=nx&&nx.classList.contains('skd');
+  if(open){ nx.remove(); pvSkOpen.delete(c); li.classList.remove('open'); li.setAttribute('aria-expanded','false'); }
+  else { li.insertAdjacentHTML('afterend',`<li class="skd" data-skd="${c}">${skDetail(c,p)}</li>`); pvSkOpen.add(c); li.classList.add('open'); li.setAttribute('aria-expanded','true'); } }
+$('pv').addEventListener('keydown',e=>{ const li=e.target.closest&&e.target.closest('.skr.tap'); if(li&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); skToggle(li); } });
+$('pv').addEventListener('click',e=>{ const sk=e.target.closest('.skr.tap'); if(sk){ skToggle(sk); return; } if(e.target.closest('#pvBack')){ pvPushed?history.back():closePlayer(); return; }
   const b=e.target.closest('[data-edit]'); if(b) openEditor(b.dataset.edit); });
 $('pv').addEventListener('change',e=>{ if(e.target.id==='pvMode'){ pvMode=e.target.value; renderPV(); } });
 
@@ -1596,7 +1675,7 @@ if(window.claude&&window.claude.use){
   const hdr=t=>({Authorization:`Bearer ${t}`, Accept:'application/vnd.github+json'});
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
   let D, SZ, hist=null, remote=null;
-  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=c4939b9f2d',{}), getJSON('data/latest.json')]); }
+  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=eac72b1a54',{}), getJSON('data/latest.json')]); }
   catch(e){ say('Could not load data. Check your connection and reopen.'); return; }
   try{ hist=await getJSON('data/history.json'); }catch(e){}
   async function fetchRemote(){
