@@ -665,7 +665,8 @@ function makeEngine(D){
     for(let i=0;i<NF;i++){const v=SL*p.f[i]*m[i]; const c=compOf[F[i]]; parts[c]=(parts[c]||0)+v; if(isO[i]) off+=v; else def+=v;}
     const lo=SL*S.lineup_o*p.lo, ld=SL*S.lineup_d*p.ld, ag=SL*p.ag*(S.age==null?1:S.age);
     const rt=p.rt||0; parts.lineup_o=lo; parts.lineup_d=ld; parts.aging=ag; if(rt) parts.returner=rt;
-    const hu=p.hu||0; if(hu) parts.hustle=hu;  // hustle stats (defense #7): post-slope, fixed
+    const hu=p.hu||0, hc=(p.hb&&p.hb[1])||0; if(hu) parts.hustle=hu-hc;  // hustle stats (defense #7): post-slope, fixed. Display: the 3PT-contest part is shown under perimeter defense, loose balls stay 'hustle'
+    if(hc) parts.perimeter_def=(parts.perimeter_def||0)+hc;
     const dreb=parts.def_rebounding||0, dstop=def-dreb+ld+hu;  // defense split: rebounding vs stops/shot prevention (box + lineup defense)
     off+=lo+ag/2+rt/2; def+=ld+ag/2+rt/2+hu;
     return {off, def, parts, dreb, dstop};
@@ -816,7 +817,7 @@ const E=makeEngine(D), M=D.meta, TEAMS=E.TEAMS, NSIM=APP&&APP.nsim||10000;
 const COMPS=M.components.concat(['lineup_o','lineup_d']);
 const LABEL={three_pt:'Three-point shooting', rim_finishing:'Rim finishing', pullup_mid:'Pull-ups and midrange', foul_drawing:'Foul drawing',
   self_creation:'Self-creation', playmaking:'Playmaking', ball_security:'Ball security', off_rebounding:'Offensive rebounding',
-  def_rebounding:'Defensive rebounding', rim_protection:'Rim protection', perimeter_def:'Perimeter defense', hustle:'Hustle (loose balls, 3PT contests)', lineup:'Lineup impact', lineup_o:'Lineup impact, offense', lineup_d:'Lineup impact, defense',
+  def_rebounding:'Defensive rebounding', rim_protection:'Rim protection', perimeter_def:'Perimeter defense', hustle:'Loose balls recovered', lineup:'Lineup impact', lineup_o:'Lineup impact, offense', lineup_d:'Lineup impact, defense',
   aging:'Age curve', returner:'Return from missed season', base:'Rookie or newcomer baseline', season:"This season's games"};
 const PARTS=COMPS.concat(['hustle','aging','returner','base','season']);
 const GROUPS=[['Offense',['three_pt','rim_finishing','pullup_mid','foul_drawing','self_creation','playmaking','ball_security','off_rebounding']],
@@ -1455,9 +1456,9 @@ function skDetail(c,p){
   let rows='', sp=0, sl=0, anyL=false;
   if(c==='hustle'){
     const hb=p.hb||[0,0];
-    rows=[['Loose balls recovered',hb[0]],['3PT shots contested',hb[1]]].map(([n,v])=>`<tr><td>${n}</td>${cell(v)}</tr>`).join('');
-    return `<table><colgroup><col class="c1"><col class="c2"></colgroup><thead><tr><th>Stat</th><th>Projection</th></tr></thead><tbody>${rows}<tr class="tot"><td>Hustle total</td>${cell(pa.hustle||0)}</tr></tbody></table>
-      <p class="note">Tracking stats from recent seasons, per 100 possessions vs league average, weighted by how much each has moved scoring margin.</p>`; }
+    rows=`<tr><td>Loose balls recovered</td>${cell(pa.hustle!=null?pa.hustle:hb[0])}</tr>`;
+    return `<table><colgroup><col class="c1"><col class="c2"></colgroup><thead><tr><th>Stat</th><th>Projection</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="note">Tracking stat from recent seasons, per 100 possessions vs league average, weighted by how much it has moved scoring margin.</p>`; }
   const fs=[]; for(let j=0;j<NF;j++) if(M.comp_of[M.feats[j]]===c) fs.push(j);
   fs.forEach(j=>{ const f=M.feats[j], w=S[c];
     const vp=M.slope*p.f[j]*w; sp+=vp;
@@ -1465,8 +1466,9 @@ function skDetail(c,p){
     const rw=li>=0?skRaw(f,h):null;
     rows+=`<tr><td>${SKF[f]||f}</td>${cell(vp)}${cell(vl)}<td class="skst">${rw?`${esc(rw[0])}<small>${esc(rw[1])}</small>`:'–'}</td></tr>`;
     if(rw) rows+=`<tr class="sr"><td colspan="3">${esc(rw[0])} · ${esc(rw[1])}</td></tr>`; });
+  if(c==='perimeter_def'&&p.hb){ const v=p.hb[1]; sp+=v; rows+=`<tr><td>3PT shots contested</td>${cell(v)}<td>–</td><td class="skst">–</td></tr>`; }
   if(fs.length>1) rows+=`<tr class="tot"><td>${LABEL[c]}</td>${cell(pa[c]!=null?pa[c]:sp)}${anyL?cell(sl):'<td>–</td>'}<td class="skst"></td></tr>`;
-  const n3=c==='three_pt'?' The projection rates 3-point accuracy with a talent estimate (career shooting plus free throws), so it can differ from one season.':'';
+  const n3=c==='perimeter_def'&&p.hb?' 3PT contests are a tracking stat (NBA.com hustle data) and have no row for last season.':c==='three_pt'?' The projection rates 3-point accuracy with a talent estimate (career shooting plus free throws), so it can differ from one season.':'';
   const nl=li<0?` He didn't play in ${yl}.`:'';
   const acc=['three_pt','rim_finishing','pullup_mid','foul_drawing'].includes(c)?' Accuracy counts makes above average on his attempts, so few attempts add little either way.':'';
   return `<table><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"></colgroup><thead><tr><th>Stat</th><th>Projection</th><th>${yl}</th><th class="skst">${yl} actual</th></tr></thead><tbody>${rows}</tbody></table>
@@ -1479,7 +1481,7 @@ function skillBars(pa,p){
   const rows=cs.map(c=>{ const v=pa[c], w=Math.abs(v)/span*100, pos=v>0;
     const brk=prevPos===true&&!pos?' brk':''; prevPos=pos;
     const tap=p&&(M.components.includes(c)&&p.f||c==='hustle'&&p.hb), op=tap&&pvSkOpen.has(c);
-    return `<li class="skr${brk}${tap?' tap':''}${op?' open':''}"${tap?` data-sk="${c}" role="button" tabindex="0" aria-expanded="${op}"`:''}><span class="skl"${c==='hustle'?` title="${LABEL[c]}"`:''}>${c==='hustle'?'Hustle (loose balls, contests)':LABEL[c]}${tap?'<span class="chev" aria-hidden="true">▸</span>':''}</span><span class="skb"><span class="skz" style="left:${z}%"></span><span class="skf" style="${pos?`left:${z}%`:`left:${z-w}%`};width:${Math.max(w,0.6)}%;background:var(--c-${c})"></span></span><b class="skv ${cls(v)}">${fmt(v,2)}</b></li>${op?`<li class="skd" data-skd="${c}">${skDetail(c,p)}</li>`:''}`; }).join('');
+    return `<li class="skr${brk}${tap?' tap':''}${op?' open':''}"${tap?` data-sk="${c}" role="button" tabindex="0" aria-expanded="${op}"`:''}><span class="skl">${LABEL[c]}${tap?'<span class="chev" aria-hidden="true">▸</span>':''}</span><span class="skb"><span class="skz" style="left:${z}%"></span><span class="skf" style="${pos?`left:${z}%`:`left:${z-w}%`};width:${Math.max(w,0.6)}%;background:var(--c-${c})"></span></span><b class="skv ${cls(v)}">${fmt(v,2)}</b></li>${op?`<li class="skd" data-skd="${c}">${skDetail(c,p)}</li>`:''}`; }).join('');
   return `<div class="skhd"><h4>Strengths and weaknesses</h4><span class="note">best to worst, in points per 100 each part adds to his rating${p&&p.f?'; tap a skill for the stats behind it':''}</span></div><ol class="sk">${rows}</ol>`;
 }
 function renderPV(){
@@ -1675,7 +1677,7 @@ if(window.claude&&window.claude.use){
   const hdr=t=>({Authorization:`Bearer ${t}`, Accept:'application/vnd.github+json'});
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
   let D, SZ, hist=null, remote=null;
-  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=eac72b1a54',{}), getJSON('data/latest.json')]); }
+  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=9b53abb9ef',{}), getJSON('data/latest.json')]); }
   catch(e){ say('Could not load data. Check your connection and reopen.'); return; }
   try{ hist=await getJSON('data/history.json'); }catch(e){}
   async function fetchRemote(){
