@@ -1,6 +1,7 @@
 team,abbr,name,status,date,type,detail,side,return_date,comment
 Atlanta Hawks,ATL,Henri Veesaar,Out,2026-09-21T19:50Z,out,,Right,2027-07-01,"Veesaar was diagnosed with a torn right ACL and is expected to miss the 2026-27 season, the Hawks announced Monday."
 Atlanta Hawks,ATL,Mouhamed Gueye,Day-To-Day,2026-07-19T00:14Z,day-to-day,Fracture,Left,2026-10-21,"Gueye underwent surgery Tuesday to repair a fractured left foot that he suffered during a workout last week, Brad Rowland of the Locked On Podcast Network reports."
+Boston Celtics,BOS,Devin Carter,Day-To-Day,2026-10-18T03:08Z,day-to-day,,,2026-10-20,"Carter (illness) agreed to a two-way deal with the Celtics on Saturday, Michael Scotto of HoopsHype.com reports."
 Brooklyn Nets,BKN,Joshua Jefferson,Out,2026-10-16T18:37Z,out,,,2026-10-24,"Jefferson (back) has yet to fully participate in team activities and remains without a timetable for his return, Erik Slater of ClutchPoints.com reports."
 Charlotte Hornets,CHA,Grayson Allen,Day-To-Day,2026-10-17T02:44Z,day-to-day,Soreness,Right,2026-10-21,Allen (knee) didn't play in Friday's 117-98 preseason loss to the Grizzlies.
 Charlotte Hornets,CHA,Moussa Diabate,Day-To-Day,2026-10-16T22:58Z,day-to-day,,Right,2026-10-21,Diabate has been ruled out for Friday's preseason finale against the Grizzlies due to a right elbow injury.
@@ -56,8 +57,8 @@ Oklahoma City Thunder,OKC,Cason Wallace,Day-To-Day,2026-10-16T00:19Z,day-to-day,
 Oklahoma City Thunder,OKC,Nikola Topic,Day-To-Day,2026-10-16T00:17Z,day-to-day,Surgery,Not Specified,2026-10-20,"Topic (back) is out for Thursday's preseason game against Houston, Justin Martinez of The Oklahoman reports."
 Oklahoma City Thunder,OKC,Chet Holmgren,Day-To-Day,2026-10-16T00:16Z,day-to-day,Bruise,,2026-10-20,"Holmgren (quadriceps) has been ruled out for Thursday's preseason game against the Rockets, Justin Martinez of The Oklahoman reports."
 Oklahoma City Thunder,OKC,Otega Oweh,Out,2026-10-15T01:22Z,out,Surgery,Right,2027-07-01,"Oweh (Achilles) underwent surgery Wednesday and will miss the entirety of the 2026-27 season, Brandon Rahbar of DailyThunder.com reports."
+Orlando Magic,ORL,Jase Richardson,Day-To-Day,2026-10-17T23:29Z,day-to-day,Soreness,,2026-10-21,"Richardson (back) is considered day-to-day, Jason Beede of the Orlando Sentinel reports."
 Orlando Magic,ORL,Noah Penda,Out,2026-10-17T22:19Z,out,,Right,2026-11-18,"Penda was diagnosed with a partially torn right hamstring Saturday, Jason Beede of the Orlando Sentinel reports."
-Orlando Magic,ORL,Jase Richardson,Day-To-Day,2026-10-17T01:57Z,day-to-day,Soreness,,2026-10-21,Richardson logged seven minutes before exiting Friday's 136-115 preseason win over the Heat due to lower-back soreness. He contributed two rebounds and two assists.
 Orlando Magic,ORL,Franz Wagner,Day-To-Day,2026-10-17T01:55Z,day-to-day,Soreness,Right,2026-10-21,"Wagner exited Friday's 136-115 preseason win over the Heat with right shoulder soreness and did not return, Cody Taylor of USA Today reports."
 Orlando Magic,ORL,Jonathan Isaac,Day-To-Day,2026-10-16T21:41Z,day-to-day,Sprain,Left,2026-10-21,Isaac (knee) is out for Friday's preseason game against Miami.
 Orlando Magic,ORL,Anthony Black,Day-To-Day,2026-10-16T21:28Z,day-to-day,Sprain,Right,2026-10-21,Black (ankle) will not play in Friday's preseason game against the Heat.
@@ -68,7 +69,7 @@ Philadelphia 76ers,PHI,Dean Wade,Day-To-Day,2026-10-17T02:12Z,day-to-day,Sprain,
 Philadelphia 76ers,PHI,Anfernee Simons,Day-To-Day,2026-10-15T17:28Z,day-to-day,,,2026-10-20,"Simons (hamstring) is out for Friday's preseason game against the Celtics, Kyle Neubeck of AllPHLY.com reports."
 Philadelphia 76ers,PHI,Adem Bona,Day-To-Day,2026-10-15T17:26Z,day-to-day,Sprain,Not Specified,2026-10-20,"Bona (foot) remains out for Friday's preseason finale against the Celtics, but he's getting closer to a return, Kyle Neubeck of AllPHLY.com reports."
 Philadelphia 76ers,PHI,Ariel Hukporti,Out,2026-10-06T19:17Z,out,Ruptured,Right,2027-10-01,"Hukporti has sustained a season-ending ruptured right Achilles tendon, per Shams Charania of ESPN."
-Phoenix Suns,PHX,Luke Kennard,Day-To-Day,2026-10-17T22:02Z,day-to-day,Strain,Left,2026-10-21,"Kennard (knee) has been ruled out for the Suns' final game of the preseason Friday against Utah, John Gambadoro of Arizona Sports 98.7 FM reports."
+Phoenix Suns,PHX,Luke Kennard,Day-To-Day,2026-10-18T13:00Z,day-to-day,Strain,Left,2026-10-21,"Kennard (knee) has been ruled out for the Suns' final game of the preseason Friday against Utah, John Gambadoro of Arizona Sports 98.7 FM reports."
 Phoenix Suns,PHX,Oso Ighodaro,Day-To-Day,2026-10-17T00:33Z,day-to-day,Soreness,,2026-10-21,"Ighodaro (hip) won't play in Friday's preseason game against Utah, Kellan Olson of ArizonaSports.com reports."
 Phoenix Suns,PHX,Mark Williams,Out,2026-09-11T16:03Z,out,Surgery,Left,2027-02-03,"Williams underwent surgery Thursday to repair a torn labrum in his left shoulder and will miss an extended period of time, Shams Charania of ESPN reports."
 Portland Trail Blazers,POR,Chris Youngblood,Day-To-Day,2026-10-17T00:42Z,day-to-day,Soreness,Left,2026-10-21,Youngblood (calf) won't play in Friday's preseason game versus the Warriors.
@@ -81,7 +82,6 @@ Sacramento Kings,SAC,Maxime Raynaud,Out,2026-10-15T14:36Z,out,Dislocated,Right,2
 San Antonio Spurs,SA,Jayden Quaintance,Out,2026-10-05T21:43Z,out,Surgery,Right,2026-12-01,"Quaintance has been around the team but has not yet been cleared for basketball activities, Matt Guzman of SI.com reports."
 San Antonio Spurs,SA,Tobias Harris,Day-To-Day,2026-10-05T01:27Z,day-to-day,Strain,Left,2026-10-20,"Spurs head coach Mitch Johnson said they will not rush Tobias Harris (calf) back to the court, Jared Weiss of The Athletic reports."
 Toronto Raptors,TOR,Nate Bittle,Day-To-Day,2026-10-17T16:31Z,day-to-day,,Right,2026-10-21,"Bittle (foot) agreed to a two-way contract with Toronto on Saturday, Michael Scotto of HoopsHype.com reports."
-Toronto Raptors,TOR,Chucky Hepburn,Day-To-Day,2026-10-12T20:12Z,day-to-day,,Left,2026-11-06,"The Raptors waived Hepburn (hamstring) on Monday, per Ryan Wolstat of the Toronto Sun."
 Utah Jazz,UTAH,Blake Hinson,Day-To-Day,2026-10-17T01:28Z,day-to-day,,Left,2026-10-21,Hinson (hamstring) is listed as out for Friday's preseason game against Phoenix.
 Utah Jazz,UTAH,Trey Alexander,Day-To-Day,2026-10-17T01:27Z,day-to-day,,Left,2026-10-21,Alexander is out for Friday's preseason finale in Phoenix due to a left knee injury.
 Utah Jazz,UTAH,Kyle Filipowski,Day-To-Day,2026-10-10T20:12Z,day-to-day,,,2026-10-21,"Jazz head coach Will Hardy said Saturday that Filipowski is progressing well and doing the necessary steps to get back on the court, but the big man doesn't have a return timeline, Shreyas Laddha of The Salt Lake Tribune reports."
