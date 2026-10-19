@@ -1,28 +1,6 @@
 {
  "_note": "User overrides applied by the nightly run (and later by the app). players: key -> {t: team, g: games of 82, mpg, r: rating}. Keys: p<NBA player id> or n:<name>|<team>. Migrated from the claude.ai dashboard (settings/current) 2026-09-21: no player overrides, all sliders at defaults.",
- "players": {
-  "p203084": {
-   "d": "N"
-  },
-  "n:Brayden Burries|MIL": {
-   "d": "R"
-  },
-  "p1643016": {
-   "d": "R"
-  },
-  "p202691": {
-   "d": "S"
-  },
-  "p203914": {
-   "d": "N"
-  },
-  "p1629645": {
-   "d": "R"
-  },
-  "p1631157": {
-   "d": "S"
-  }
- },
+ "players": {},
  "sliders": {
   "three_pt": 1,
   "rim_finishing": 1,
@@ -40,5 +18,5 @@
   "age": 1,
   "bm": 0.37290551766215724
  },
- "updated": "2026-10-19T14:55:14.724Z"
+ "updated": "2026-10-19T15:00:26.105Z"
 }
