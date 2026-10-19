@@ -157,6 +157,7 @@ tr.cut td{border-bottom:2px solid var(--rule)}
 .roster .warn{color:var(--neg);font-size:13px;margin:6px 2px 0}
 .rsum{display:flex;flex-wrap:wrap;gap:4px 22px;font-size:13.5px;color:var(--muted);margin:0 2px 8px}
 .rsum b{color:var(--ink);font-family:var(--cond);font-size:17px}
+.popath{margin:0 2px 6px}
 /* head to head */
 .h2h{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:18px;margin-bottom:22px}
 .h2h .pick{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
@@ -1026,9 +1027,14 @@ function rosterHTML(x){
     <td class="num ${r.o.r!=null?'ov':cls(r.tot)}">${fmt(r.tot)}</td><td class="num ${z0?'muted':cls(gmv(r).add)}">${fmt(gmv(r).add,2)}</td>
     <td><button class="edit" data-edit="${esc(r.p.k)}">Edit</button></td></tr>`; };
   const rows=rot.map(row).join('')+(bench.length?`<tr class="benchhd"><td colspan="8">No projected minutes (${bench.length}): the roster has more players than minutes. Tap Edit to give someone a role.</td></tr>`+bench.map(row).join(''):'');
-  return `${winsHist(x)}${histChart(x.t)}<div class="roster"><div class="rsum"><span>Net rating <b class="${cls(x.net)}">${fmt(x.net)}</b></span><span>Offense <b>${fmt(x.off)}</b></span><span>Defense <b>${fmt(x.def)}</b></span><span>Minutes-weighted age <b>${x.age.toFixed(1)}</b></span></div>
+  return `${winsHist(x)}${histChart(x.t)}<div class="roster">${poPath(x)}<div class="rsum"><span>Net rating <b class="${cls(x.net)}">${fmt(x.net)}</b></span><span>Offense <b>${fmt(x.off)}</b></span><span>Defense <b>${fmt(x.def)}</b></span><span>Minutes-weighted age <b>${x.age.toFixed(1)}</b></span></div>
     <table><thead><tr><th class="l">Player</th><th class="hide-s">Age</th><th>Games</th><th>Min when playing</th><th class="hide-s">Season min</th><th>Rating</th><th title="Rating times share of team minutes">Adds to team</th><th></th></tr></thead><tbody>${rows}</tbody></table>
     ${x.roster.filter(r=>r.roleU&&r.role==='S').length>5?`<p class="warn">You have set ${x.roster.filter(r=>r.roleU&&r.role==='S').length} starters for ${x.t}; a team starts five.</p>`:''}${x.over>0?`<p class="warn">Your minutes for this team add up to ${Math.round((SEASON?240*x.gr:19680)+x.over).toLocaleString()}, more than the ${(SEASON?240*x.gr:19680).toLocaleString()} ${SEASON?'left this season':'a season allows'}. Everyone else is at zero.</p>`:''}</div>`;
+}
+// postseason path (2026-10-18): top-6 seed, play-in (finished 7th-10th), playoffs (top 6 + play-in winners), title
+function poPath(x){
+  const s=SIMB&&SIMB[x.i]; if(!s||s.pin==null) return '';
+  return `<div class="rsum popath" title="Playoffs = a top-6 seed, or 7th to 10th and through the play-in"><span>Top-6 seed <b>${pct(s.top6)}</b></span><span>Play-in <b>${pct(s.pin)}</b></span><span>Makes playoffs <b>${pct(s.po)}</b></span><span>Title <b>${pct(s.title)}</b></span></div>`;
 }
 // win distribution: final wins across the simulated seasons (forecast = bars, model alone = outline)
 function winsHist(x){
@@ -1677,7 +1683,7 @@ if(window.claude&&window.claude.use){
   const hdr=t=>({Authorization:`Bearer ${t}`, Accept:'application/vnd.github+json'});
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
   let D, SZ, hist=null, remote=null;
-  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=9b53abb9ef',{}), getJSON('data/latest.json')]); }
+  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=bcea55b551',{}), getJSON('data/latest.json')]); }
   catch(e){ say('Could not load data. Check your connection and reopen.'); return; }
   try{ hist=await getJSON('data/history.json'); }catch(e){}
   async function fetchRemote(){
