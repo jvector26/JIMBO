@@ -1,4 +1,4 @@
-2026-10-18T22:37:20.007261Z
+2026-10-19T17:00:31.087588Z
 round 0 curl_cffi chrome 403 6003 b'<!DOCTYPE html><html lang="en-US"><head><title>Just a moment'
-round 0 curl_cffi chrome120 200 212077 b'<!DOCTYPE html>\r\n<!--[if lt IE 7]>      <html lang="en" clas'
-saved live/2026/depth/realgm_20261018.html.gz 212077
+round 0 curl_cffi chrome120 200 211801 b'<!DOCTYPE html>\r\n<!--[if lt IE 7]>      <html lang="en" clas'
+saved live/2026/depth/realgm_20261019.html.gz 211801
