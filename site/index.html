@@ -1073,7 +1073,7 @@ const ST_COLS=[
   {k:'mw', lab:'Model', tip:'The model alone', v:x=>x.mw, td:x=>x.mw.toFixed(1)},
   {k:'line', lab:'Line', tip:'Vegas win-total line', v:x=>x.line, td:x=>x.line},
   {k:'agea', lab:'Age adj', tip:'Roster-age adjustment in the forecast (younger rosters have beaten the market), including the league re-centering', v:x=>x.pa+x.padj, td:x=>fmt(x.pa+x.padj), c:x=>cls(x.pa+x.padj)},
-  {k:'edge', lab:'Model vs line', tip:'Model alone minus the line', v:x=>x.mw-x.line, td:x=>fmt(x.mw-x.line), c:x=>Math.abs(x.mw-x.line)>=3?cls(x.mw-x.line):''},
+  {k:'edge', lab:'Forecast vs line', tip:'Forecast minus the line (includes the roster-age adjustment)', v:x=>x.bw-x.line, td:x=>fmt(x.bw-x.line), c:x=>Math.abs(x.bw-x.line)>=2?cls(x.bw-x.line):''},
   {k:'pover', lab:'Over line', tip:'Chance the forecast finishes over the betting line', hide:'hide-m', v:(x,s)=>s?s.pover:-1, td:(x,s)=>s?pct(s.pover):'–'},
   {k:'po', lab:'Playoffs', v:(x,s)=>s?s.po:-1, td:(x,s)=>s?pct(s.po):'–'},
   {k:'title', lab:'Title', hide:'hide-s', v:(x,s)=>s?s.title:-1, td:(x,s)=>s?pct(s.title):'–'},
