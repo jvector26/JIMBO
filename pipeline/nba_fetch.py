@@ -188,6 +188,9 @@ def fetch_injuries(season):
     print(f"injuries: {len(df)} rows, statuses {df.status.value_counts().to_dict() if len(df) else {}}")
 
 
+ESPN_ABBR = {"SA": "SAS", "GS": "GSW", "NY": "NYK", "NO": "NOP", "UTAH": "UTA", "WSH": "WAS"}
+
+
 def fetch_odds(season, date=None):
     url = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard"
     if date:
@@ -205,8 +208,20 @@ def fetch_odds(season, date=None):
                              away_ml=(o.get("awayTeamOdds") or {}).get("moneyLine")))
     df = pd.DataFrame(rows)
     stamp = date or dt.datetime.utcnow().strftime("%Y%m%d")
+    f = os.path.join(live_dir(season, "odds"), f"{stamp}.csv")
+    if len(df):   # ESPN uses SA/GS/NY/NO/UTAH/WSH; the schedule uses NBA tricodes (2026-10-20: lines for those teams never matched)
+        df["home"] = df.home.replace(ESPN_ABBR); df["away"] = df.away.replace(ESPN_ABBR)
+        df["details"] = df.details.map(lambda x: " ".join([ESPN_ABBR.get(w, w) for w in x.split(" ")]) if isinstance(x, str) else x)
+    if os.path.exists(f):   # ESPN drops a game's odds once it tips: keep lines saved by an earlier run for games no longer listed
+        old = pd.read_csv(f)
+        old["home"] = old.home.replace(ESPN_ABBR); old["away"] = old.away.replace(ESPN_ABBR)
+        old["details"] = old.details.map(lambda x: " ".join([ESPN_ABBR.get(w, w) for w in x.split(" ")]) if isinstance(x, str) else x)
+        if len(df):
+            new_k = set(zip(df.home, df.away))
+            old = old[[k not in new_k for k in zip(old.home, old.away)]]
+        df = pd.concat([old, df], ignore_index=True) if len(df) else old
     if len(df):
-        df.to_csv(os.path.join(live_dir(season, "odds"), f"{stamp}.csv"), index=False)
+        df.to_csv(f, index=False)
     print(f"odds: {len(df)} rows for {stamp}")
 
 

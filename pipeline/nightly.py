@@ -349,6 +349,9 @@ if not (sched.date == asof_i).any() and (sched.date > asof_i).any():
 today = sched[sched.date == game_day]
 odds_f = os.path.join(live, "odds", f"{game_day}.csv")
 OD = pd.read_csv(odds_f) if os.path.exists(odds_f) else pd.DataFrame(columns=["home", "away", "spread", "details", "over_under", "home_ml", "away_ml"])
+_EA = {"SA": "SAS", "GS": "GSW", "NY": "NYK", "NO": "NOP", "UTAH": "UTA", "WSH": "WAS"}   # ESPN -> NBA tricodes (older odds files)
+OD["home"] = OD.home.replace(_EA); OD["away"] = OD.away.replace(_EA)
+OD["details"] = OD.details.map(lambda x: " ".join(_EA.get(w, w) for w in x.split(" ")) if isinstance(x, str) else x)
 netm = {t: game_strength(t) for t in SIM.TEAMS}; nm_mean = np.mean(list(netm.values()))
 tonight = []
 for _, gg in today.iterrows():

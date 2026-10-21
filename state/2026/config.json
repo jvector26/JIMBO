@@ -62,12 +62,10 @@
     0.63
    ]
   },
-  "exempt": [
-   "p1631105"
-  ],
+  "exempt": [],
   "min_team_players": 13,
   "newc_L": 308.6275017357719,
-  "state_chart": "20261007",
+  "state_chart": "20261019",
   "note": "nightly.py re-applies the latest RealGM chart dated before the opener: moves, drops to FA, tiers."
  }
 }
