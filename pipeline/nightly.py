@@ -87,7 +87,7 @@ try:
     if _DC and "m0" in PL and os.path.isdir(os.path.join(live, "depth")):
         import glob, depth_chart as DCH
         _first = int(sched.date.min()) if len(sched) else 99999999
-        _cut = min(asof_i, _first - 1)
+        _cut = min(asof_i, _first)   # the opening-day chart counts (2026-10-20: the 10-19 evening chart still had Kevin Porter Jr., waived that night)
         _fs = [f for f in sorted(glob.glob(os.path.join(live, "depth", "realgm_*.html.gz"))) if int(os.path.basename(f)[7:15]) <= _cut]
         if _fs:
             _R = DCH.load_chart(_fs[-1], S)
