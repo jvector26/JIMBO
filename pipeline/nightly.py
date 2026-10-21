@@ -125,6 +125,21 @@ except Exception as e:
     import traceback; traceback.print_exc()
     print(f"WARNING depth chart skipped: {e!r}")
     PL = _PL_pre_depth; DEPTH = {"chart": None, "moved": [], "dropped": [], "added": [], "user_tiers": [], "auto_tiers": [], "error": repr(e)[:200]}
+# rookies/newcomers without an NBA id in the state (key "n:<name>|<team>") get their id from the box scores the first time they
+# play (2026-10-21: Aday Mara was counted twice, once at his college prior and once as an unnamed -4.5 newcomer). Match on
+# normalized name + team, else name alone when unique. The key stays the same, so user overrides keep working.
+_bx = sorted(__import__("glob").glob(os.path.join(live, "box", "*.csv.gz")))
+if _bx and PL.player.isna().any():
+    _B = pd.concat([pd.read_csv(f, usecols=["player", "name", "abbr"]) for f in _bx]).drop_duplicates("player")
+    _B["k"] = _B.name.map(norm_name); _B = _B[~_B.player.isin(PL.player.dropna())]
+    _byt = {(k_, t_): p_ for k_, t_, p_ in zip(_B.k, _B.abbr, _B.player)}
+    _cnt = _B.k.value_counts(); _byn = {k_: p_ for k_, p_ in zip(_B.k, _B.player) if _cnt[k_] == 1}
+    _filled = []
+    for i_ in PL.index[PL.player.isna()]:
+        k_ = norm_name(PL.at[i_, "name"]); p_ = _byt.get((k_, PL.at[i_, "team"]), _byn.get(k_))
+        if p_ is not None and p_ not in set(PL.player.dropna()):
+            PL.at[i_, "player"] = int(p_); _filled.append(PL.at[i_, "name"])
+    if _filled: print(f"ids from box scores: {len(_filled)}", _filled[:12])
 # ------------------------------------------------------------------ ratings
 prior = PL.dropna(subset=["player"]).drop_duplicates("player").set_index("player").rating_pre
 prior.index = prior.index.astype(np.int64)
