@@ -4,7 +4,9 @@ name: nightly
 on:
   schedule:
     - cron: "17 10 * * *"   # ~6:17 ET: after all games are final (off :00, GitHub delays top-of-hour crons by hours)
+    - cron: "29 16 * * *"   # ~12:29 ET: extra slot (2026-10-20: scheduled runs landing 3-7 h late)
     - cron: "43 20 * * *"   # ~16:43 ET: refresh injuries and tonight's lines before tip-off
+    - cron: "11 22 * * *"   # ~18:11 ET: extra pre-tip slot (lines from earlier runs are kept once a game tips)
   workflow_dispatch:
     inputs:
       asof:
