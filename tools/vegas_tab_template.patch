@@ -1,0 +1,143 @@
+--- /tmp/claude-0/index.orig.html	2026-10-22 08:12:37.023544770 -0500
++++ site/index.html	2026-10-22 08:13:19.788318927 -0500
+@@ -269,7 +269,16 @@
+ .tabs{border-bottom:2px solid var(--black);gap:6px;margin-bottom:0}
+ .tabs button{font-family:var(--display);font-size:clamp(13px,1.9vw,16px);font-weight:400;color:var(--ink);border:2px solid var(--black);border-bottom:0;
+   border-radius:10px 10px 0 0;padding:8px 14px 6px;margin-bottom:-2px;background:#FFEB99}
+-#t-tn{background:#FFD9B8 !important} #t-pl{background:#FFD1E8} #t-hh{background:#C9F4F6}
++#t-tn{background:#FFD9B8 !important} #t-pl{background:#FFD1E8} #t-hh{background:#C9F4F6} #t-vg{background:#D9F7C8}
++/* JIMBO vs Vegas tab (session 29) */
++.vgtiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin:12px 0 18px}
++.vgt{border:2px solid var(--black);padding:9px 11px;box-shadow:4px 4px 0 var(--shadow2);background:var(--surface);display:flex;flex-direction:column;gap:2px}
++.vgk{font-size:12.5px;font-weight:600;color:var(--muted)} .vgv{font-family:var(--cond);font-weight:700;font-size:30px;line-height:1.1;color:var(--ink)}
++.vgv small{font-size:18px;color:var(--muted)} .vgv.vgpass{color:var(--magenta)}
++.vgh{font-size:15px;font-weight:700;margin:18px 0 2px} .vgread{min-height:2.6em;margin:2px 0 6px}
++.vgtab td.vgbig{font-weight:700} .vgtab tr.vgday td{background:var(--soft);font-weight:700;font-size:12.5px;color:var(--muted);padding-top:5px;padding-bottom:5px} .vgj{color:var(--magenta)}
++.bnav button[hidden]{display:none !important}
++@media (max-width:640px){ .vgtab td,.vgtab th{padding-left:4px;padding-right:4px;font-size:13px} .vgtiles{grid-template-columns:1fr 1fr;gap:10px} .vgv{font-size:26px} }
+ .tabs button[aria-selected="true"]{background:var(--surface) !important;border-bottom:2px solid var(--surface);transform:translateY(-2px)}
+ .panel{background:var(--surface);border:2px solid var(--black);border-top:0;padding:14px;margin-bottom:18px;box-shadow:5px 5px 0 var(--shadow)}
+ #pv{background:var(--surface);border:2px solid var(--black);padding:14px;box-shadow:5px 5px 0 var(--shadow)}
+@@ -508,6 +517,7 @@
+       <button role="tab" id="t-tn" aria-controls="p-tn" aria-selected="false" tabindex="-1" hidden>Tonight</button>
+       <button role="tab" id="t-pl" aria-controls="p-pl" aria-selected="false" tabindex="-1">Players</button>
+       <button role="tab" id="t-hh" aria-controls="p-hh" aria-selected="false" tabindex="-1">Head to head</button>
++      <button role="tab" id="t-vg" aria-controls="p-vg" aria-selected="false" tabindex="-1" hidden>vs Vegas</button>
+     </div>
+ 
+     <div class="panel" id="p-st" role="tabpanel" aria-labelledby="t-st">
+@@ -527,6 +537,8 @@
+ 
+     <div class="panel" id="p-tn" role="tabpanel" aria-labelledby="t-tn" hidden><div id="tonight"></div></div>
+ 
++    <div class="panel" id="p-vg" role="tabpanel" aria-labelledby="t-vg" hidden><div id="vegas"></div></div>
++
+     <div class="panel" id="p-pl" role="tabpanel" aria-labelledby="t-pl" hidden>
+       <div class="tools">
+         <input id="q" type="search" placeholder="Search player" aria-label="Search player">
+@@ -607,6 +619,7 @@
+   <button data-go="t-tn"><span class="ic" aria-hidden="true">🏀</span>Tonight</button>
+   <button data-go="t-pl"><span class="ic" aria-hidden="true">⭐</span>Players</button>
+   <button data-go="t-hh"><span class="ic" aria-hidden="true">🆚</span>Matchups</button>
++  <button data-go="t-vg" id="bn-vg" hidden><span class="ic" aria-hidden="true">🎰</span>vs Vegas</button>
+   <button data-go="set"><span class="ic" aria-hidden="true">⚙️</span>Settings</button>
+ </nav>
+ <footer>
+@@ -1337,6 +1350,71 @@
+ $('gv').addEventListener('click',e=>{ if(e.target.closest('#gvBack')){ gvPushed?history.back():closeGame(); return; }
+   const b=e.target.closest('[data-edit]'); if(b){ openEditor(b.dataset.edit); return; }
+   const pr=e.target.closest('[data-pv]'); if(pr) openPlayer(pr.dataset.pv); });
++// ---------- JIMBO vs Vegas (app; session 29). Data: data/vegas.json from pipeline/nightly.py, rows [date, home, away, JIMBO home margin
++// (last pre-tip run), DraftKings home line (closing as seen pre-tip), final home margin]. Games without a line are skipped.
++function vgStats(rows){
++  let n=0, em=0, ev=0, cl=0, tie=0, w=0, l=0, sgg=0, sgr=0, bw=0, bl=0;
++  rows.forEach(([, , , m, v, a])=>{ n++; em+=Math.abs(m-a); ev+=Math.abs(v-a);
++    const dm=Math.abs(m-a), dv=Math.abs(v-a); if(dm<dv) cl++; else if(dm===dv) tie++;
++    const g=m-v, r=a-v; sgg+=g*g; sgr+=g*r;
++    if(g!==0&&r!==0){ const win=(g>0)===(r>0); win?w++:l++; if(Math.abs(g)>=3) win?bw++:bl++; } });
++  const b=sgg?sgr/sgg:0; let t=null;
++  if(n>=3&&sgg){ let ss=0; rows.forEach(([, , , m, v, a])=>{ const e=(a-v)-b*(m-v); ss+=e*e; }); const se=Math.sqrt(ss/(n-1)/sgg); t=se?b/se:null; }
++  return {n, mm:n?em/n:0, mv:n?ev/n:0, cl, tie, w, l, bw, bl, b, t};
++}
++function vgChart(xs, series, refs, lab, aria){   // one y-axis line chart, x = games scored; tap/hover readout below
++  const all=series.flatMap(s=>s.v).concat(refs.map(r=>r.y)).filter(x=>x!=null&&isFinite(x));
++  let lo=Math.min(...all), hi=Math.max(...all); const pad=(hi-lo)*0.12||1; lo-=pad; hi+=pad;
++  const W=innerWidth<520?380:600, Hh=innerWidth<520?150:170, L=30, R=12, T=10, B=22, n=xs.length;
++  const x=i=>n===1?(L+W-R)/2:L+i/(n-1)*(W-L-R), y=u=>T+(hi-u)/(hi-lo)*(Hh-T-B);
++  const tk=v=>Math.abs(hi-lo)<4?v.toFixed(1):Math.round(v);
++  let g=`<line x1="${L}" x2="${W-R}" y1="${Hh-B}" y2="${Hh-B}" stroke="var(--line)"/><text x="${L-5}" y="${y(hi-pad)+4}" text-anchor="end">${tk(hi-pad)}</text><text x="${L-5}" y="${y(lo+pad)+4}" text-anchor="end">${tk(lo+pad)}</text>`;
++  refs.forEach(r=>{ g+=`<line x1="${L}" x2="${W-R}" y1="${y(r.y)}" y2="${y(r.y)}" stroke="var(--muted)" stroke-width="1" stroke-dasharray="${r.dash||'4 4'}"/>`+(r.label?`<text x="${W-R}" y="${y(r.y)-4}" text-anchor="end">${esc(r.label)}</text>`:''); });
++  series.forEach(s=>{ const pts=s.v.map((u,i)=>u==null?null:x(i)+','+y(u)).filter(Boolean);
++    if(pts.length>1) g+=`<polyline points="${pts.join(' ')}" fill="none" stroke="${s.c}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"${s.dash?` stroke-dasharray="${s.dash}"`:''}/>`;
++    const k=s.v.length-1; if(s.v[k]!=null) g+=`<circle cx="${x(k)}" cy="${y(s.v[k])}" r="4.5" fill="${s.c}" stroke="var(--surface)" stroke-width="2"/>`; });
++  g+=`<text x="${L}" y="${Hh-5}">${esc(xs[0].d)}</text>`+(n>1?`<text x="${W-R}" y="${Hh-5}" text-anchor="end">${esc(xs[n-1].d)}</text>`:'');
++  g+=`<line class="vgx" x1="0" x2="0" y1="${T}" y2="${Hh-B}" stroke="var(--ink)" stroke-width="1" visibility="hidden"/>`;
++  const id='vg'+Math.random().toString(36).slice(2,8);
++  setTimeout(()=>{ const sv=document.getElementById(id); if(!sv) return; const rd=sv.parentNode.nextElementSibling, ln=sv.querySelector('.vgx'), base=rd.textContent;
++    const at=e=>{ const bx=sv.getBoundingClientRect(), px=(e.clientX-bx.left)/bx.width*W; const i=n===1?0:Math.max(0,Math.min(n-1,Math.round((px-L)/(W-L-R)*(n-1))));
++      ln.setAttribute('x1',x(i)); ln.setAttribute('x2',x(i)); ln.setAttribute('visibility','visible'); rd.textContent=lab(i); };
++    sv.addEventListener('pointermove',at); sv.addEventListener('pointerdown',at);
++    sv.addEventListener('pointerleave',()=>{ ln.setAttribute('visibility','hidden'); rd.textContent=base; }); },0);
++  return `<div class="cchart"><svg id="${id}" viewBox="0 0 ${W} ${Hh}" width="100%" style="max-height:200px;touch-action:pan-y" role="img" aria-label="${esc(aria)}">${g}</svg></div><p class="note vgread">${esc(lab(n-1))}</p>`;
++}
++function renderVegas(){
++  const el=$('vegas'); if(!el) return;
++  const VG=APP&&APP.vg, rows=(VG&&VG.games||[]).filter(r=>r[4]!=null);
++  const dl=d=>{ const s=String(d); return new Date(`${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6)}T12:00:00`).toLocaleDateString(undefined,{month:'short',day:'numeric'}); };
++  let h=`<div class="conf"><h2>JIMBO vs Vegas</h2><span class="note">every game so far</span></div>
++    <p class="note">Each game is scored with JIMBO's margin from the last nightly run before tip-off against the DraftKings spread seen then (the closing line when the run is close to tip).</p>`;
++  if(!rows.length){ el.innerHTML=h+'<p class="note">No scored games yet.</p>'; return; }
++  const S=vgStats(rows), tie=S.tie?`, ${S.tie} tied`:'';
++  const tstr=S.t==null?'–':S.t.toFixed(1), pass=S.t!=null&&S.t>=2.5;
++  h+=`<div class="vgtiles">
++    <div class="vgt"><span class="vgk">Closer to the final score</span><span class="vgv">${S.cl} of ${S.n}</span><span class="note">JIMBO's margin beat the line's${tie}</span></div>
++    <div class="vgt"><span class="vgk">Average miss</span><span class="vgv">${S.mm.toFixed(1)} <small>vs ${S.mv.toFixed(1)}</small></span><span class="note">points: JIMBO vs the line</span></div>
++    <div class="vgt"><span class="vgk">Against the spread</span><span class="vgv">${S.w}–${S.l}</span><span class="note">siding with JIMBO; gap 3+: ${S.bw}–${S.bl}</span></div>
++    <div class="vgt"><span class="vgk">Edge test</span><span class="vgv${pass?' vgpass':''}">t ${tstr}</span><span class="note">${pass?'past':'needs'} 2.5 · ${S.n>=50?`weight on JIMBO ${Math.round(Math.max(0,Math.min(1,S.b))*100)}%`:'weight shown from 50 games'}</span></div>
++  </div>`;
++  // running series, one point per game day
++  const days=[...new Set(rows.map(r=>r[0]))].sort(), xs=[], mm=[], mv=[], tt=[];
++  days.forEach(d=>{ const sub=rows.filter(r=>r[0]<=d), s=vgStats(sub); xs.push({d:dl(d), n:s.n, s}); mm.push(s.mm); mv.push(s.mv); tt.push(s.t); });
++  h+=`<h3 class="vgh">Average miss so far</h3>
++    <div class="cleg"><span><i style="background:var(--magenta)"></i>JIMBO</span><span><i style="background:var(--ink)"></i>Vegas line</span><span>points per game, all games to date; lower is better</span></div>`
++    +vgChart(xs,[{v:mv,c:'var(--ink)'},{v:mm,c:'var(--magenta)'}],[],i=>`Through ${xs[i].d} (${xs[i].n} games): JIMBO misses by ${mm[i].toFixed(1)}, the line by ${mv[i].toFixed(1)}.`,'Running average miss, JIMBO vs the Vegas line');
++  h+=`<h3 class="vgh">Is JIMBO's disagreement with the line real?</h3>
++    <div class="cleg"><span><i style="background:var(--magenta)"></i>t-statistic: do games move the way JIMBO leans?</span><span>dashed: research bar 2.5</span></div>`
++    +(tt.some(v=>v!=null)?vgChart(xs,[{v:tt,c:'var(--magenta)'}],[{y:0,dash:'2 3'},{y:2.5,label:'2.5'}],i=>tt[i]==null?`Through ${xs[i].d}: too few games.`:`Through ${xs[i].d} (${xs[i].n} games): t ${tt[i].toFixed(2)}${xs[i].n>=50?`; best weight on JIMBO vs the line ${Math.round(Math.max(0,Math.min(1,xs[i].s.b))*100)}%`:''}; ATS ${xs[i].s.w}–${xs[i].s.l}.`,'Running t-statistic of JIMBO vs the line'):'<p class="note">Needs a few more games.</p>');
++  h+=`<p class="note">Rough guide: if JIMBO deserves half the weight against the line, t should pass 2.5 around 600 games (early January); a third, around 1,100 (late March); less than that, not this season. Games are noisy: a perfect forecast still misses by about 13 points.</p>`;
++  const who=(r,v,k)=>Math.abs(v)<0.05?'even':`${v>0?r[1]:r[2]} ${Math.abs(v).toFixed(k)}`;
++  h+=`<h3 class="vgh">Game log</h3><div class="tbl"><table class="vgtab"><thead><tr><th class="l">Game</th><th>JIMBO</th><th>Line</th><th>Final</th><th>Closer</th></tr></thead><tbody>`
++    +days.slice().reverse().map(d=>`<tr class="vgday"><td class="l" colspan="5">${dl(d)}</td></tr>`+rows.filter(r=>r[0]===d).reverse().map(r=>{ const [,hm,aw,m,v,a]=r, dm=Math.abs(m-a), dv=Math.abs(v-a), big=Math.abs(m-v)>=3;
++      return `<tr><td class="l">${aw}@${hm}</td><td${big?' class="vgbig"':''}>${who(r,m,1)}</td><td>${who(r,v,1)}</td><td>${who(r,a,0)}</td><td>${dm<dv?'<b class="vgj">JIMBO</b>':dm>dv?'Line':'Tie'}</td></tr>`; }).join('')).join('')
++    +`</tbody></table></div><p class="note">Margins name the team favored and by how much. Bold JIMBO numbers: 3+ points off the line.</p>`;
++  el.innerHTML=h;
++}
+ // ---------- forecast history chart (app)
+ function histChart(t){
+   const H=APP&&APP.hist; if(!H) return '';
+@@ -1357,7 +1435,7 @@
+ const tabs=[...document.querySelectorAll('[role=tab]')];
+ function selectTab(tb){ tabs.forEach(x=>{ const on=x===tb; x.setAttribute('aria-selected',on); x.tabIndex=on?0:-1; $(x.getAttribute('aria-controls')).hidden=!on; });
+   document.body.classList.remove('setmode'); document.querySelectorAll('#bnav button').forEach(b=>b.toggleAttribute('aria-current',b.dataset.go===tb.id)); }
+-if(SEASON){ $('t-tn').hidden=false;
++if(SEASON){ $('t-tn').hidden=false; $('t-vg').hidden=false; $('bn-vg').hidden=false; renderVegas();
+   const gen=SZ.generated_utc?new Date(SZ.generated_utc.replace('Z',':00Z')):null;
+   $('fresh').hidden=false; $('fresh').textContent=`Nightly update ${gen&&!isNaN(gen)?gen.toLocaleString(undefined,{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):SZ.asof} · ${SZ.games_final?SZ.games_final+' games played':'season starts '+new Date('2026-10-20T12:00:00').toLocaleDateString(undefined,{month:'long',day:'numeric'})}`; }
+ if(APP){ document.body.classList.add('app'); $('bnav').hidden=false;
+@@ -1686,6 +1764,7 @@
+   try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=2e949ae8f1',{}), getJSON('data/latest.json')]); }
+   catch(e){ say('Could not load data. Check your connection and reopen.'); return; }
+   try{ hist=await getJSON('data/history.json'); }catch(e){}
++  let vg=null; try{ vg=await getJSON('data/vegas.json'); }catch(e){}
+   async function fetchRemote(){
+     const t=tok();
+     if(t){ const r=await fetch(API+'?ref=main',{headers:hdr(t),cache:'no-store'}); if(!r.ok) throw new Error('GitHub '+r.status); const j=await r.json(); return {data:JSON.parse(b64d(j.content)), sha:j.sha}; }
+@@ -1718,7 +1797,7 @@
+     ctx.$('ghForget').addEventListener('click',()=>{ localStorage.removeItem(TK); ctx.$('ghForget').hidden=true; st.textContent='Token removed. Edits now stay on this device.'; });
+   }
+   if(ld) ld.remove();
+-  jimboBoot(D, SZ, {nsim: innerWidth<760?5000:10000, hist, remote, save, afterBoot});
++  jimboBoot(D, SZ, {nsim: innerWidth<760?5000:10000, hist, vg, remote, save, afterBoot});
+ })();
+ </script>
+ </body>

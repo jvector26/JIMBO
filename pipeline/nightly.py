@@ -384,8 +384,41 @@ for _, gg in today.iterrows():
                     "game": int(gg.game), "time_utc": gg.get("time_utc"), "home": gg.home, "away": gg.away,
                     "margin": round(float(sp_), 1), "p_home": round(float(norm.cdf(sp_ / SIG)), 3),
                     "line": (o.details.iloc[0] if len(o) else None), "total": (float(o.over_under.iloc[0]) if len(o) and pd.notna(o.over_under.iloc[0]) else None)})
+# ------------------------------------------------------------------ JIMBO vs Vegas log (session 29, user request 2026-10-22)
+# live/{S}/pregame.csv keeps, per game, the LAST pre-tip JIMBO home margin and DraftKings home line seen by any run whose
+# clock time is before tip (a run after tip never overwrites; a missing line keeps the last one seen). Written only on
+# live runs (no --asof). vegas.json = those rows joined with final scores, scored on the "vs Vegas" tab.
+def home_line(det, home, away):
+    """ESPN details ('TOR -10.5', 'EVEN') -> home margin implied by the line."""
+    if not isinstance(det, str): return None
+    m_ = re.match(r"^\s*([A-Z]{2,4})\s*([+-]?\d+(?:\.\d+)?)\s*$", det)
+    if m_:
+        v = float(m_.group(2))
+        return -v if m_.group(1) == home else (v if m_.group(1) == away else None)
+    return 0.0 if det.strip().upper() in ("EVEN", "PK", "PICK", "PICK'EM") else None
+pg_f = os.path.join(live, "pregame.csv")
+PG_COLS = ["game", "date", "time_utc", "home", "away", "model", "p_home", "line", "line_txt", "run_utc"]
+PGL = pd.read_csv(pg_f) if os.path.exists(pg_f) else pd.DataFrame(columns=PG_COLS)
+if not a.asof:
+    now_u = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
+    for g_ in tonight:
+        tip = pd.to_datetime(g_["time_utc"], utc=True, errors="coerce") if isinstance(g_["time_utc"], str) else pd.NaT
+        if pd.isna(tip):
+            if game_day <= int(et_now.strftime("%Y%m%d")): continue      # no tip time: only log games on a later day
+        elif tip.tz_localize(None) <= now_u: continue                     # already tipped: keep the earlier record
+        ln, ltxt = home_line(g_["line"], g_["home"], g_["away"]), g_["line"]
+        prev = PGL[PGL.game == g_["game"]]
+        if ln is None and len(prev) and pd.notna(prev.line.iloc[0]): ln, ltxt = float(prev.line.iloc[0]), prev.line_txt.iloc[0]
+        row = {"game": g_["game"], "date": game_day, "time_utc": g_["time_utc"], "home": g_["home"], "away": g_["away"],
+               "model": g_["margin"], "p_home": g_["p_home"], "line": ln, "line_txt": ltxt, "run_utc": now_u.strftime("%Y-%m-%dT%H:%MZ")}
+        PGL = pd.concat([PGL[PGL.game != g_["game"]], pd.DataFrame([row])], ignore_index=True)
+    PGL.sort_values(["date", "time_utc", "game"]).to_csv(pg_f, index=False)
+fin = {int(g_): (int(hp) - int(ap_)) for g_, hp, ap_ in zip(res.game, res.home_pts, res.away_pts)}
+vegas = {"asof": asof, "games": [[int(r_.date), r_.home, r_.away, float(r_.model), (None if pd.isna(r_.line) else float(r_.line)), fin[int(r_.game)]]
+                                 for r_ in PGL.sort_values(["date", "time_utc", "game"]).itertuples() if int(r_.game) in fin]}
 # ------------------------------------------------------------------ write
 os.makedirs(a.out, exist_ok=True)
+json.dump(vegas, open(os.path.join(a.out, "vegas.json"), "w"), separators=(",", ":"), allow_nan=False)
 F, M = out["forecast"], out["model"]
 teams = []
 def last10(t):   # [date, opponent, 'H'/'A', team pts, opp pts], newest last
