@@ -9,7 +9,7 @@
   }
  },
  "sliders": {
-  "three_pt": 1,
+  "three_pt": 0,
   "rim_finishing": 1.8,
   "pullup_mid": 1.8,
   "foul_drawing": 1,
@@ -25,5 +25,5 @@
   "age": 0,
   "bm": 0.37290551766215724
  },
- "updated": "2026-10-22T13:31:47.446Z"
+ "updated": "2026-10-22T13:31:53.168Z"
 }
