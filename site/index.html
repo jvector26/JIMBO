@@ -1418,7 +1418,7 @@ function renderVegas(){
 // ---------- forecast history chart (app)
 function histChart(t){
   const H=APP&&APP.hist; if(!H) return '';
-  const ds=Object.keys(H).sort().filter(d=>H[d][t]); if(!ds.length) return '';
+  const ds=Object.keys(H).sort().filter(d=>d>='2026-10-20'&&H[d][t]); if(!ds.length) return '';  // season view: opening night on
   const v=ds.map(d=>H[d][t][0]), po=ds.map(d=>H[d][t][1]);
   const lo=Math.floor(Math.min(...v)-3), hi=Math.ceil(Math.max(...v)+3), W=600, Hh=120, L=30, R=40, T=10, B=20;
   const x=i=>ds.length===1?(L+W-R)/2:L+i/(ds.length-1)*(W-L-R), y=w=>T+(hi-w)/(hi-lo)*(Hh-T-B), yp=p=>T+(1-p)*(Hh-T-B);
@@ -1428,7 +1428,7 @@ function histChart(t){
   g+=`<circle cx="${x(ds.length-1)}" cy="${y(v[v.length-1])}" r="5" fill="var(--magenta)" stroke="var(--black)" stroke-width="1.5"/>`;
   const lab=d=>new Date(d+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'});
   g+=`<text x="${L}" y="${Hh-4}">${lab(ds[0])}</text>`+(ds.length>1?`<text x="${W-R}" y="${Hh-4}" text-anchor="end">${lab(ds[ds.length-1])}</text>`:'');
-  return `<div class="hist"><div class="cleg"><span><i style="background:var(--magenta)"></i>Projected wins (nightly run)</span><span><i style="background:var(--c-fage)"></i>Playoff chance</span>${ds.length===1?`<span>Tracking started ${lab(ds[0])}: one point per night from here.</span>`:''}</div>
+  return `<div class="hist"><div class="cleg"><span><i style="background:var(--magenta)"></i>Projected wins (nightly run)</span><span><i style="background:var(--c-fage)"></i>Playoff chance</span><span>Since opening night</span></div>
     <div class="cchart"><svg viewBox="0 0 ${W} ${Hh}" width="100%" preserveAspectRatio="none" style="max-height:140px" role="img" aria-label="${t} projected wins over time">${g}</svg></div></div>`;
 }
 // ---------- tabs
