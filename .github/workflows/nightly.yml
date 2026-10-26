@@ -41,6 +41,9 @@ jobs:
         run: |
           ASOF="${{ github.event.inputs.asof }}"
           python pipeline/nightly.py --season 2026 ${ASOF:+--asof $ASOF}
+      - name: Player-page season data (game logs, rating history; display only, failures don't stop the run)
+        continue-on-error: true
+        run: python pipeline/season_log.py --season 2026
       - name: Commit
         run: |
           git config user.name "jimbo-bot"

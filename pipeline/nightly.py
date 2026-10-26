@@ -438,6 +438,7 @@ pl = P[(P.team != "FA") | (P.gp > 0)].copy()
 pl["rating_delta"] = pl.rating - pl.rating_pre
 players = [{"k": row.key, "n": row["name"], "t": row.team, "pos": round(float(row.pos_est), 2) if pd.notna(row.pos_est) else 3.0,
             "r": round(float(row.rating), 2), "r_pre": round(float(row.rating_pre), 2), "gp": int(row.gp),
+            **({"id": int(row.pid)} if row.pid >= 0 and not str(row.key).startswith("p") else {}),   # NBA id for name-keyed players (app game log)
             "mpg": round(float(row.mpg_season), 1), "min_rem": round(float(row.min_rem)), "status": row.status or "",
             # app fields: pre-allocation minutes wanted, mpg estimate, availability, games out
             "mw": round(float(row.min_want)), "me": round(float(row.mpg_est), 2), "mg": round(float(row.m_tg), 3), "mr": round(float(row.m_raw), 3), "mc": round(float(row.m_c), 2), "av": round(float(row.avail), 3),

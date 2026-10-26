@@ -491,6 +491,58 @@ body.pvopen #gv{display:none}
 .gdet{font-size:13px;font-weight:600;color:var(--focus);margin-top:6px;text-align:right}
 @media (max-width:640px){ #gv .gvrot td.l .tm{display:block;margin-left:0;font-size:12px} .gvcards .v{font-size:21px} .wf col.c{width:3.6em}
   #gv{padding:10px 8px;box-shadow:3px 3px 0 var(--shadow)} .wf td,.wf th{padding:6px 3px} .gvrot td,.gvrot th{padding-left:3px;padding-right:3px} }
+/* player view: This season / Projection / Career tabs (2026-10-26) */
+.pvtabs,body.app .pvtabs{display:flex;margin:4px 0 14px}
+.pvtabs button{min-height:44px}
+.pvpane[hidden]{display:none}
+.sea-hd{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.sea-hd .note{margin:0}
+.seg{display:inline-flex;border:1.5px solid var(--black);border-radius:6px;overflow:hidden}
+.seg button{border:0;background:var(--surface);padding:6px 10px;min-height:36px;font-size:13px;font-weight:600}
+.seg button+button{border-left:1.5px solid var(--black)}
+.seg button[aria-pressed="true"]{background:var(--black);color:#fff}
+.sea-ctl{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 12px}
+.sea-ctl .seg:last-child{margin-left:auto}
+.stiles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;max-width:640px}
+.stile{border-top:3px solid var(--black);padding:6px 2px 2px;display:flex;flex-direction:column;gap:1px;min-width:0}
+.stile .l{font-size:11.5px;font-weight:600;color:var(--muted);letter-spacing:.02em}
+.stile .v{font-family:var(--cond);font-size:26px;font-weight:700;line-height:1.05}
+.stile.noise .v{color:#8A83A0}
+.stile .d{font-size:12px;font-weight:600}
+.stile .c{font-size:11px;color:var(--muted);line-height:1.2}
+.stile .tb{height:4px;background:var(--line);border-radius:2px;margin-top:5px;position:relative}
+.stile .tb i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:var(--purple)}
+.stile.noise .tb i{background:#A99BD6}
+.stile .t{font-size:10.5px;color:var(--muted)}
+.sout{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;max-width:640px}
+.sout li{display:grid;grid-template-columns:76px minmax(0,1fr);gap:10px;align-items:start;font-size:14.5px}
+.sout .tag{font-family:var(--cond);font-size:13px;font-weight:700;text-align:center;border:1.5px solid var(--black);border-radius:3px;padding:1px 0;background:#FFEB99}
+.sout .tag.role{background:#C9F4F6} .sout .tag.dn{background:#FFD1E8} .sout .tag.rt{background:#E4D9FB}
+.sout .early{color:var(--muted)}
+.rtrend svg{display:block;width:100%;max-width:560px;height:auto}
+.rtrend text{font-family:var(--text);font-size:11px;fill:var(--muted)}
+.glog{max-width:640px}
+.glh,.glr{display:grid;grid-template-columns:minmax(0,1fr) 78px 34px 32px 32px 32px 38px;gap:2px;align-items:center;text-align:right}
+.glh{background:var(--purple);color:#fff;font-size:11.5px;font-weight:600;padding:7px 10px 5px}
+.glh span:first-child,.glh span:nth-child(2){text-align:left}
+.glr{width:100%;background:none;border:0;border-bottom:1px solid var(--line);padding:7px 10px;min-height:48px;font-family:var(--cond);font-size:16px}
+.glr:hover{background:#FFF7CF}
+.glr .gm{text-align:left;display:flex;flex-direction:column;line-height:1.15}
+.glr .gm small{font-family:var(--text);font-size:11.5px;color:var(--muted)}
+.glr .res{text-align:left;white-space:nowrap;font-size:14px}
+.wlb{display:inline-block;width:18px;text-align:center;font-weight:700;font-size:13px;border:1.5px solid var(--black);border-radius:3px;margin-right:3px}
+.wlb.w{background:#C9F4F6} .wlb.l{background:#FFD1E8}
+.glr.dnp{grid-template-columns:minmax(0,1fr) auto;color:var(--muted);cursor:default;font-family:var(--text);font-size:13px}
+.glr.dnp:hover{background:none}
+.gld{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px 10px;padding:6px 10px 12px;background:var(--soft);border-bottom:1px solid var(--line)}
+.gld div{display:flex;flex-direction:column} .gld span{font-size:11px;color:var(--muted)} .gld b{font-family:var(--cond);font-size:17px;font-weight:600}
+.glmore{margin:10px 10px 0}
+@media (max-width:640px){
+  .stiles{gap:4px} .stile .v{font-size:22px} .stile .c{font-size:10.5px}
+  .glh,.glr{grid-template-columns:minmax(0,1fr) 70px 30px 28px 28px 28px 34px;padding-left:6px;padding-right:6px}
+  .glr.dnp{grid-template-columns:minmax(0,1fr) auto}
+  .sout li{grid-template-columns:72px minmax(0,1fr);font-size:14px} .sout .tag{font-size:12px}
+}
 </style>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -1449,10 +1501,11 @@ tabs.forEach((tb,i)=>{ tb.addEventListener('click',()=>selectTab(tb));
 // ---------- player view
 const NF=M.feats.length, EFFS=new Set(M.eff);
 let pvKey=null, pvScroll=0, pvPushed=false, pvMode='all';
+let pvTab=null; const pvSea={split:'all',per:'g',open:null,all:false}, SEAS={st:'idle'};   // "This season" tab state
 function openPlayer(k){
   if(!byKey.has(k)) return;
   if(!pvKey){ pvScroll=window.scrollY; try{ history.pushState({pv:k},''); pvPushed=true; }catch(e){ pvPushed=false; } }
-  if(pvKey!==k) pvSkOpen.clear(); pvKey=k; document.body.classList.add('pvopen'); $('pv').hidden=false; renderPV();
+  if(pvKey!==k){ pvSkOpen.clear(); pvTab=null; pvSea.split='all'; pvSea.open=null; pvSea.all=false; } pvKey=k; document.body.classList.add('pvopen'); $('pv').hidden=false; renderPV();
   const top=$('pv').getBoundingClientRect().top+window.scrollY-10; window.scrollTo(0,Math.max(0,top)); $('pvBack')&&$('pvBack').focus({preventScroll:true});
 }
 function closePlayer(){ pvKey=null; pvPushed=false; document.body.classList.remove('pvopen'); $('pv').hidden=true; $('pv').innerHTML=''; window.scrollTo(0,pvScroll); }
@@ -1584,6 +1637,7 @@ function renderPV(){
     <div class="card"><div class="k">${SEASON&&ANYPLAYED?'Minutes left':'Projected minutes'}</div><div class="v">${Math.round(r.min).toLocaleString()}</div><div class="s">${Math.round(g)} games × ${mpg.toFixed(1)} min</div></div>
     ${r.t!=='FA'?`<div class="card"><div class="k">Adds to team</div><div class="v ${cls(gv.add)}">${fmt(gv.add,2)}</div><div class="s">net rating points</div></div>`:''}
   </div>`;
+  const hTop=h; h='';
   // how the rating is built
   const pa=r.parts, box=M.components.reduce((a,c)=>a+(pa[c]||0),0), pbox=box, yrs=hist.slice(-3).map(x=>seasonLbl(x.y)).join(', ');
   let rowsB='';
@@ -1612,6 +1666,7 @@ function renderPV(){
       <p class="note" style="margin-top:10px">College score ${fmt(rook.cs,2)}: better than ${rook.pct}% of first-rounders since 2006. Baseline = ${(+RV.col_a).toFixed(2)} + ${(+RV.col_b).toFixed(2)} × (score − average, capped at ±${RV.col_cap}) = ${fmt(v,2)}${rook.capped?' (capped)':''}, then ×${M.slope.toFixed(3)} calibration. An average first-round rookie comes out near ${(+RV.col_a).toFixed(2)}.</p></div>`;
     } else h+=`<div class="pvsec"><h3>Where the rookie baseline comes from</h3><p class="note">Pick ${rook.pick}, no college data (international or other path): baseline from draft slot and draft age.</p></div>`;
   }
+  const hProj=h; h='';
   // career chart
   const proj=p.fx==null?{parts:pa,net:r.mtot}:{parts:{},net:r.mtot};
   if(hist.length){
@@ -1641,15 +1696,151 @@ function renderPV(){
       ${hist.slice().reverse().map(x=>`<tr class="${x.mn<250?'low':''}"><td class="l"><span class="lg">${seasonLbl(x.y)}</span><span class="sh">'${String((x.y+1)%100).padStart(2,'0')}</span></td><td class="l">${esc(x.tm)}</td><td class="num hide-s">${x.a!=null?Math.floor(x.a):'–'}</td><td class="num hide-s">${x.g}</td><td class="num hide-s">${x.g?(x.mn/x.g).toFixed(1):'–'}</td>${rowCells(x)}</tr>`).join('')}
       </tbody></table></div><p class="note">Season rows: that season alone (Total = box + that season's lineup effect, offense and defense, at your lineup weights${pvMode==='od'?'; Off and Def include their lineup part':''}). On phones, L off / L def = lineup offense / defense. The projection row uses the 3-season averages and its Total also includes the age adjustment${pa.returner?', the return-from-injury adjustment':''} and league re-centering.</p></div>`;
   } else h+=`<div class="pvsec"><h3>Career by season</h3><p class="note">No NBA seasons yet.</p></div>`;
+  const hCareer=h;
+  if(SEASON){
+    if(!pvTab) pvTab=((ZP&&ZP.get(k)||{}).gp>0)?'season':'proj';
+    const T=[['season','This season'],['proj','Projection'],['career','Career']];
+    h=hTop+`<div class="tabs pvtabs" role="tablist" aria-label="Player views">${T.map(([v,l])=>`<button role="tab" id="pvt-${v}" aria-controls="pvp-${v}" aria-selected="${v===pvTab}" data-pvtab="${v}">${l}</button>`).join('')}</div>`+
+      `<div class="pvpane" role="tabpanel" id="pvp-season" aria-labelledby="pvt-season"${pvTab!=='season'?' hidden':''}><div id="pvSeason">${seasHTML(k)}</div></div>`+
+      `<div class="pvpane" role="tabpanel" id="pvp-proj" aria-labelledby="pvt-proj"${pvTab!=='proj'?' hidden':''}>${hProj}</div>`+
+      `<div class="pvpane" role="tabpanel" id="pvp-career" aria-labelledby="pvt-career"${pvTab!=='career'?' hidden':''}>${hCareer}</div>`;
+    seasLoad();
+  } else h=hTop+hProj+hCareer;
   $('pv').innerHTML=h;
   const cc=$('pv').querySelector('.cchart'); if(cc) cc.scrollLeft=cc.scrollWidth;
+}
+// ---------- player view: "This season" tab (2026-10-26). Data: gamelog.json, rating_hist.json (nightly, pipeline/season_log.py),
+// prev_season.json (2025-26 totals). Loaded the first time a player page opens; display only.
+function seasLoad(){ if(SEAS.st==='loading'||SEAS.st==='ok') return; SEAS.st='loading';
+  const gj=u=>fetch(u,{cache:'no-cache'}).then(x=>{ if(!x.ok) throw new Error(x.status); return x.json(); });
+  Promise.all([gj('data/gamelog.json'),gj('data/rating_hist.json'),gj('data/prev_season.json').catch(()=>({p:{},cols:[]}))])
+    .then(([g,rh,pv])=>{ SEAS.g=g; SEAS.rh=rh; SEAS.pv=pv; SEAS.st='ok'; seasPaint(); })
+    .catch(()=>{ SEAS.st='err'; seasPaint(); }); }
+function seasPaint(){ const el=$('pvSeason'); if(el&&pvKey) el.innerHTML=seasHTML(pvKey); }
+function seasPid(k){ if(k.startsWith('p')) return k.slice(1); const z=ZP&&ZP.get(k); return z&&z.id!=null?String(z.id):null; }
+const seaDate=d=>new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+function seasHTML(k){
+  const sec=(t,b,x='')=>`<div class="pvsec"><div class="sea-hd"><h3>${t}</h3>${x}</div>${b}</div>`;
+  if(SEAS.st!=='ok') return sec('Season so far',`<p class="note">${SEAS.st==='err'?"Couldn't load this season's games. Check your connection and reopen the player.":'Loading this season…'}</p>`);
+  const G=SEAS.g, C=G.cols, ix=Object.fromEntries(C.map((c,i)=>[c,i])), pid=seasPid(k), z=ZP.get(k)||{}, p=byKey.get(k)||{};
+  const rows=(pid&&G.p[pid])||[], pl=rows.filter(x=>x[2]>=0);
+  const PV=SEAS.pv, pcol=Object.fromEntries((PV.cols||[]).map((c,i)=>[c,i])), lyR=pid&&PV.p?PV.p[pid]:null;
+  const ly=lyR?Object.fromEntries(Object.keys(pcol).map(c=>[c,lyR[pcol[c]]])):null;
+  const gm=x=>{ const g=G.g[x[0]]||['',"",'',0,0], home=!!x[1], tm=home?g[1]:g[2], op=home?g[2]:g[1], mp=home?g[3]:g[4], opp=home?g[4]:g[3];
+    return {date:g[0], tm, opp:(home?'vs ':'@ ')+op, w:mp>opp, score:`${mp}-${opp}`}; };
+  const asof=G.asof?` · through ${seaDate(new Date(new Date(G.asof+'T12:00:00')-864e5).toISOString().slice(0,10))}`:'';
+  if(!pl.length){
+    const st=z.status?`${esc(z.status)}${z.inj?` (${esc(z.inj)})`:''}. `:'';
+    const dn=rows.length?` Listed but didn't play in ${rows.length} game${rows.length>1?'s':''}${rows[rows.length-1][3]?` (latest: ${esc(rows[rows.length-1][3])})`:''}.`:'';
+    return sec('Season so far',`<p class="note">${st}No games played yet this season.${dn} Projection and Career tabs have his outlook.</p>`);
+  }
+  const s=pvSea, n0=pl.length;
+  if(s.split==='l5'&&n0<7) s.split='all';
+  const pool=pl.filter((x,i)=>s.split==='all'?true:s.split==='home'?x[1]:s.split==='away'?!x[1]:i>=n0-5);
+  const n=pool.length, sum=c=>pool.reduce((a,x)=>a+x[ix[c]],0), sumA=c=>pl.reduce((a,x)=>a+x[ix[c]],0);
+  const nH=pl.filter(x=>x[1]).length, gsA=sumA('gs');
+  const segs=(name,opts,cur)=>`<div class="seg" role="group" aria-label="${name}">${opts.map(([v,l,dis])=>dis?'':`<button data-sea="${name==='Rate'?'per':'split'}" data-v="${v}" aria-pressed="${v===cur}">${l}</button>`).join('')}</div>`;
+  const ctl=`<div class="sea-ctl">${segs('Which games',[['all',`All ${n0}`],['l5','Last 5',n0<7],['home',`Home ${nH}`,!nH||nH===n0],['away',`Away ${n0-nH}`,!nH||nH===n0]],s.split)}${segs('Rate',[['g','Per game'],['36','Per 36']],s.per)}</div>`;
+  const tz=ZT&&ZT[z.t||p.t], rec=`${n0} game${n0>1?'s':''} · ${gsA} start${gsA===1?'':'s'}${tz?` · ${z.t||p.t} ${tz.w}-${tz.l}`:''}`;
+  // 1. season numbers
+  const mins=sum('min'), reb=sum('oreb')+sum('dreb'), tsa=sum('fga')+0.44*sum('fta'), ts=tsa>0?sum('pts')/(2*tsa):null;
+  const lyTsa=ly?ly.fga+0.44*ly.fta:0, lyTs=lyTsa>0?ly.pts/(2*lyTsa):null;
+  const f1=v=>v==null||!isFinite(v)?'–':v.toFixed(1);
+  const rate=(t,lt)=>s.per==='36'?[mins>0?t/mins*36:null, ly&&ly.min>0?lt/ly.min*36:null]:[t/n, ly&&ly.gp>0?lt/ly.gp:null];
+  const tile=(l,v,ref,refL,kk)=>{ const fr=n/(n+kk), tr=fr<0.2?'Noise':fr<0.5?'Early':'Solid', d=v!=null&&ref!=null?v-ref:null;
+    return `<div class="stile${fr<0.2?' noise':''}"><span class="l">${l}</span><span class="v">${f1(v)}</span><span class="d ${d==null?'':cls(d)}">${d==null?'&nbsp;':fmt(d)}</span><span class="c">${ref==null?(refL==='was'?'no NBA history':'no projection'):`${refL} ${f1(ref)}`}</span><span class="tb" aria-hidden="true"><i style="width:${Math.round(fr*100)}%"></i></span><span class="t">${tr}</span></div>`; };
+  const u=s.per==='36'?'/36':'', LY='was';
+  const projM=p.mpg!=null?+p.mpg:null;
+  const tiles=[tile('MIN',mins/n,projM,'proj',4), tile('PTS'+u,...rate(sum('pts'),ly&&ly.pts),LY,10), tile('REB'+u,...rate(reb,ly&&(ly.oreb+ly.dreb)),LY,8),
+    tile('AST'+u,...rate(sum('ast'),ly&&ly.ast),LY,10), tile('TS%',ts!=null?ts*100:null,lyTs!=null?lyTs*100:null,LY,25)].join('');
+  let out=sec('Season so far',`${ctl}<div class="stiles">${tiles}</div><p class="note" style="margin:10px 0 0">Bar = how much to trust each number yet; grey = too early to read much into. “proj” = his preseason minutes projection; “was” = last season${s.split!=='all'?`; showing ${n} of ${n0} games`:''}.</p>`,`<span class="note">${rec}</span>`);
+  // 2. what stands out: biggest moves vs last season / projection, scored by how unlikely they are by chance
+  const N=[], earlyT=n0<10?` <span class="early">Early: ${n0} game${n0>1?'s':''}.</span>`:'';
+  const mA=sumA('min'), mpgA=mA/n0;
+  const lyGsR=ly&&ly.gp?ly.gs/ly.gp:null, gsR=gsA/n0;
+  let minsUsed=false;
+  if(projM!=null&&Math.abs(mpgA-projM)>=3){ N.push({tag:'MINUTES',c:'role',sc:Math.abs(mpgA-projM)/(6/Math.sqrt(n0)),
+    t:`<b>${mpgA>projM?'More':'Fewer'} minutes than expected.</b> ${f1(mpgA)} a game; JIMBO projected ${f1(projM)}.`}); minsUsed=N.length-1; }
+  if(lyGsR!=null&&gsR>=0.6&&lyGsR<0.3&&n0>=2){ const t=`<b>Promoted to starter.</b> Started ${gsA} of ${n0} after ${ly.gs} start${ly.gs===1?'':'s'} in ${ly.gp} games last season.`;
+    if(minsUsed!==false){ N[minsUsed]={tag:'ROLE',c:'role',sc:N[minsUsed].sc+3,t:t+` Playing ${f1(mpgA)} min a game; JIMBO projected ${f1(projM)}.`}; } else N.push({tag:'ROLE',c:'role',sc:3,t}); }
+  else if(lyGsR!=null&&lyGsR>=0.6&&gsR<0.4&&n0>=2) N.push({tag:'ROLE',c:'dn',sc:3,t:`<b>Coming off the bench.</b> ${n0-gsA} of ${n0} games as a reserve after starting ${ly.gs} of ${ly.gp} last season.`});
+  else if(!ly&&gsR>=0.6&&n0>=2) N.push({tag:'ROLE',c:'role',sc:2.5,t:`<b>Starting as a rookie.</b> ${gsA} starts in ${n0} games.`});
+  if(ly&&ly.min>=250){
+    const cnt=(c,lt)=>({c:sum0(c),e:lt/ly.min*mA});
+    function sum0(c){ return c==='reb'?sumA('oreb')+sumA('dreb'):sumA(c); }
+    [['pts',ly.pts,'SCORING','Scoring more','Scoring less','points'],['ast',ly.ast,'PASSING','More assists','Fewer assists','assists'],
+     ['reb',ly.oreb+ly.dreb,'BOARDS','More rebounds','Fewer rebounds','rebounds'],['fg3a',ly.fg3a,'3PT','More threes','Fewer threes','3-point attempts'],
+     ['fta',ly.fta,'FT','Getting to the line more','Getting to the line less','free-throw attempts'],['tov',ly.tov,'TOV','More turnovers','Fewer turnovers','turnovers']]
+    .forEach(([c,lt,tag,up,dn,word])=>{ const {c:x,e}=cnt(c,lt); if(e<1.5&&x<3) return;
+      const zz=(x-e)/Math.sqrt(Math.max(e,1)*1.6), r36=x/mA*36, l36=lt/ly.min*36;
+      if(Math.abs(zz)<1.6||Math.abs(r36-l36)/Math.max(l36,0.5)<0.25) return;
+      const bad=c==='tov'?x>e:x<e;
+      const ex=c==='fg3a'?`; ${sumA('fg3m')} of ${x} so far${x<60?' (too early on the percentage)':''}`:'';
+      N.push({tag,c:bad?'dn':'',sc:Math.abs(zz),t:`<b>${x>e?up:dn}.</b> ${f1(r36)} ${word} per 36 minutes, ${x>e?'up':'down'} from ${f1(l36)} last season${ex}.${earlyT}`}); });
+    const tsaA=sumA('fga')+0.44*sumA('fta');
+    if(lyTs!=null&&tsaA>=15){ const tsA=sumA('pts')/(2*tsaA), zz=(tsA-lyTs)/(0.6/Math.sqrt(tsaA));
+      if(Math.abs(zz)>=1.6&&Math.abs(tsA-lyTs)>=0.04) N.push({tag:'TS%',c:tsA<lyTs?'dn':'',sc:Math.abs(zz)*0.9,
+        t:`<b>Shooting ${tsA>lyTs?'better':'worse'}.</b> True shooting ${f1(tsA*100)}%, ${tsA>lyTs?'up':'down'} from ${f1(lyTs*100)}%.${earlyT}`}); }
+  }
+  const RH=SEAS.rh, rr=RH&&RH.r[k], pre=RH&&RH.pre[k];
+  const rNow=rr?[...rr].reverse().find(v=>v!=null):null;
+  if(rNow!=null&&pre!=null&&Math.abs(rNow-pre)>=0.5) N.push({tag:'RATING',c:rNow<pre?'dn':'rt',sc:2+Math.abs(rNow-pre),t:`<b>JIMBO rating ${rNow>pre?'up':'down'} ${Math.abs(rNow-pre).toFixed(2)}</b> since preseason, now ${fmt(rNow,2)}.`});
+  const top=N.sort((a,b)=>b.sc-a.sc).slice(0,3);
+  out+=sec('What stands out',top.length?`<ol class="sout">${top.map(x=>`<li><span class="tag ${x.c}">${x.tag}</span><div>${x.t}</div></li>`).join('')}</ol><p class="note" style="margin:10px 0 0">Picked nightly: his biggest changes from last season and his projection, allowing for how few games he has played.</p>`:
+    `<p class="note">Nothing unusual yet: his numbers are in line with ${ly?'last season':'what we expected'} and his projection.</p>`);
+  // 3. rating night by night
+  if(rr&&pre!=null){
+    const D0=RH.d, pts=D0.map((d,i)=>[d,rr[i]]).filter(x=>x[1]!=null);
+    if(pts.length>=2){
+      const vs=pts.map(x=>x[1]).concat(pre), lo0=Math.min(...vs), hi0=Math.max(...vs), mid=(lo0+hi0)/2, half=Math.max(0.5,(hi0-lo0)/2+0.08);
+      const W=320, Hh=120, x0=12, x1=W-10, X=i=>x0+(pts.length>1?i*(x1-x0)/(pts.length-1):0), Y=v=>10+(mid+half-v)/(2*half)*84;
+      const gd=new Set(pl.map(x=>(G.g[x[0]]||[''])[0]));
+      const after=i=>{ const a=i?pts[i-1][0]:'0000', b=pts[i][0]; for(const d of gd) if(d>=a&&d<b) return true; return false; };
+      const dl=rNow-pre, lastD=pts[pts.length-1][0];
+      const ttl=`JIMBO rating from ${fmt(pre,2)} preseason to ${fmt(rNow,2)}`;
+      const svg=`<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="${ttl}">
+        <line x1="${x0}" x2="${x1}" y1="${Y(pre).toFixed(1)}" y2="${Y(pre).toFixed(1)}" stroke="#A99BD6" stroke-width="1.5" stroke-dasharray="4 4"/>
+        <polyline points="${pts.map((x,i)=>`${X(i).toFixed(1)},${Y(x[1]).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--purple)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+        ${pts.map((x,i)=>`<circle cx="${X(i).toFixed(1)}" cy="${Y(x[1]).toFixed(1)}" r="${i===pts.length-1?5:3.5}" fill="${after(i)?'var(--purple)':'#fff'}" stroke="var(--purple)" stroke-width="1.5"/>`).join('')}
+        <text x="${x0}" y="${Hh-4}">${seaDate(pts[0][0]).replace(/^\w+, /,'')}</text><text x="${x1}" y="${Hh-4}" text-anchor="end">${seaDate(lastD).replace(/^\w+, /,'')}</text></svg>`;
+      const lyMin=ly?Math.round(ly.min):0;
+      const why=Math.abs(dl)<0.15?`Barely moved so far${lyMin?`: ${n0} game${n0>1?'s':''} count for little next to his ${lyMin.toLocaleString()} minutes last season`:''}.`:
+        `${dl>0?'Up':'Down'} ${Math.abs(dl).toFixed(2)} since preseason as his games this season are blended with his history.`;
+      const meT=z.me!=null&&projM!=null&&Math.abs(z.me-projM)>=1?` His minutes forecast moves faster: ${f1(z.me)} a game, ${z.me>projM?'up':'down'} from ${f1(projM)}.`:'';
+      out+=sec('JIMBO rating, night by night',`<div class="rtrend">${svg}</div><p style="margin:6px 0 0;font-size:14px">${why}${meT}</p><p class="note" style="margin:4px 0 0">Dashed line: preseason ${fmt(pre,2)}. Model rating at default settings after each nightly update; filled dots include a game he played.</p>`,
+        `<span class="num ${cls(dl)}" style="font-size:18px;font-weight:700">${fmt(dl,2)}</span>`);
+    }
+  }
+  // 4. game log, newest first
+  const all=rows.slice().reverse(), shown=s.all?all:all.slice(0,5);
+  const lg=shown.map(x=>{ const g=gm(x), id=String(x[0]);
+    if(x[2]<0) return `<div class="glr dnp"><span class="gm"><b>${g.opp}</b><small>${seaDate(g.date)}</small></span><span>Did not play${x[3]?`: ${esc(x[3])}`:''}</span></div>`;
+    const op=s.open===id, v=c=>x[ix[c]], pm=v('pm'), t=v('fga')+0.44*v('fta');
+    return `<div><button class="glr" data-sea="open" data-v="${id}" aria-expanded="${op}"><span class="gm"><b>${g.opp}</b><small>${seaDate(g.date)}${v('gs')?'':' · bench'}</small></span>
+      <span class="res"><span class="wlb ${g.w?'w':'l'}">${g.w?'W':'L'}</span>${g.score}</span><span>${Math.round(v('min'))}</span><b>${v('pts')}</b><span>${v('oreb')+v('dreb')}</span><span>${v('ast')}</span><span class="${cls(pm)}">${pm>0?'+':pm<0?'−':''}${Math.abs(pm)}</span></button>
+      ${op?`<div class="gld">${[['FG',`${v('fgm')}-${v('fga')}`],['3P',`${v('fg3m')}-${v('fg3a')}`],['FT',`${v('ftm')}-${v('fta')}`],['TS%',t>0?(v('pts')/(2*t)*100).toFixed(0):'–'],
+        ['Off reb',v('oreb')],['Def reb',v('dreb')],['Stl / Blk',`${v('stl')} / ${v('blk')}`],['Turnovers',v('tov')]].map(([a,b])=>`<div><span>${a}</span><b>${b}</b></div>`).join('')}</div>`:''}</div>`; }).join('');
+  out+=`<div class="pvsec glog" style="padding:12px 0 10px"><div class="sea-hd" style="padding:0 12px"><h3>Game log</h3><span class="note">Tap a game for the full line</span></div>
+    <div class="glh" style="margin-top:8px"><span>Game</span><span>Result</span><span>MIN</span><span>PTS</span><span>REB</span><span>AST</span><span>+/−</span></div>${lg}
+    ${all.length>5?`<div class="glmore"><button class="linkbtn" data-sea="all" style="min-height:36px">${s.all?'Show last 5':`All ${all.length} games`}</button></div>`:''}</div>
+    <p class="note" style="margin:-8px 0 0">Updated nightly${asof}. Box lines built from play-by-play; points checked against the official box score.</p>`;
+  return out;
 }
 function skToggle(li){ const c=li.dataset.sk, p=byKey.get(pvKey); if(!c||!p) return;
   const nx=li.nextElementSibling, open=nx&&nx.classList.contains('skd');
   if(open){ nx.remove(); pvSkOpen.delete(c); li.classList.remove('open'); li.setAttribute('aria-expanded','false'); }
   else { li.insertAdjacentHTML('afterend',`<li class="skd" data-skd="${c}">${skDetail(c,p)}</li>`); pvSkOpen.add(c); li.classList.add('open'); li.setAttribute('aria-expanded','true'); } }
 $('pv').addEventListener('keydown',e=>{ const li=e.target.closest&&e.target.closest('.skr.tap'); if(li&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); skToggle(li); } });
-$('pv').addEventListener('click',e=>{ const sk=e.target.closest('.skr.tap'); if(sk){ skToggle(sk); return; } if(e.target.closest('#pvBack')){ pvPushed?history.back():closePlayer(); return; }
+$('pv').addEventListener('click',e=>{
+  const tb=e.target.closest('[data-pvtab]');
+  if(tb){ pvTab=tb.dataset.pvtab; $('pv').querySelectorAll('[data-pvtab]').forEach(b=>b.setAttribute('aria-selected',b===tb));
+    $('pv').querySelectorAll('.pvpane').forEach(x=>x.hidden=x.id!=='pvp-'+pvTab);
+    if(pvTab==='career'){ const cc=$('pv').querySelector('.cchart'); if(cc) cc.scrollLeft=cc.scrollWidth; } return; }
+  const sb=e.target.closest('[data-sea]');
+  if(sb){ const a=sb.dataset.sea, v=sb.dataset.v;
+    if(a==='open') pvSea.open=pvSea.open===v?null:v; else if(a==='all') pvSea.all=!pvSea.all; else pvSea[a]=v;
+    seasPaint(); const f=$('pvSeason').querySelector(`[data-sea="${a}"]${v!=null?`[data-v="${v}"]`:''}`); if(f) f.focus({preventScroll:true}); return; }
+  const sk=e.target.closest('.skr.tap'); if(sk){ skToggle(sk); return; } if(e.target.closest('#pvBack')){ pvPushed?history.back():closePlayer(); return; }
   const b=e.target.closest('[data-edit]'); if(b) openEditor(b.dataset.edit); });
 $('pv').addEventListener('change',e=>{ if(e.target.id==='pvMode'){ pvMode=e.target.value; renderPV(); } });
 
