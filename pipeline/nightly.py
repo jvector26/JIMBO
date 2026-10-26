@@ -434,15 +434,15 @@ for i, t in enumerate(SIM.TEAMS):
                   "margin": round(float(fc_m[t]), 2), "model_margin": round(float(model_m[t]), 2), "offset": round(float(off[t]), 2),
                   "g_rem": int(G_rem[t]), "gp": int(played[t]), "gap": round(float(gap0.get(t, 0)), 3),
                   "dec": round(float(decay[t]), 4), "pd": round(float(pdelta[t]), 2), "l10": last10(t)})
-# season-to-date performance (display only, 2026-10-26: Players tab "This season" view). Season rating = this season's box
-# score alone through the model's own feature recipe (each stat pulled toward league average until ~300 possessions),
-# x slope, centered so the possession-weighted league average is 0. Lineup results are not in it (too noisy early).
+# season-to-date performance (display only, 2026-10-26: app "This season" views). Season rating = this season's box
+# score alone, RAW (user call 2026-10-26: pure 2026-27, no pull toward league average or any prior), through the model's
+# feature weights x slope, centered so the possession-weighted league average is 0. Lineup results are not in it.
 # Points added (page) = season rating x possessions / 100. sb = season totals [pts, reb, ast].
 SR = {}
 try:
     if pg is not None and st is not None and len(pg):
         _q = pg[pg["min"] > 0]
-        _f = U.partial_features(_q, st)
+        _f = U.partial_features(_q, st, shrink=False)
         _b = pd.Series(SL * U.box_of(_f, pd.Series(cfg["Wo"]), pd.Series(cfg["Wd"])), index=_f.index)
         _ps = (_f.poss_off + _f.poss_def) / 2
         _b = _b - (_b * _ps).sum() / _ps.sum()

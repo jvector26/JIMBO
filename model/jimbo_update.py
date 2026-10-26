@@ -19,8 +19,9 @@ def box_of(df, Wo, Wd):
     return df[OFF_FEATS].to_numpy() @ Wo[OFF_FEATS].values + df[DEF_FEATS].to_numpy() @ Wd[DEF_FEATS].values
 
 
-def partial_features(pg, st):
-    """features.py recipe on season-to-date totals (pg: player-games, st: stints)."""
+def partial_features(pg, st, shrink=True):
+    """features.py recipe on season-to-date totals (pg: player-games, st: stints).
+    shrink=False (display only, app season views): raw rates, no pull toward league average."""
     tot = pg.groupby("player")[TOT].sum()
     out = []
     for me, op in (("A", "B"), ("B", "A")):
@@ -37,7 +38,7 @@ def partial_features(pg, st):
     f = tot.join(oc, how="inner"); f = f[(f.poss_off > 0) & (f.poss_def > 0)].copy()
     L = f[["fg3m", "fg3a", "rim_fgm", "rim_fga", "mid_fgm", "mid_fga", "ftm", "fta"]].sum()
     p3, prim, pmid, pft = L.fg3m / L.fg3a, L.rim_fgm / L.rim_fga, L.mid_fgm / L.mid_fga, L.ftm / L.fta
-    sh = lambda m, a, p, k: (m + k * p) / (a + k)
+    sh = (lambda m, a, p, k: (m + k * p) / (a + k)) if shrink else (lambda m, a, p, k: (m / a.where(a > 0)).fillna(p))
     po, pd_ = f.poss_off / 100, f.poss_def / 100
     f["o_3vol"] = f.fg3a / po; f["o_3eff"] = f.o_3vol * 3 * (sh(f.fg3m, f.fg3a, p3, 250) - p3)
     f["o_rimvol"] = f.rim_fga / po; f["o_rimeff"] = f.o_rimvol * 2 * (sh(f.rim_fgm, f.rim_fga, prim, 100) - prim)
@@ -50,7 +51,7 @@ def partial_features(pg, st):
     f["d_oppxq"] = (f.opp_rim_a * 2 * prim + f.opp_mid_a * 2 * pmid + f.opp_3_a * 3 * p3) / ofga * ofga / pd_
     for c in OFF_FEATS + DEF_FEATS:
         w = f.poss_off if c.startswith("o_") else f.poss_def
-        f[c] = ((f[c] - (f[c] * w).sum() / w.sum()) * (w / (w + 300))).fillna(0.0)
+        f[c] = ((f[c] - (f[c] * w).sum() / w.sum()) * ((w / (w + 300)) if shrink else 1.0)).fillna(0.0)
     return f
 
 

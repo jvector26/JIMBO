@@ -7,7 +7,8 @@ Runs after nightly.py (reads its latest.json). Writes:
                     "p": {player_id: [[game, team_is_home, starter, min, pts, fgm, fga, 3pm, 3pa, ftm, fta, oreb, dreb,
                                        ast, stl, blk, tov, pm], ...]}}       # played games, oldest first
                     DNP rows: [game, team_is_home, -1, "reason"]   (only when the box lists a reason)
-  rating_hist.json {"d": [asof dates], "r": {player key: [rating on each date or null]}, "pre": {key: preseason}}
+  rating_hist.json {"d": [asof dates], "r": {player key: [model rating on each date or null]}, "pre": {key: preseason},
+                    "s": {key: [pure 2026-27 season rating (box score only) on each date or null]}}
 Box points from play-by-play shots are checked against the official box line; a mismatch keeps the box points.
 Display only: nothing here feeds the model.
 """
@@ -94,6 +95,8 @@ if d not in H["d"]:                       # insert in date order (a replay with 
     H["d"].insert(j, d)
     for k in H["r"]:
         H["r"][k].insert(j, None)
+    for k in H.get("s", {}):
+        H["s"][k].insert(j, None)
 i, n = H["d"].index(d), len(H["d"])
 for k in H["r"]:
     H["r"][k] += [None] * (n - len(H["r"][k]))
@@ -103,4 +106,10 @@ for p in LT["players"]:
     row += [None] * (n - len(row))
     row[i] = p["r"]
     H["pre"][k] = p["r_pre"]
+    if p.get("sr") is not None:                       # pure 2026-27 season rating (nightly.py sr), same dates
+        srow = H.setdefault("s", {}).setdefault(k, [None] * n)
+        srow += [None] * (n - len(srow))
+        srow[i] = p["sr"]
+for k in H.get("s", {}):
+    H["s"][k] += [None] * (n - len(H["s"][k]))
 json.dump(H, open(hf, "w"), separators=(",", ":"), allow_nan=False)

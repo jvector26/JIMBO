@@ -1,0 +1,73 @@
+diff --git a/site/index.html b/site/index.html
+index 7d7ca50..280e9b4 100644
+--- a/site/index.html
++++ b/site/index.html
+@@ -637,13 +637,13 @@ body.pvopen #gv{display:none}
+         <table class="stab">
+           <thead><tr>
+             <th class="l">#</th><th class="l">Player<span class="sub">pts · reb · ast per game</span></th><th>GP</th><th class="hide-s">Min/g</th>
+-            <th><button data-ssort="sr" title="This season's box score only, small samples pulled toward average">Season<br>rating</button></th>
++            <th><button data-ssort="sr" title="This season's box score only, per 100 possessions">Season<br>rating</button></th>
+             <th><button data-ssort="pa" aria-sort="descending" title="Season rating x possessions played / 100">Points<br>added</button></th>
+           </tr></thead>
+           <tbody id="srows"></tbody>
+         </table>
+       </div>
+-      <p class="note" id="sNote" hidden>Points added = how many points he has added to his team's scoring margin so far, compared with an average player in the same minutes (season rating × possessions ÷ 100). So it rewards playing well <i>and</i> playing a lot: a big rating in a few minutes won't climb this list. Season rating = this season's box score only, read the way JIMBO reads stats (small samples are pulled toward average, so early numbers are modest and spread out as games add up). Lineup results aren't in it yet: too noisy this early. Updated nightly.</p>
++      <p class="note" id="sNote" hidden>Points added = how many points he has added to his team's scoring margin so far, compared with an average player in the same minutes (season rating × possessions ÷ 100). So it rewards playing well <i>and</i> playing a lot: a big rating in a few minutes won't climb this list. Season rating = points per 100 possessions vs an average player, from this season's box score only: nothing from past seasons or the projection, and nothing pulled toward average, so small samples swing a lot. Sorting by season rating lists players averaging 15+ minutes who have played at least half their team's games. Lineup results aren't in it. Updated nightly.</p>
+       <button class="btn more" id="more">Show 50 more</button>
+     </div>
+ 
+@@ -1248,6 +1248,7 @@ function renderSeasonPlayers(){
+   const posOk=r=>!pf||(pf.length===1?POS3(r.p.ps)===pf:POS5(r.p.ps)===pf);
+   let list=P.rows.filter(r=>r.z&&r.z.sr!=null&&(!team||r.t===team)&&posOk(r)&&(!q||r.p.n.toLowerCase().includes(q)))
+     .map(r=>({r, sr:r.z.sr, pa:r.z.sr*r.z.sp/100}));
++  if(sSort==='sr') list=list.filter(x=>{ const z=x.r.z, tg=(ZT[x.r.t]||{}).gp||0; return (z.mpg||0)>=15&&(z.gp||0)>=Math.ceil(tg/2); });  // qualified, like NBA stat leaders
+   list.sort((a,b)=>b[sSort]-a[sSort]);
+   $('count').textContent=`${list.length} players`;
+   $('srows').innerHTML=list.slice(0,shown).map((x,i)=>{ const r=x.r, z=r.z, g=z.gp||0, sb=z.sb;
+@@ -1836,33 +1837,26 @@ function seasHTML(k){
+       if(Math.abs(zz)>=1.6&&Math.abs(tsA-lyTs)>=0.04) N.push({tag:'TS%',c:tsA<lyTs?'dn':'',sc:Math.abs(zz)*0.9,
+         t:`<b>Shooting ${tsA>lyTs?'better':'worse'}.</b> True shooting ${f1(tsA*100)}%, ${tsA>lyTs?'up':'down'} from ${f1(lyTs*100)}%.${earlyT}`}); }
+   }
+-  const RH=SEAS.rh, rr=RH&&RH.r[k], pre=RH&&RH.pre[k];
+-  const rNow=rr?[...rr].reverse().find(v=>v!=null):null;
+-  if(rNow!=null&&pre!=null&&Math.abs(rNow-pre)>=0.5) N.push({tag:'RATING',c:rNow<pre?'dn':'rt',sc:2+Math.abs(rNow-pre),t:`<b>JIMBO rating ${rNow>pre?'up':'down'} ${Math.abs(rNow-pre).toFixed(2)}</b> since preseason, now ${fmt(rNow,2)}.`});
+   const top=N.sort((a,b)=>b.sc-a.sc).slice(0,3);
+   out+=sec('What stands out',top.length?`<ol class="sout">${top.map(x=>`<li><span class="tag ${x.c}">${x.tag}</span><div>${x.t}</div></li>`).join('')}</ol><p class="note" style="margin:10px 0 0">Picked nightly: his biggest changes from last season and his projection, allowing for how few games he has played.</p>`:
+     `<p class="note">Nothing unusual yet: his numbers are in line with ${ly?'last season':'what we expected'} and his projection.</p>`);
+-  // 3. rating night by night
+-  if(rr&&pre!=null){
+-    const D0=RH.d, pts=D0.map((d,i)=>[d,rr[i]]).filter(x=>x[1]!=null);
++  // 3. season rating night by night (pure 2026-27: box score only, no prior; rating_hist.json "s")
++  const RH=SEAS.rh, sr_=RH&&RH.s&&RH.s[k];
++  if(sr_){
++    const pts=RH.d.map((d,i)=>[d,sr_[i]]).filter(x=>x[1]!=null);
+     if(pts.length>=2){
+-      const vs=pts.map(x=>x[1]).concat(pre), lo0=Math.min(...vs), hi0=Math.max(...vs), mid=(lo0+hi0)/2, half=Math.max(0.5,(hi0-lo0)/2+0.08);
+-      const W=320, Hh=120, x0=12, x1=W-10, X=i=>x0+(pts.length>1?i*(x1-x0)/(pts.length-1):0), Y=v=>10+(mid+half-v)/(2*half)*84;
++      const vs=pts.map(x=>x[1]).concat(0), lo0=Math.min(...vs), hi0=Math.max(...vs), mid=(lo0+hi0)/2, half=Math.max(2,(hi0-lo0)/2+0.5);
++      const W=320, Hh=120, x0=12, x1=W-10, X=i=>x0+i*(x1-x0)/(pts.length-1), Y=v=>10+(mid+half-v)/(2*half)*84;
+       const gd=new Set(pl.map(x=>(G.g[x[0]]||[''])[0]));
+       const after=i=>{ const a=i?pts[i-1][0]:'0000', b=pts[i][0]; for(const d of gd) if(d>=a&&d<b) return true; return false; };
+-      const dl=rNow-pre, lastD=pts[pts.length-1][0];
+-      const ttl=`JIMBO rating from ${fmt(pre,2)} preseason to ${fmt(rNow,2)}`;
+-      const svg=`<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="${ttl}">
+-        <line x1="${x0}" x2="${x1}" y1="${Y(pre).toFixed(1)}" y2="${Y(pre).toFixed(1)}" stroke="#A99BD6" stroke-width="1.5" stroke-dasharray="4 4"/>
++      const now=pts[pts.length-1][1], lastD=pts[pts.length-1][0];
++      const svg=`<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Season rating night by night, now ${fmt(now,2)}">
++        <line x1="${x0}" x2="${x1}" y1="${Y(0).toFixed(1)}" y2="${Y(0).toFixed(1)}" stroke="#A99BD6" stroke-width="1.5" stroke-dasharray="4 4"/>
+         <polyline points="${pts.map((x,i)=>`${X(i).toFixed(1)},${Y(x[1]).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--purple)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+         ${pts.map((x,i)=>`<circle cx="${X(i).toFixed(1)}" cy="${Y(x[1]).toFixed(1)}" r="${i===pts.length-1?5:3.5}" fill="${after(i)?'var(--purple)':'#fff'}" stroke="var(--purple)" stroke-width="1.5"/>`).join('')}
+         <text x="${x0}" y="${Hh-4}">${seaDate(pts[0][0]).replace(/^\w+, /,'')}</text><text x="${x1}" y="${Hh-4}" text-anchor="end">${seaDate(lastD).replace(/^\w+, /,'')}</text></svg>`;
+-      const lyMin=ly?Math.round(ly.min):0;
+-      const why=Math.abs(dl)<0.15?`Barely moved so far${lyMin?`: ${n0} game${n0>1?'s':''} count for little next to his ${lyMin.toLocaleString()} minutes last season`:''}.`:
+-        `${dl>0?'Up':'Down'} ${Math.abs(dl).toFixed(2)} since preseason as his games this season are blended with his history.`;
+-      const meT=z.me!=null&&projM!=null&&Math.abs(z.me-projM)>=1?` His minutes forecast moves faster: ${f1(z.me)} a game, ${z.me>projM?'up':'down'} from ${f1(projM)}.`:'';
+-      out+=sec('JIMBO rating, night by night',`<div class="rtrend">${svg}</div><p style="margin:6px 0 0;font-size:14px">${why}${meT}</p><p class="note" style="margin:4px 0 0">Dashed line: preseason ${fmt(pre,2)}. Model rating at default settings after each nightly update; filled dots include a game he played.</p>`,
+-        `<span class="num ${cls(dl)}" style="font-size:18px;font-weight:700">${fmt(dl,2)}</span>`);
++      out+=sec('Season rating, night by night',`<div class="rtrend">${svg}</div><p class="note" style="margin:6px 0 0">This season's box score only, per 100 possessions vs an average player, after each nightly update. Dashed line: league average. Filled dots: updates that included a game he played. Early on, one game can swing it a lot.</p>`,
++        `<span class="num ${cls(now)}" style="font-size:18px;font-weight:700">${fmt(now,2)}</span>`);
+     }
+   }
+   // 4. game log, newest first
