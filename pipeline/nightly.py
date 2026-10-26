@@ -434,11 +434,31 @@ for i, t in enumerate(SIM.TEAMS):
                   "margin": round(float(fc_m[t]), 2), "model_margin": round(float(model_m[t]), 2), "offset": round(float(off[t]), 2),
                   "g_rem": int(G_rem[t]), "gp": int(played[t]), "gap": round(float(gap0.get(t, 0)), 3),
                   "dec": round(float(decay[t]), 4), "pd": round(float(pdelta[t]), 2), "l10": last10(t)})
+# season-to-date performance (display only, 2026-10-26: Players tab "This season" view). Season rating = this season's box
+# score alone through the model's own feature recipe (each stat pulled toward league average until ~300 possessions),
+# x slope, centered so the possession-weighted league average is 0. Lineup results are not in it (too noisy early).
+# Points added (page) = season rating x possessions / 100. sb = season totals [pts, reb, ast].
+SR = {}
+try:
+    if pg is not None and st is not None and len(pg):
+        _q = pg[pg["min"] > 0]
+        _f = U.partial_features(_q, st)
+        _b = pd.Series(SL * U.box_of(_f, pd.Series(cfg["Wo"]), pd.Series(cfg["Wd"])), index=_f.index)
+        _ps = (_f.poss_off + _f.poss_def) / 2
+        _b = _b - (_b * _ps).sum() / _ps.sum()
+        _t = _q.groupby("player")[["pts", "oreb", "dreb", "ast"]].sum()
+        for _p in _b.index:
+            _tt = _t.loc[_p] if _p in _t.index else None
+            SR[int(_p)] = {"sr": round(float(_b[_p]), 2), "sp": round(float(_ps[_p])),
+                           **({"sb": [int(_tt.pts), int(_tt.oreb + _tt.dreb), int(_tt.ast)]} if _tt is not None else {})}
+except Exception as e:
+    print(f"WARNING season rating skipped: {e!r}")
 pl = P[(P.team != "FA") | (P.gp > 0)].copy()
 pl["rating_delta"] = pl.rating - pl.rating_pre
 players = [{"k": row.key, "n": row["name"], "t": row.team, "pos": round(float(row.pos_est), 2) if pd.notna(row.pos_est) else 3.0,
             "r": round(float(row.rating), 2), "r_pre": round(float(row.rating_pre), 2), "gp": int(row.gp),
             **({"id": int(row.pid)} if row.pid >= 0 and not str(row.key).startswith("p") else {}),   # NBA id for name-keyed players (app game log)
+            **SR.get(int(row.pid), {}),                                                         # season rating / possessions / totals
             "mpg": round(float(row.mpg_season), 1), "min_rem": round(float(row.min_rem)), "status": row.status or "",
             # app fields: pre-allocation minutes wanted, mpg estimate, availability, games out
             "mw": round(float(row.min_want)), "me": round(float(row.mpg_est), 2), "mg": round(float(row.m_tg), 3), "mr": round(float(row.m_raw), 3), "mc": round(float(row.m_c), 2), "av": round(float(row.avail), 3),
