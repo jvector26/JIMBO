@@ -1,0 +1,24 @@
+diff --git a/site/index.html b/site/index.html
+index 280e9b4..341aaae 100644
+--- a/site/index.html
++++ b/site/index.html
+@@ -1802,8 +1802,9 @@ function seasHTML(k){
+   const f1=v=>v==null||!isFinite(v)?'–':v.toFixed(1);
+   const rate=(t,lt)=>s.per==='36'?[mins>0?t/mins*36:null, ly&&ly.min>0?lt/ly.min*36:null]:[t/n, ly&&ly.gp>0?lt/ly.gp:null];
+   const tile=(l,v,ref,refL,kk)=>{ const fr=n/(n+kk), tr=fr<0.2?'Noise':fr<0.5?'Early':'Solid', d=v!=null&&ref!=null?v-ref:null;
+-    return `<div class="stile${fr<0.2?' noise':''}"><span class="l">${l}</span><span class="v">${f1(v)}</span><span class="d ${d==null?'':cls(d)}">${d==null?'&nbsp;':fmt(d)}</span><span class="c">${ref==null?(refL==='was'?'no NBA history':'no projection'):`${refL} ${f1(ref)}`}</span><span class="tb" aria-hidden="true"><i style="width:${Math.round(fr*100)}%"></i></span><span class="t">${tr}</span></div>`; };
++    return `<div class="stile${fr<0.2?' noise':''}"><span class="l">${l}</span><span class="v">${f1(v)}</span><span class="d ${d==null?'':cls(d)}">${d==null?'&nbsp;':fmt(d)}</span><span class="c">${ref==null?(refL==='was'?(nbaPast?'missed last season':'no NBA history'):'no projection'):`${refL} ${f1(ref)}`}</span><span class="tb" aria-hidden="true"><i style="width:${Math.round(fr*100)}%"></i></span><span class="t">${tr}</span></div>`; };
+   const u=s.per==='36'?'/36':'', LY='was';
++  const nbaPast=!!(D.hist&&D.hist[p.k]&&D.hist[p.k].s&&D.hist[p.k].s.length)||!!p.rt; // played in the NBA before (e.g. missed 2025-26 injured)
+   const projM=p.mpg!=null?+p.mpg:null;
+   const tiles=[tile('MIN',mins/n,projM,'proj',4), tile('PTS'+u,...rate(sum('pts'),ly&&ly.pts),LY,10), tile('REB'+u,...rate(reb,ly&&(ly.oreb+ly.dreb)),LY,8),
+     tile('AST'+u,...rate(sum('ast'),ly&&ly.ast),LY,10), tile('TS%',ts!=null?ts*100:null,lyTs!=null?lyTs*100:null,LY,25)].join('');
+@@ -1819,7 +1820,7 @@ function seasHTML(k){
+   if(lyGsR!=null&&gsR>=0.6&&lyGsR<0.3&&n0>=2){ const t=`<b>Promoted to starter.</b> Started ${gsA} of ${n0} after ${ly.gs} start${ly.gs===1?'':'s'} in ${ly.gp} games last season.`;
+     if(minsUsed!==false){ N[minsUsed]={tag:'ROLE',c:'role',sc:N[minsUsed].sc+3,t:t+` Playing ${f1(mpgA)} min a game; JIMBO projected ${f1(projM)}.`}; } else N.push({tag:'ROLE',c:'role',sc:3,t}); }
+   else if(lyGsR!=null&&lyGsR>=0.6&&gsR<0.4&&n0>=2) N.push({tag:'ROLE',c:'dn',sc:3,t:`<b>Coming off the bench.</b> ${n0-gsA} of ${n0} games as a reserve after starting ${ly.gs} of ${ly.gp} last season.`});
+-  else if(!ly&&gsR>=0.6&&n0>=2) N.push({tag:'ROLE',c:'role',sc:2.5,t:`<b>Starting as a rookie.</b> ${gsA} starts in ${n0} games.`});
++  else if(!ly&&!nbaPast&&gsR>=0.6&&n0>=2) N.push({tag:'ROLE',c:'role',sc:2.5,t:`<b>Starting as a rookie.</b> ${gsA} starts in ${n0} games.`});
+   if(ly&&ly.min>=250){
+     const cnt=(c,lt)=>({c:sum0(c),e:lt/ly.min*mA});
+     function sum0(c){ return c==='reb'?sumA('oreb')+sumA('dreb'):sumA(c); }
