@@ -182,7 +182,7 @@ k = cfg.get("mpg_k", 10); P["mpg_est"] = (k * P.mpg_pre.fillna(10) + P.gp * P.mp
 #   m = w*(RW*last10 + (1-RW)*season_to_date) + (1-w)*preseason, w = n/(n+K), n = team games since joining, DNPs count 0;
 #   (optional, off by default: no injury-report entry but absent K_STREAK+ straight -> x0.5); team rescaled to 240 per game.
 K_MIN, RW, K_STREAK = cfg.get("min_k", 5), cfg.get("min_rec", 0.5), cfg.get("min_streak", 999)  # streak fallback off: hurt player minutes in 9-season replay; injury reports cover absences
-P["n_tm"] = 0.0; P["std_tg"] = 0.0; P["l10_tg"] = 0.0; P["streak"] = 0.0; P["np_c"] = 0.0; P["std_p"] = 0.0; P["l5_p"] = 0.0
+P["hdnp"] = 0.0; P["n_tm"] = 0.0; P["std_tg"] = 0.0; P["l10_tg"] = 0.0; P["streak"] = 0.0; P["np_c"] = 0.0; P["std_p"] = 0.0; P["l5_p"] = 0.0
 if pg is not None and len(pg) and games is not None and len(games):
     tgm = pd.concat([games[["game", "date", "home"]].rename(columns={"home": "t"}),
                      games[["game", "date", "away"]].rename(columns={"away": "t"})]).sort_values(["date", "game"])
@@ -201,6 +201,32 @@ if pg is not None and len(pg) and games is not None and len(games):
         P.loc[hit, c_] = P.loc[hit, "pid"].map(R_[cc]).values
     ngm = tgm.groupby("t").size()
     P.loc[~hit, "streak"] = P.loc[~hit, "team"].map(ngm).fillna(0).values   # on a roster, not appeared yet
+    # healthy DNPs for tonight's minutes (2026-10-28, user request: Cormac Ryan 24 min tonight with 0 games): team games since
+    # joining (never appeared: all of his team's games) that he missed with no injury-report listing that day (any status) and
+    # no injury DNP in the box. Box scores list active players only, so inactive-but-healthy games count too.
+    _inj_d = {}
+    for _d in tgm.date.unique():
+        _f = os.path.join(live, "injuries_hist", f"{int(_d)}.csv.gz")
+        _inj_d[int(_d)] = set(pd.read_csv(_f).name.map(norm_name)) if os.path.exists(_f) else None
+    _dnd = set()
+    for _f in sorted(__import__("glob").glob(os.path.join(live, "box", "*.csv.gz"))):
+        _b = pd.read_csv(_f, usecols=["game", "player", "not_playing"])
+        _dnd |= set(zip(_b.game[_b.not_playing.fillna("").str.contains("INJ")], _b.player[_b.not_playing.fillna("").str.contains("INJ")]))
+    _played = set(zip(xq.player[xq["min"] > 0], xq.game[xq["min"] > 0]))
+    _tg = {t_: g_ for t_, g_ in tgm.groupby("t")}
+    P["hdnp"] = 0.0
+    for i_ in P.index:
+        t_ = P.at[i_, "team"]
+        if t_ == "FA" or t_ not in _tg: continue
+        n_ = int(P.at[i_, "n_tm"]) if hit[i_] else int(ngm.get(t_, 0)); pid_ = int(P.at[i_, "pid"]); nm_ = norm_name(str(P.at[i_, "name"]))
+        g_ = _tg[t_]; g_ = g_[g_.k < n_]
+        c_ = 0
+        for gid_, d_ in zip(g_.game, g_.date):
+            if (pid_, gid_) in _played or (gid_, pid_) in _dnd: continue
+            L_ = _inj_d.get(int(d_))
+            if L_ is None or nm_ in L_: continue      # no report saved that day, or listed: not a healthy DNP
+            c_ += 1
+        P.at[i_, "hdnp"] = c_
 MIN_ALLOC = cfg.get("min_alloc", "rescale")   # 9-season replay: rescale best (trim = worse player minutes early, teams equal)
 if MIN_ALLOC == "rescale":   # prior = preseason ALLOCATED minutes; team rescaled to 240 (as inseason_minutes.py)
     pre_tg = (P.min_proj / 82).where(P.min_proj.notna(), P.std_tg) if "min_proj" in P else P.std_tg
@@ -222,6 +248,8 @@ for kk, o in OV.items():
     if "r" in o: P.loc[m, "rating"] = float(o["r"])
 # injuries (ESPN): games missed from now
 inj_f = os.path.join(live, "injuries.csv")
+if a.asof and os.path.exists(os.path.join(live, "injuries_hist", f"{asof_i}.csv.gz")):   # replays: that day's report
+    inj_f = os.path.join(live, "injuries_hist", f"{asof_i}.csv.gz")
 P["status"] = ""; P["miss"] = 0.0; P["inj"] = ""; P["ret"] = ""
 G_rem = (82 - played).clip(lower=0).astype(int)   # includes TBD Cup-week games
 if os.path.exists(inj_f) and not a.schedule_from_parsed:
@@ -314,18 +342,32 @@ for mode, mg in (("forecast", fc_m), ("model", model_m - model_m.mean())):
 # games baked in. c = w*(0.5*last5 played + 0.5*season played) + (1-w)*preseason mpg when playing, w = np/(np+GK), np = games
 # played for the current team; preseason prior = mpg when playing WITHOUT the age multiplier (better calibrated). Injury report: out 0, day-to-day x0.5; team trimmed to 240 from the bottom of the rotation
 # (scaled up if short). Backtest 2014-25: game margin RMSE 13.265 -> 13.225 (t -3.0, both halves), player-game min RMSE 7.53 -> 7.08.
+# 2026-10-28 (user request after Cormac Ryan / Kel'el Ware on the MIL card; replay in tools/tonight_minutes_replay.py):
+#  (a) healthy DNPs count as 0-minute games in the blend: w = (np + hdnp)/(np + hdnp + K), observed = played-minutes x np/(np + hdnp);
+#  (b) the prior is capped at his preseason ALLOCATED minutes when playing, min_proj/(82 x avail_pre) (depth chart + roster trim:
+#      Ryan's raw 23.6 -> 0);  (d) the 240 trim cuts in order of m_pk = tonight's minutes x chance he plays (below), not tonight's
+#      size ("c" = order by season minutes per team game, kept for replays). Replay of the 8 game nights 10-20..10-27 (56 games):
+#      player-game minutes RMSE 8.43 -> 7.13 (t -7.2), margin RMSE 15.06 -> 15.03 (noise at 56 games).
+_GV = os.environ.get("JIMBO_GAME_VARIANT", cfg.get("game_variant", "abd"))
 GK = cfg.get("game_k", 5)
-_wg = P.np_c / (P.np_c + GK)
+_nav = P.np_c + (P.hdnp if "a" in _GV else 0)
+_wg = _nav / (_nav + GK)
+_obs = ((0.5 * P.l5_p + 0.5 * P.std_p) * (P.np_c / _nav.replace(0, np.nan))).fillna(0)
 _pre_c = (P.mpg_wp if "mpg_wp" in P else P.mpg_pre).fillna(P.mpg_pre).fillna(10.0).clip(0, 40)
-P["m_c"] = (_wg * (0.5 * P.l5_p + 0.5 * P.std_p) + (1 - _wg) * _pre_c).where(P.team != "FA", 0).fillna(0)
+if "b" in _GV and "min_proj" in P:
+    _alloc = P.min_proj / (82 * P.avail_pre.clip(lower=0.3))
+    _pre_c = _pre_c.where(_alloc.isna(), np.minimum(_pre_c, _alloc.fillna(0)))
+P["m_c"] = (_wg * _obs + (1 - _wg) * _pre_c).where(P.team != "FA", 0).fillna(0)
+# trim order (d): expected minutes counting the chance he plays at all, p = (np + K x avail_pre)/(np + hdnp + K)
+P["m_pk"] = P.m_c * ((P.np_c + GK * P.avail_pre.fillna(.7)) / (_nav + GK)).clip(0, 1)
 P["c_lock"] = False
 for kk, o in OV.items():   # user edits: g = 0 -> not playing; mpg -> his minutes when playing (kept by the trim)
     m = P.key == kk
     if m.any() and o.get("g", None) == 0: P.loc[m, "m_c"] = 0.0
     elif m.any() and "mpg" in o: P.loc[m, "m_c"] = float(o["mpg"]); P.loc[m, "c_lock"] = True
-def trim240(per, lock=None, total=240.0):
-    """Bottom-trim the rotation to 240 (smallest expected minutes cut first); scale up if short. Edited (locked) players keep
-    their minutes unless the edits alone exceed 240."""
+def trim240(per, lock=None, total=240.0, key=None):
+    """Bottom-trim the rotation to 240 (lowest key cut first: season minutes per team game, ties by size); scale up if short.
+    Edited (locked) players keep their minutes unless the edits alone exceed 240."""
     per = per.clip(lower=0).astype(float); lock = pd.Series(False, index=per.index) if lock is None else lock.reindex(per.index).fillna(False).astype(bool)
     L = per[lock].sum(); out = per.copy()
     if L >= total:
@@ -334,7 +376,9 @@ def trim240(per, lock=None, total=240.0):
     if U <= 0: return out
     if U < R: out[~lock] = (fr * R / U).clip(upper=48); return out
     ex = U - R
-    for i in fr.sort_values().index:
+    order = (pd.DataFrame({"k": key.reindex(fr.index).fillna(0), "v": fr}).sort_values(["k", "v"]).index if key is not None
+             else fr.sort_values().index)
+    for i in order:
         cut = min(ex, out[i]); out[i] -= cut; ex -= cut
         if ex <= 0: break
     return out
@@ -346,13 +390,14 @@ def tonight_minutes(t):
     lk = P.c_lock[m]
     base = P.m_c[m].where(lk | ~(st.str.startswith("out") | st.str.contains("suspen")), 0.0)
     dtd = list(base.index[st.str.contains("day") & (base > 0) & ~lk])[:8]
-    if not dtd: return trim240(base, lk)
+    key = (P.m_tg[m] if "c" in _GV else P.m_pk[m] if "d" in _GV else None)
+    if not dtd: return trim240(base, lk, key=key)
     acc = base * 0.0
     for mask in range(1 << len(dtd)):
         b = base.copy()
         for j, i in enumerate(dtd):
             if not (mask >> j) & 1: b[i] = 0.0
-        acc += trim240(b, lk)
+        acc += trim240(b, lk, key=key)
     return acc / (1 << len(dtd))
 def game_strength(t):
     per = tonight_minutes(t)
@@ -367,7 +412,11 @@ OD = pd.read_csv(odds_f) if os.path.exists(odds_f) else pd.DataFrame(columns=["h
 _EA = {"SA": "SAS", "GS": "GSW", "NY": "NYK", "NO": "NOP", "UTAH": "UTA", "WSH": "WAS"}   # ESPN -> NBA tricodes (older odds files)
 OD["home"] = OD.home.replace(_EA); OD["away"] = OD.away.replace(_EA)
 OD["details"] = OD.details.map(lambda x: " ".join(_EA.get(w, w) for w in x.split(" ")) if isinstance(x, str) else x)
-netm = {t: game_strength(t) for t in SIM.TEAMS}; nm_mean = np.mean(list(netm.values()))
+netm = {t: game_strength(t) for t in SIM.TEAMS}
+if os.environ.get("JIMBO_DUMP_TONIGHT"):   # replay/debug: expected minutes tonight for every rostered player
+    os.makedirs(a.out, exist_ok=True)
+    pd.concat([tonight_minutes(t).rename("tn") for t in SIM.TEAMS]).to_frame().join(P[["pid", "name", "team", "m_c", "m_tg", "hdnp", "np_c"]]).to_csv(os.path.join(a.out, "tonight_min.csv"))
+nm_mean = np.mean(list(netm.values()))
 tonight = []
 for _, gg in today.iterrows():
     mh = (netm[gg.home] - nm_mean) * pace / 100 + off[gg.home] + gap0.get(gg.home, 0) * decay[gg.home]
@@ -461,7 +510,7 @@ players = [{"k": row.key, "n": row["name"], "t": row.team, "pos": round(float(ro
             **SR.get(int(row.pid), {}),                                                         # season rating / possessions / totals
             "mpg": round(float(row.mpg_season), 1), "min_rem": round(float(row.min_rem)), "status": row.status or "",
             # app fields: pre-allocation minutes wanted, mpg estimate, availability, games out
-            "mw": round(float(row.min_want)), "me": round(float(row.mpg_est), 2), "mg": round(float(row.m_tg), 3), "mr": round(float(row.m_raw), 3), "mc": round(float(row.m_c), 2), "av": round(float(row.avail), 3),
+            "mw": round(float(row.min_want)), "me": round(float(row.mpg_est), 2), "mg": round(float(row.m_tg), 3), "mr": round(float(row.m_raw), 3), "mc": round(float(row.m_c), 2), "mk": round(float(row.m_pk), 2), "av": round(float(row.avail), 3),
             "miss": round(float(row.miss), 1), **({"inj": row.inj, "ret": row.ret} if row.status else {}),
             **({"dt": row.tier} if isinstance(row.get("tier"), str) else {}),              # role tier used (chart or user)
             **({"dc": row.tier_chart} if isinstance(row.get("tier_chart"), str) else {})}   # chart tier

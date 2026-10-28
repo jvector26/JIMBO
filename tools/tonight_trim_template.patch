@@ -1,0 +1,42 @@
+diff --git a/site/index.html b/site/index.html
+index 341aaae..27ddaf8 100644
+--- a/site/index.html
++++ b/site/index.html
+@@ -1033,12 +1033,12 @@ function gmv(r){ // games, minutes when playing, season minutes, value added to
+     return {g, mpg:mp, smin:r.min+r.gp*r.mpgS, add:gr>0?r.tot*r.min/(48*gr):0}; }
+   const g=r.o.g!=null?r.o.g:r.p.g; return {g, mpg:g>0?r.min/g:0, smin:r.min, add:r.tot*r.min/3936};
+ }
+-function trim240(v, lock){ // bottom-trim the rotation to 240 (smallest cut first), scale up if short; edited (locked) minutes kept
++function trim240(v, lock, key){ // bottom-trim the rotation to 240 (lowest key cut first, ties by size; key = nightly z.mk = minutes x chance he plays, 2026-10-28), scale up if short; edited (locked) minutes kept
+   let L=0, U=0; v.forEach((x,i)=>{ if(lock[i]) L+=x; else U+=x; }); const out=v.slice();
+   if(L>=240){ v.forEach((x,i)=>{ out[i]=lock[i]&&L>0?x*240/L:0; }); return out; }
+   const R=240-L; if(U<=0) return out;
+   if(U<R){ v.forEach((x,i)=>{ if(!lock[i]) out[i]=Math.min(48,x*R/U); }); return out; }
+-  let ex=U-R; const idx=v.map((x,i)=>i).filter(i=>!lock[i]).sort((a,b)=>v[a]-v[b]);
++  let ex=U-R; const idx=v.map((x,i)=>i).filter(i=>!lock[i]).sort((a,b)=>key?(key[a]-key[b])||(v[a]-v[b]):v[a]-v[b]);
+   for(const i of idx){ const c=Math.min(ex,out[i]); out[i]-=c; ex-=c; if(ex<=0) break; }
+   return out;
+ }
+@@ -1048,10 +1048,11 @@ function gameStrength(){ // per team: tonight's expected rotation = minutes WHEN
+   P.team.forEach(x=>{ const R=x.roster, lock=R.map(r=>r.o.g!==0&&r.o.mpg!=null);
+     const base=R.map((r,i)=>{ if(r.o.g===0) return 0; if(lock[i]) return r.o.mpg; const s=(r.z&&r.z.status||'').toLowerCase();
+       if(s.startsWith('out')||s.includes('suspen')) return 0; return r.z&&r.z.mc!=null?r.z.mc:(r.me||0); });
++    const key=R.map((r,i)=>r.z&&r.z.mk!=null?r.z.mk:base[i]);
+     const dtd=R.map((r,i)=>i).filter(i=>!lock[i]&&base[i]>0&&/day/i.test(R[i].z&&R[i].z.status||'')).slice(0,8);
+     const em=new Array(R.length).fill(0), n=1<<dtd.length;
+-    for(let m=0;m<n;m++){ const b=base.slice(); dtd.forEach((i,j)=>{ if(!((m>>j)&1)) b[i]=0; }); trim240(b,lock).forEach((v,i)=>em[i]+=v/n); }
+-    rot[x.t]=R.map((r,i)=>({r, em:em[i], ifp:dtd.includes(i)?trim240(base,lock)[i]:null}));
++    for(let m=0;m<n;m++){ const b=base.slice(); dtd.forEach((i,j)=>{ if(!((m>>j)&1)) b[i]=0; }); trim240(b,lock,key).forEach((v,i)=>em[i]+=v/n); }
++    rot[x.t]=R.map((r,i)=>({r, em:em[i], ifp:dtd.includes(i)?trim240(base,lock,key)[i]:null}));
+     st[x.t]=rot[x.t].reduce((a,q)=>a+q.r.tot*q.em,0)/48; });
+   return {st, rot, mean:Object.values(st).reduce((a,b)=>a+b,0)/NT};
+ }
+@@ -1437,7 +1438,7 @@ function renderGV(){
+     </tbody></table></div>
+     <p class="note" style="margin-top:8px">Win chance = Φ(margin ÷ ${M.sig}) = <b>${pct(g.ph)}</b> for ${g.home}. The model alone (no forecast blend) gives ${g.home} ${pct(g.phm)}.</p></div>`;
+   // rotations
+-  h+=`<div class="pvsec"><h3>Expected rotations</h3><p class="note">Expected minutes tonight: each player's minutes in the games he plays (this season blended with the preseason projection; season averages would wrongly count games he missed), trimmed to 240 per team from the end of the bench. Out = 0; a day-to-day player plays or sits with equal odds, so his number is the average and his full minutes if he plays are noted. Your edits included. This is the expected rotation, not a starting lineup; starters are announced about 30 minutes before tip. Tap a player for his page; Edit changes tonight's odds right away.</p>
++  h+=`<div class="pvsec"><h3>Expected rotations</h3><p class="note">Expected minutes tonight: each player's minutes in the games he plays (this season blended with his preseason projected role; injury absences don't count, healthy scratches count as 0), trimmed to 240 per team starting with the players least likely to play. Out = 0; a day-to-day player plays or sits with equal odds, so his number is the average and his full minutes if he plays are noted. Your edits included. This is the expected rotation, not a starting lineup; starters are announced about 30 minutes before tip. Tap a player for his page; Edit changes tonight's odds right away.</p>
+     <div class="gvrot">${rotHTML(A,g)}${rotHTML(H,g)}</div></div>`;
+   // context
+   const T=Object.fromEntries(SZ.teams.map(t=>[t.t,t]));
