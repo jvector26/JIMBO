@@ -474,6 +474,14 @@ body.pvopen #gv{display:none}
 .dist .lab{fill:var(--ink);font-weight:600}
 .game[data-g]{cursor:pointer}
 .game[data-g]:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.tnnav{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;margin:2px 0 8px}
+.tnnav .btn{min-width:44px;min-height:44px;font-size:22px;line-height:1;padding:0 12px} .tnnav .btn:disabled{opacity:.35}
+.tnlab{text-align:center} .tnlab h2{margin:0} .tnback{text-align:center;margin:-4px 0 8px} .tnback .linkbtn{min-height:32px}
+.tnsum{margin:0 0 4px}
+.game.past .gpct{color:var(--muted)} .game.past .won .gpct{color:var(--ink)} .game.past .won .tname{font-weight:800}
+.pgrid{display:grid;grid-template-columns:auto auto 1fr;gap:2px 10px;margin-top:8px} .pgrid b{white-space:nowrap}
+.pverd{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;margin-top:8px;padding-top:6px;border-top:1px dashed var(--rule);font-size:13px}
+.pwin{color:var(--magenta)} .ploss{color:var(--muted)}
 .gdet{font-size:13px;font-weight:600;color:var(--focus);margin-top:6px;text-align:right}
 @media (max-width:640px){ #gv .gvrot td.l .tm{display:block;margin-left:0;font-size:12px} .gvcards .v{font-size:21px} .wf col.c{width:3.6em}
   #gv{padding:10px 8px;box-shadow:3px 3px 0 var(--shadow)} .wf td,.wf th{padding:6px 3px} .gvrot td,.gvrot th{padding-left:3px;padding-right:3px} }
@@ -1016,13 +1024,16 @@ function gameStrength(){ // per team: tonight's expected rotation = minutes WHEN
     st[x.t]=rot[x.t].reduce((a,q)=>a+q.r.tot*q.em,0)/48; });
   return {st, rot, mean:Object.values(st).reduce((a,b)=>a+b,0)/NT};
 }
-function tonightGames(){ // spread = (lineup pts + team offset + blend adj)_home - (same)_away + home court; each part returned for the game page
+function tonightGames(list, day){ // spread = (lineup pts + team offset + blend adj)_home - (same)_away + home court; each part returned for the game page
+  // list/day: a later day's games (2026-10-29, Tonight day stepper); same team strengths as tonight (today's rotations and injury report)
   if(!SEASON||!SZ.tonight) return [];
   const G=gameStrength(), T=Object.fromEntries(P.team.map(x=>[x.t,x]));
   const part=t=>{ const lin=G.st[t]-G.mean, pts=lin*SZ.pace/100, off=ZT[t].offset, bl=T[t].gap*ZT[t].dec; return {t, lin, pts, off, bl, dec:ZT[t].dec, m:pts+off+bl, rot:G.rot[t], x:T[t]}; };
-  return SZ.tonight.map(g=>{ const H=part(g.home), A=part(g.away), sp=H.m-A.m+M.hca, spm=(H.pts+H.off)-(A.pts+A.off)+M.hca;
-    return {...g, sp, ph:E.Phi(sp/M.sig), spm, phm:E.Phi(spm/M.sig), H, A}; });
+  return (list||SZ.tonight).map(g=>{ const H=part(g.home), A=part(g.away), sp=H.m-A.m+M.hca, spm=(H.pts+H.off)-(A.pts+A.off)+M.hca;
+    return {...g, day:day||SZ.game_day, sp, ph:E.Phi(sp/M.sig), spm, phm:E.Phi(spm/M.sig), H, A}; });
 }
+const ymd=d=>{ const s=String(d).replace(/-/g,''); return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}`; };
+function allGames(){ return tonightGames().concat(...(SZ.upcoming||[]).map(u=>tonightGames(u.games, ymd(u.day)))); }
 function injWhat(z){ // "left knee inflammation" from factual report fields (side, body part, injury type)
   if(!z) return ''; const ok=x=>x&&!/^(nan|not specified)$/i.test(x);
   const side=ok(z.is)?z.is.toLowerCase():'', part=ok(z.ib)?z.ib:'', typ=ok(z.inj)?z.inj.replace(/\s*(Left|Right|Not Specified)$/i,'').trim():'';
@@ -1300,25 +1311,60 @@ $('rows').addEventListener('keydown',e=>{ const tr=e.target.closest('tr.p'); if(
 // ---------- tonight's games (app)
 function tipTime(t){ if(!t) return ''; const d=new Date(t); return isNaN(d)?'':d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}); }
 function mktSpread(g){ const m=/^([A-Z]{2,4})\s*([+-]?\d+(?:\.\d+)?)$/.exec((g.line||'').trim()); if(!m) return null; const v=+m[2]; return m[1]===g.home?-v:m[1]===g.away?v:null; } // home margin implied by the line
-function renderTonight(){
-  if(!SEASON||!$('tonight')) return;
-  const gs=tonightGames(), day=new Date(SZ.game_day+'T12:00:00'), today=SZ.game_day===SZ.asof;
-  const ds=day.toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'});
-  let h=`<div class="conf"><h2>${today?'Tonight':'Next games'}</h2><span class="note">${ds}${today?'':' (no games before then)'}</span></div>`;
-  if(!gs.length) h+='<p class="note">No games scheduled.</p>';
-  h+='<div class="games">'+gs.map(g=>{ const fav=g.sp>=0?g.home:g.away, ms=mktSpread(g);
-    return `<div class="game" data-g="${g.game}" tabindex="0" role="button" aria-label="Game details: ${g.away} at ${g.home}"><div class="gtop"><span class="note">${tipTime(g.time_utc)}</span>${ms!=null?`<span class="note">Line ${esc(g.line)}${g.total?` · total ${g.total}`:''}</span>`:''}</div>
+// Day stepper (2026-10-29, user request): back through every game day so far (final score vs JIMBO's last pre-tip margin and the
+// line, from data/vegas.json) and forward up to 3 game days (latest.json upcoming: projection vs line once ESPN posts it).
+let tnSel=null;   // null = the current game day
+function tnDays(){ const now=ymd(SZ.game_day), past=[...new Set(((APP&&APP.vg&&APP.vg.games)||[]).map(r=>ymd(r[0])))].filter(d=>d<now).sort();
+  return past.map(d=>({d, k:'past'})).concat([{d:now, k:'now'}], (SZ.upcoming||[]).map(u=>({d:ymd(u.day), k:'next', u}))); }
+function gameCard(g, next){ const fav=g.sp>=0?g.home:g.away, ms=mktSpread(g);
+  return `<div class="game" data-g="${g.game}" tabindex="0" role="button" aria-label="Game details: ${g.away} at ${g.home}"><div class="gtop"><span class="note">${tipTime(g.time_utc)}</span>${ms!=null?`<span class="note">Line ${esc(g.line)}${g.total?` · total ${g.total}`:''}</span>`:next?'<span class="note">No line yet</span>':''}</div>
       <div class="gteams"><div class="gside"><span class="gpct">${Math.round((1-g.ph)*100)}%</span><span class="tname">${g.away}</span><span class="note">away</span></div>
       <span class="at">at</span><div class="gside"><span class="gpct">${Math.round(g.ph*100)}%</span><span class="tname">${g.home}</span><span class="note">home</span></div></div>
       <div class="pbar" aria-hidden="true"><span style="width:${(1-g.ph)*100}%"></span></div>
-      <div class="note gsub">JIMBO: ${fav} by ${Math.abs(g.sp).toFixed(1)}${ms!=null?` · market ${ms>=0?g.home:g.away} by ${Math.abs(ms).toFixed(1)} · <b class="${Math.abs(g.sp-ms)>=3?'mv':''}">gap ${fmt(g.sp-ms)} for ${g.home}</b>`:''}</div><div class="gdet">How the odds are built, rotations ›</div></div>`; }).join('')+'</div>';
-  h+=`<p class="note">Win chances use tonight's expected rotation: each player's minutes when he plays, out players zero, day-to-day players a coin flip, and your edits apply. Lines from ESPN when posted.</p>`;
+      <div class="note gsub">JIMBO: ${fav} by ${Math.abs(g.sp).toFixed(1)}${ms!=null?` · market ${ms>=0?g.home:g.away} by ${Math.abs(ms).toFixed(1)} · <b class="${Math.abs(g.sp-ms)>=3?'mv':''}">gap ${fmt(g.sp-ms)} for ${g.home}</b>`:''}</div><div class="gdet">How the odds are built, rotations ›</div></div>`; }
+function pastCard(r){ const [,hm,aw,m,v,a,hp,ap,,ph]=r, who=(x,k)=>Math.abs(x)<0.05?'even':`${x>0?hm:aw} by ${Math.abs(x).toFixed(k)}`;
+  const hw=a>0, dm=Math.abs(m-a), dv=v==null?null:Math.abs(v-a);
+  let verdict='';
+  if(v!=null){ const gp=m-v, rr=a-v, side=Math.abs(gp)<0.05?null:gp>0?hm:aw;
+    const ats=side==null?'JIMBO matched the line':rr===0?`${side} vs the line: push`:`JIMBO's side (${side}) ${(gp>0)===(rr>0)?'<b class="pwin">covered</b>':'<b class="ploss">didn\'t cover</b>'}`;
+    verdict=`<div class="pverd"><span>${dm<dv?'<b class="vgj">JIMBO closer</b>':dm>dv?'<b>Line closer</b>':'<b>Tie</b>'} <span class="note">(missed by ${dm.toFixed(1)} vs ${dv.toFixed(1)})</span></span><span>${ats}</span></div>`; }
+  return `<div class="game past"><div class="gtop"><span class="note">Final</span>${v!=null?`<span class="note">Line ${esc(who(v,1).replace(' by ',' -'))}</span>`:'<span class="note">No line</span>'}</div>
+    <div class="gteams"><div class="gside${hw?'':' won'}"><span class="gpct">${ap??''}</span><span class="tname">${aw}</span><span class="note">away</span></div>
+    <span class="at">at</span><div class="gside${hw?' won':''}"><span class="gpct">${hp??''}</span><span class="tname">${hm}</span><span class="note">home</span></div></div>
+    <div class="note gsub pgrid"><span>JIMBO</span><b>${who(m,1)}</b><span>${ph!=null?`${Math.round((m>=0?ph:1-ph)*100)}% to win`:''}</span>
+      <span>Line</span><b>${v!=null?who(v,1):'–'}</b><span></span>
+      <span>Final</span><b>${who(a,0)}</b><span></span></div>${verdict}</div>`; }
+function renderTonight(){
+  if(!SEASON||!$('tonight')) return;
+  const days=tnDays(); let i=days.findIndex(x=>x.d===tnSel); if(i<0){ tnSel=null; i=days.findIndex(x=>x.k==='now'); }
+  const D0=days[i], day=new Date(D0.d+'T12:00:00'), today=SZ.game_day===SZ.asof;
+  const ds=day.toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'});
+  const title=D0.k==='past'?'Results':D0.k==='next'?'Coming up':today?'Tonight':'Next games';
+  const sub=D0.k==='now'&&!today?' (no games before then)':'';
+  let h=`<div class="tnnav"><button class="btn" data-tnd="${i-1}" ${i>0?'':'disabled'} aria-label="Previous game day">‹</button>
+    <div class="tnlab"><h2>${title}</h2><span class="note">${ds}${sub}</span></div>
+    <button class="btn" data-tnd="${i+1}" ${i<days.length-1?'':'disabled'} aria-label="Next game day">›</button></div>
+    ${D0.k!=='now'?`<div class="tnback"><button class="linkbtn" data-tnd="${days.findIndex(x=>x.k==='now')}">Back to ${today?'tonight':'the next games'}</button></div>`:''}`;
+  if(D0.k==='past'){
+    const rows=APP.vg.games.filter(r=>ymd(r[0])===D0.d), L=rows.filter(r=>r[4]!=null);
+    if(L.length){ const S=vgStats(L);
+      h+=`<p class="note tnsum">JIMBO closer in <b>${S.cl} of ${S.n}</b>${S.tie?` (${S.tie} tied)`:''} · JIMBO's side vs the line <b>${S.w}–${S.l}</b> · average miss <b>${S.mm.toFixed(1)}</b> vs the line's ${S.mv.toFixed(1)}</p>`; }
+    h+='<div class="games">'+rows.map(pastCard).join('')+'</div>';
+    h+=`<p class="note">JIMBO = its margin from the last nightly run before tip-off; Line = the DraftKings spread seen then. Season totals are on the vs Vegas tab.</p>`;
+  } else {
+    const gs=D0.k==='next'?tonightGames(D0.u.games, D0.d):tonightGames();
+    if(!gs.length) h+='<p class="note">No games scheduled.</p>';
+    h+='<div class="games">'+gs.map(g=>gameCard(g, D0.k==='next')).join('')+'</div>';
+    h+=D0.k==='next'?`<p class="note">An early look: these use today's expected rotations and injury report, so they move as news comes in. Lines usually post about a day ahead.</p>`
+      :`<p class="note">Win chances use tonight's expected rotation: each player's minutes when he plays, out players zero, day-to-day players a coin flip, and your edits apply. Lines from ESPN when posted.</p>`;
+  }
   $('tonight').innerHTML=h;
 }
 // ---------- game detail page (app): tap a game on Tonight
 let gvKey=null, gvScroll=0, gvPushed=false;
-$('tonight')&&$('tonight').addEventListener('click',e=>{ const c=e.target.closest('[data-g]'); if(c) openGame(+c.dataset.g); });
-$('tonight')&&$('tonight').addEventListener('keydown',e=>{ const c=e.target.closest('[data-g]'); if(c&&e.target===c&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); openGame(+c.dataset.g); } });
+$('tonight')&&$('tonight').addEventListener('click',e=>{ const n=e.target.closest('[data-tnd]'); if(n){ const d=tnDays()[+n.dataset.tnd]; if(d){ tnSel=d.k==='now'?null:d.d; renderTonight(); } return; }
+  const c=e.target.closest('.game[data-g]'); if(c) openGame(+c.dataset.g); });
+$('tonight')&&$('tonight').addEventListener('keydown',e=>{ const c=e.target.closest('.game[data-g]'); if(c&&e.target===c&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); openGame(+c.dataset.g); } });
 function openGame(id){
   if(!gvKey){ gvScroll=window.scrollY; try{ history.pushState({gv:id},''); gvPushed=true; }catch(e){ gvPushed=false; } }
   gvKey=id; document.body.classList.add('gvopen'); $('gv').hidden=false; renderGV();
@@ -1359,8 +1405,8 @@ function rotHTML(Q,g){
 }
 function renderGV(){
   if(!gvKey||!P) return;
-  const g=tonightGames().find(x=>x.game===gvKey); if(!g){ closeGame(); return; }
-  const H=g.H, A=g.A, ms=mktSpread(g), pace=SZ.pace, day=new Date(SZ.game_day+'T12:00:00');
+  const g=allGames().find(x=>x.game===gvKey); if(!g){ closeGame(); return; }
+  const H=g.H, A=g.A, ms=mktSpread(g), pace=SZ.pace, day=new Date(g.day+'T12:00:00');
   const ds=day.toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'}), tip=tipTime(g.time_utc);
   const rec=x=>ANYPLAYED?` · ${x.w}-${x.l}`:'';
   let h=`<div class="pvtop"><button class="back" id="gvBack">← Back</button><span class="note">${ds}${tip?` · ${tip}`:''}</span></div>

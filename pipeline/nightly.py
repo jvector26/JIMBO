@@ -421,33 +421,41 @@ def game_strength(t):
 game_day = asof_i
 if not (sched.date == asof_i).any() and (sched.date > asof_i).any():
     game_day = int(sched.date[sched.date > asof_i].min())   # no games today: show the next game day
-today = sched[sched.date == game_day]
-odds_f = os.path.join(live, "odds", f"{game_day}.csv")
-OD = pd.read_csv(odds_f) if os.path.exists(odds_f) else pd.DataFrame(columns=["home", "away", "spread", "details", "over_under", "home_ml", "away_ml"])
 _EA = {"SA": "SAS", "GS": "GSW", "NY": "NYK", "NO": "NOP", "UTAH": "UTA", "WSH": "WAS"}   # ESPN -> NBA tricodes (older odds files)
-OD["home"] = OD.home.replace(_EA); OD["away"] = OD.away.replace(_EA)
-OD["details"] = OD.details.map(lambda x: " ".join(_EA.get(w, w) for w in x.split(" ")) if isinstance(x, str) else x)
+def read_odds(day):
+    f_ = os.path.join(live, "odds", f"{day}.csv")
+    od = pd.read_csv(f_) if os.path.exists(f_) else pd.DataFrame(columns=["home", "away", "spread", "details", "over_under", "home_ml", "away_ml"])
+    od["home"] = od.home.replace(_EA); od["away"] = od.away.replace(_EA)
+    od["details"] = od.details.map(lambda x: " ".join(_EA.get(w, w) for w in x.split(" ")) if isinstance(x, str) else x)
+    return od
 netm = {t: game_strength(t) for t in SIM.TEAMS}
 if os.environ.get("JIMBO_DUMP_TONIGHT"):   # replay/debug: expected minutes tonight for every rostered player
     os.makedirs(a.out, exist_ok=True)
     pd.concat([tonight_minutes(t).rename("tn") for t in SIM.TEAMS]).to_frame().join(P[["pid", "name", "team", "m_c", "m_tg", "hdnp", "np_c"]]).to_csv(os.path.join(a.out, "tonight_min.csv"))
 nm_mean = np.mean(list(netm.values()))
-tonight = []
-for _, gg in today.iterrows():
-    mh = (netm[gg.home] - nm_mean) * pace / 100 + off[gg.home] + gap0.get(gg.home, 0) * decay[gg.home]
-    ma = (netm[gg.away] - nm_mean) * pace / 100 + off[gg.away] + gap0.get(gg.away, 0) * decay[gg.away]
-    sp_ = mh - ma + HCA
-    o = OD[(OD.home == gg.home) & (OD.away == gg.away)]
-    def _rest(t):   # days since the team's previous game (None = no earlier game this season)
-        prev = sched[((sched.home == t) | (sched.away == t)) & (sched.date < game_day)].date
-        if not len(prev): return None
-        return int((pd.Timestamp(str(game_day)) - pd.Timestamp(str(int(prev.max())))).days)
-    mt = res[((res.home == gg.home) & (res.away == gg.away)) | ((res.home == gg.away) & (res.away == gg.home))].sort_values("date")
-    tonight.append({"rest_h": _rest(gg.home), "rest_a": _rest(gg.away),
-                    "meet": [[int(d), h_, a_, int(hp), int(ap_)] for d, h_, a_, hp, ap_ in zip(mt.date, mt.home, mt.away, mt.home_pts, mt.away_pts)],
-                    "game": int(gg.game), "time_utc": gg.get("time_utc"), "home": gg.home, "away": gg.away,
-                    "margin": round(float(sp_), 1), "p_home": round(float(norm.cdf(sp_ / SIG)), 3),
-                    "line": (o.details.iloc[0] if len(o) else None), "total": (float(o.over_under.iloc[0]) if len(o) and pd.notna(o.over_under.iloc[0]) else None)})
+def day_games(day):
+    """Game cards for one day. Later days (2026-10-29, user request: Tonight tab steps forward 3 game days) use the same
+    team strengths as tonight (today's expected rotations and injury report); only rest and the posted line differ."""
+    OD = read_odds(day)
+    out_ = []
+    for _, gg in sched[sched.date == day].iterrows():
+        mh = (netm[gg.home] - nm_mean) * pace / 100 + off[gg.home] + gap0.get(gg.home, 0) * decay[gg.home]
+        ma = (netm[gg.away] - nm_mean) * pace / 100 + off[gg.away] + gap0.get(gg.away, 0) * decay[gg.away]
+        sp_ = mh - ma + HCA
+        o = OD[(OD.home == gg.home) & (OD.away == gg.away)]
+        def _rest(t):   # days since the team's previous game (None = no earlier game this season)
+            prev = sched[((sched.home == t) | (sched.away == t)) & (sched.date < day)].date
+            if not len(prev): return None
+            return int((pd.Timestamp(str(day)) - pd.Timestamp(str(int(prev.max())))).days)
+        mt = res[((res.home == gg.home) & (res.away == gg.away)) | ((res.home == gg.away) & (res.away == gg.home))].sort_values("date")
+        out_.append({"rest_h": _rest(gg.home), "rest_a": _rest(gg.away),
+                     "meet": [[int(d), h_, a_, int(hp), int(ap_)] for d, h_, a_, hp, ap_ in zip(mt.date, mt.home, mt.away, mt.home_pts, mt.away_pts)],
+                     "game": int(gg.game), "time_utc": gg.get("time_utc"), "home": gg.home, "away": gg.away,
+                     "margin": round(float(sp_), 1), "p_home": round(float(norm.cdf(sp_ / SIG)), 3),
+                     "line": (o.details.iloc[0] if len(o) else None), "total": (float(o.over_under.iloc[0]) if len(o) and pd.notna(o.over_under.iloc[0]) else None)})
+    return out_
+tonight = day_games(game_day)
+upcoming = [{"day": int(d_), "games": day_games(int(d_))} for d_ in sorted(sched.date[sched.date > game_day].unique())[:3]]
 # ------------------------------------------------------------------ JIMBO vs Vegas log (session 29, user request 2026-10-22)
 # live/{S}/pregame.csv keeps, per game, the LAST pre-tip JIMBO home margin and DraftKings home line seen by any run whose
 # clock time is before tip (a run after tip never overwrites; a missing line keeps the last one seen). Written only on
@@ -478,7 +486,11 @@ if not a.asof:
         PGL = pd.concat([PGL[PGL.game != g_["game"]], pd.DataFrame([row])], ignore_index=True)
     PGL.sort_values(["date", "time_utc", "game"]).to_csv(pg_f, index=False)
 fin = {int(g_): (int(hp) - int(ap_)) for g_, hp, ap_ in zip(res.game, res.home_pts, res.away_pts)}
-vegas = {"asof": asof, "games": [[int(r_.date), r_.home, r_.away, float(r_.model), (None if pd.isna(r_.line) else float(r_.line)), fin[int(r_.game)]]
+fpts = {int(g_): [int(hp), int(ap_)] for g_, hp, ap_ in zip(res.game, res.home_pts, res.away_pts)}
+# rows: [date, home, away, JIMBO home margin, line home margin, final home margin, home pts, away pts, game, JIMBO p_home]
+# (fields 6-9 added 2026-10-29 for the Tonight tab's past days; the vs Vegas tab reads 0-5)
+vegas = {"asof": asof, "games": [[int(r_.date), r_.home, r_.away, float(r_.model), (None if pd.isna(r_.line) else float(r_.line)), fin[int(r_.game)],
+                                  *fpts[int(r_.game)], int(r_.game), (None if pd.isna(r_.p_home) else float(r_.p_home))]
                                  for r_ in PGL.sort_values(["date", "time_utc", "game"]).itertuples() if int(r_.game) in fin]}
 # ------------------------------------------------------------------ write
 os.makedirs(a.out, exist_ok=True)
@@ -531,7 +543,7 @@ players = [{"k": row.key, "n": row["name"], "t": row.team, "pos": round(float(ro
             **({"dc": row.tier_chart} if isinstance(row.get("tier_chart"), str) else {})}   # chart tier
            for _, row in pl.sort_values("rating", ascending=False).iterrows() if row.team != "FA" or row.gp > 0]   # every rostered player (injured ones carry their status to the app)
 latest = {"asof": asof, "season": S, "games_final": n_done, "games_parsed": n_parsed, "pace": round(pace, 1), "tau": round(float(tau), 2),
-          "teams": teams, "players": players, "tonight": tonight, "sims": a.sims,
+          "teams": teams, "players": players, "tonight": tonight, "upcoming": upcoming, "sims": a.sims,
           "game_day": f"{str(game_day)[:4]}-{str(game_day)[4:6]}-{str(game_day)[6:]}", "depth": DEPTH,
           "cfg": {"gap_k": cfg["gap_k"], "sig": SIG, "hca": HCA, "hca_po": SIM.PO["hca_po"]},
           "rem": [f"{h}-{w}" for h, w in zip(rem.home, rem.away)],   # remaining schedule (TBD Cup slots not included)
