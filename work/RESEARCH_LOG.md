@@ -1696,3 +1696,12 @@ Proposal (not applied): (a) game margin term -beta x (B2B_home - B2B_away) in ni
 (total, since nightly minutes don't foresee rest DNPs; rest listings on ESPN DTD already count half), HCA re-centred; optional
 travel split. (b) later: night-2 sit probability in the tonight-minutes rule for 30+ mpg / 30+ age (display realism; would then
 cut beta toward 1.7). Season minutes need nothing (availability already includes B2B rests).
+
+## PACE: DOES IT MATTER FOR THE NIGHTLY SPREAD?  [2026-10-29, session 35, user question] -> NO CHANGE (back-of-envelope, no backtest)
+Model: margin = net per 100 x ONE league pace/100 (cfg 96.1 preseason; live 97.6 from 2026-27 stints after 60 games); team pace not used.
+Ratings, team offsets and the 12.8 game sd were all fit with the same possession definition, so the scale is consistent.
+Size: team pace sd ~2-4 poss (player_seasons proxy, noisy; yr-to-yr corr .24 on that proxy), matchup pace dev ~1.5-2.5%.
+Spread change = model margin x dev: sd 0.10-0.17 pts over the 71 logged games (model sd 6.8); max ~0.6-1.1 pts on a 20-pt spread.
+Expected game-margin RMSE gain ~0.001 (vs 13.2) -> undetectable, below the bar by design. Win-prob sd scales with sqrt(poss): ~1%.
+Where pace WOULD matter: a JIMBO total (over/under; backlog D in game-detail notes), player counting-stat projections.
+Side note: line = 0.87 x JIMBO through origin (71 games, corr .93) - JIMBO spreads a bit wider than DK; not pace (2%, not 13%). Watch on vs Vegas tab.
