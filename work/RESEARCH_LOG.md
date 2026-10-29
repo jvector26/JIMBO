@@ -1705,3 +1705,21 @@ Spread change = model margin x dev: sd 0.10-0.17 pts over the 71 logged games (m
 Expected game-margin RMSE gain ~0.001 (vs 13.2) -> undetectable, below the bar by design. Win-prob sd scales with sqrt(poss): ~1%.
 Where pace WOULD matter: a JIMBO total (over/under; backlog D in game-detail notes), player counting-stat projections.
 Side note: line = 0.87 x JIMBO through origin (71 games, corr .93) - JIMBO spreads a bit wider than DK; not pace (2%, not 13%). Watch on vs Vegas tab.
+
+## SEASON MINUTES: AVAILABILITY DOUBLE COUNT (Giannis 37.5)  [2026-10-29, session 38] -> MODEL RULE KEPT (split fails); consistency fix PROPOSED, not applied
+User: app shows Giannis 37.5 min when playing (season 31.5, never averaged that). Cause: nightly minutes per TEAM game blend at
+n/(n+5) (inseason_minutes.py choice), availability av at n/(n+20) (avail_k). App min/game and po_delta use min_rem/(games x av).
+Healthy-so-far players with low avail_pre: per-team-game jumps (he was available) while av barely moves -> mpg explodes.
+Giannis m_tg 25.0, av .666 -> 37.5. 10-29: 21 players implied 36+ (A. Davis 41.8, Trae 41.1, Tatum 40.9); median +2.4 vs own mpg.
+Team strength uses min_rem only (av not involved), except po_delta (playoff minutes curve).
+Test (code/season_avail_test.py, data/savail_{S}.pkl; same replay as inseason_minutes.py, cp 5..70, 2014-25 excl 2019-20, no injury
+reports; avail prior proxy = project.py rule B from prior 3 seasons' games, corr .87 with 2026 avail_pre, same mean):
+ split = avail (Ka avp + gp)/(Ka+n) x mpg-when-playing (gp/(gp+k2) toward obs, prior pre/avp):
+  team RMSE cur 3.4745 vs split20/5/.5 3.5031: team MSE +0.40 t +2.53 WORSE (2014-18 t +0.5, 2020-25 t +3.2), game t +2.6 worse.
+ asym (missed games fast, healthy games slow): team t +2.4 worse. With absence-streak injury proxy on both (j5 x.5): t +1.5 worse.
+ Fragile + healthy subset (avp<.65, played every game, n>=4, 1,094 cases): cur per-team-game 21.32 vs actual 19.51 (+1.8, ~9% high);
+  split 19.55 (unbiased). App-style min-when-playing: cur 28.7 vs actual 25.5; split 26.3.
+Verdict: the fast per-team-game blend is the better TEAM predictor overall (keep), though it runs ~9% high for fragile stars on a healthy run.
+The 37.5 itself is an inconsistency: av should use the same blend as the minutes, av_c = (5 avail_pre + gp)/(5 + n). Then min_rem/(g x av_c)
+= weighted mean of minutes when playing: Giannis 31.6 (61 g), Davis 33.5, Trae 33.3, Tatum 34.5; 36+ count 21 -> 0; median vs own mpg -0.2.
+Team strength unchanged; po_delta moves <= 0.23 pts (MEM -0.23 .. MIA +0.19). Awaiting user OK (display + playoff term; model minutes unchanged).
