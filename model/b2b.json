@@ -1,0 +1,5 @@
+{
+ "beta": 2.0,
+ "hca": 2.54,
+ "note": "Session 37 (2026-10-29, user OK 'ship 1'). Second night of a back-to-back (team played the day before): -beta points to that team's game margin, in nightly game cards (tonight + upcoming), past-game predictions for team offsets, and the regular-season part of the rest-of-season sim. Total effect vs own season level 2.2 (FE 2015-25, t -12.6), fatigue-only 1.7 with actual minutes (research bar LOSO 13.4633 -> 13.4367); 2.0 chosen because ESPN rest listings already count half in nightly minutes. hca = 2.6 - mean adjustment over the 2026-27 schedule (road teams are on B2Bs more often, so part of the old 2.6 was B2B). Not used in playoff series (hca_po). Env JIMBO_B2B=0 turns it off (beta 0, hca 2.6). Details: work/RESEARCH_LOG.md BACK-TO-BACKS."
+}

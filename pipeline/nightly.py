@@ -27,6 +27,7 @@ et_now = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None) - dt.timedelta(ho
 asof = a.asof or et_now.strftime("%Y-%m-%d")        # games dated before asof are complete
 asof_i = int(asof.replace("-", ""))
 SIG, HCA, SL = cfg["sig"], cfg["hca"], cfg["slope"]
+HCA = SIM.HCA if SIM.B2B["beta"] else HCA   # back-to-backs (session 37): re-centred home court from model/b2b.json
 
 def norm_name(s):
     s = unicodedata.normalize("NFKD", str(s)).encode("ascii", "ignore").decode().lower()
@@ -43,6 +44,9 @@ else:
     sched = pd.DataFrame({"game": s0.game, "date": s0.date_et.str.replace("-", "").astype(int), "home": s0.home,
                           "away": s0.away, "home_pts": s0.home_pts, "away_pts": s0.away_pts, "time_utc": s0.time_utc})
 done = sched.date < asof_i
+B2B_H, B2B_A = SIM.b2b_flags(sched)          # session 37: 1 = team also played the day before
+def b2b_adj(g_):  # home-side margin change for one game id
+    return -SIM.B2B["beta"] * (B2B_H.get(g_, 0) - B2B_A.get(g_, 0))
 # parsed season-to-date play-by-play
 pg = st = games = None
 parsed = a.parsed or os.path.join(ROOT, "state", "season_parse")
@@ -158,7 +162,7 @@ if games is not None and len(games) >= cfg["min_games"]:
     x["side"] = np.where(x.team == x.home_id, 1.0, -1.0)
     x["ws"] = 5 * x["min"] / x.groupby(["game", "team"])["min"].transform("sum") * x.side
     pr = (x.ws * x.player.map(r).fillna(SL * cfg["unrated"])).groupby(x.game).sum()
-    past = games.assign(pred=games.game.map(pr).fillna(0) * pace / 100 + HCA)
+    past = games.assign(pred=games.game.map(pr).fillna(0) * pace / 100 + HCA + games.game.map(b2b_adj))
     off = U.team_offsets(past, cfg["lam_t"]).reindex(SIM.TEAMS).fillna(0)
 # ------------------------------------------------------------------ rosters, minutes, injuries
 P = PL.copy()
@@ -346,9 +350,10 @@ tau = np.interp(avg_played, [0, 41, 70, 82], [cfg["tau_pre"], cfg["tau_mid"], cf
 # from playoff-shaped minutes (model/po.json), added in play-in and playoff games; playoff series home court po.json hca_po
 pdelta = SIM.po_delta(P.team, P.rating, P.min_rem, (P.g_rem - P.miss).clip(lower=0) * P.avail, G_rem, pace).reindex(SIM.TEAMS).fillna(0)
 remA = np.array([[SIM.IDX[h], SIM.IDX[w]] for h, w in zip(rem.home, rem.away)], int).reshape(-1, 2)
+remB = np.array([b2b_adj(g_) for g_ in rem.game], float)
 out = {}
 for mode, mg in (("forecast", fc_m), ("model", model_m - model_m.mean())):
-    W, TRUE, rng = SIM.simulate_rest(mg.reindex(SIM.TEAMS).to_numpy(), tau, remA, wins.to_numpy(), played.to_numpy(), a.sims)
+    W, TRUE, rng = SIM.simulate_rest(mg.reindex(SIM.TEAMS).to_numpy(), tau, remA, wins.to_numpy(), played.to_numpy(), a.sims, adj=remB)
     post = SIM.postseason(W, TRUE, rng, pdelta.to_numpy(), SIM.PO["hca_po"])
     out[mode] = dict(mean=W.mean(0), p10=np.percentile(W, 10, 0), p90=np.percentile(W, 90, 0), **post,
                      over=np.array([(W[:, i] > TP.line.get(t, 99)).mean() for i, t in enumerate(SIM.TEAMS)]))
@@ -441,7 +446,8 @@ def day_games(day):
     for _, gg in sched[sched.date == day].iterrows():
         mh = (netm[gg.home] - nm_mean) * pace / 100 + off[gg.home] + gap0.get(gg.home, 0) * decay[gg.home]
         ma = (netm[gg.away] - nm_mean) * pace / 100 + off[gg.away] + gap0.get(gg.away, 0) * decay[gg.away]
-        sp_ = mh - ma + HCA
+        rs_ = b2b_adj(gg.game)                  # back-to-back adjustment, home side
+        sp_ = mh - ma + HCA + rs_
         o = OD[(OD.home == gg.home) & (OD.away == gg.away)]
         def _rest(t):   # days since the team's previous game (None = no earlier game this season)
             prev = sched[((sched.home == t) | (sched.away == t)) & (sched.date < day)].date
@@ -451,7 +457,7 @@ def day_games(day):
         out_.append({"rest_h": _rest(gg.home), "rest_a": _rest(gg.away),
                      "meet": [[int(d), h_, a_, int(hp), int(ap_)] for d, h_, a_, hp, ap_ in zip(mt.date, mt.home, mt.away, mt.home_pts, mt.away_pts)],
                      "game": int(gg.game), "time_utc": gg.get("time_utc"), "home": gg.home, "away": gg.away,
-                     "margin": round(float(sp_), 1), "p_home": round(float(norm.cdf(sp_ / SIG)), 3),
+                     "margin": round(float(sp_), 1), "rs": round(float(rs_), 2), "b2b": [int(B2B_H.get(gg.game, 0)), int(B2B_A.get(gg.game, 0))], "p_home": round(float(norm.cdf(sp_ / SIG)), 3),
                      "line": (o.details.iloc[0] if len(o) else None), "total": (float(o.over_under.iloc[0]) if len(o) and pd.notna(o.over_under.iloc[0]) else None)})
     return out_
 tonight = day_games(game_day)
@@ -545,8 +551,9 @@ players = [{"k": row.key, "n": row["name"], "t": row.team, "pos": round(float(ro
 latest = {"asof": asof, "season": S, "games_final": n_done, "games_parsed": n_parsed, "pace": round(pace, 1), "tau": round(float(tau), 2),
           "teams": teams, "players": players, "tonight": tonight, "upcoming": upcoming, "sims": a.sims,
           "game_day": f"{str(game_day)[:4]}-{str(game_day)[4:6]}-{str(game_day)[6:]}", "depth": DEPTH,
-          "cfg": {"gap_k": cfg["gap_k"], "sig": SIG, "hca": HCA, "hca_po": SIM.PO["hca_po"]},
+          "cfg": {"gap_k": cfg["gap_k"], "sig": SIG, "hca": HCA, "hca_po": SIM.PO["hca_po"], "b2b": SIM.B2B["beta"]},
           "rem": [f"{h}-{w}" for h, w in zip(rem.home, rem.away)],   # remaining schedule (TBD Cup slots not included)
+          "rem_rs": [round(float(x), 2) for x in remB],                # back-to-back adjustment per remaining game (home side)
           "generated_utc": dt.datetime.now(dt.timezone.utc).replace(tzinfo=None).strftime("%Y-%m-%dT%H:%MZ")}
 def _finite(o):   # browsers reject NaN/Infinity in JSON (2026-10-06 outage): write them as null
     if isinstance(o, float): return o if np.isfinite(o) else None

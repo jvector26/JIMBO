@@ -31,17 +31,21 @@ def fill_tbd(rem, played_n, rng):
     return np.vstack([rem, np.array(extra, int).reshape(-1, 2)]) if extra else rem
 
 
-def simulate_rest(margins, tau, rem, wins_now, played_n, n_sims=10000, seed=7):
+def simulate_rest(margins, tau, rem, wins_now, played_n, n_sims=10000, seed=7, adj=None):
     """margins: array(30) per-game neutral margins; rem: (G,2) remaining games [home_idx, away_idx];
-    wins_now: array(30). Returns final wins W (n,30) and true strengths TRUE (n,30)."""
+    wins_now: array(30). adj: per remaining game home-side margin change (back-to-backs), same order as rem; filled TBD
+    games get 0. Returns final wins W (n,30) and true strengths TRUE (n,30)."""
     rng = np.random.default_rng(seed)
+    n0 = len(rem)
     rem = fill_tbd(rem, played_n, rng)
+    a_ = np.zeros(len(rem))
+    if adj is not None: a_[:n0] = adj
     true = margins[None, :] + rng.normal(0, tau, (n_sims, 30))
     W = np.tile(wins_now, (n_sims, 1)).astype(int)
     if len(rem):
         for c0 in range(0, n_sims, 2000):
             t = true[c0:c0 + 2000]
-            p = norm.cdf((t[:, rem[:, 0]] - t[:, rem[:, 1]] + HCA) / SIG)
+            p = norm.cdf((t[:, rem[:, 0]] - t[:, rem[:, 1]] + HCA + a_) / SIG)
             hw = rng.random(p.shape) < p
             W[c0:c0 + 2000] += np.stack([hw[:, rem[:, 0] == k].sum(1) + (~hw[:, rem[:, 1] == k]).sum(1) for k in range(30)], 1)
     return W, true, rng
@@ -60,6 +64,24 @@ def bo7_prob(pa, pb):
 
 
 PO = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "po.json")))
+# back-to-backs (session 37): -beta to a team on the 2nd night of a B2B; HCA re-centred (model/b2b.json). JIMBO_B2B=0 = off.
+_b2bf = os.path.join(os.path.dirname(os.path.abspath(__file__)), "b2b.json")
+B2B = json.load(open(_b2bf)) if os.path.exists(_b2bf) and os.environ.get("JIMBO_B2B", "1") != "0" else {"beta": 0.0, "hca": HCA}
+HCA = B2B["hca"]
+
+
+def b2b_flags(sched):
+    """sched: DataFrame with game, date (YYYYMMDD int), home, away (whole season, any order; TBD rows ignored).
+    Returns (game -> home on B2B, game -> away on B2B) as dicts of 0/1 (B2B = team also played the day before)."""
+    import pandas as pd
+    s = sched[sched.home.notna() & sched.away.notna() & (sched.home != sched.away)]
+    d = pd.to_datetime(s.date.astype(int).astype(str))
+    L = pd.concat([pd.DataFrame({"game": s.game.values, "d": d.values, "t": s.home.values}),
+                   pd.DataFrame({"game": s.game.values, "d": d.values, "t": s.away.values})]).sort_values(["t", "d"])
+    L["b"] = ((L.d - L.groupby("t").d.shift(1)).dt.days == 1).astype(int)
+    k = L.set_index(["game", "t"]).b
+    return (dict(zip(s.game, k.reindex(pd.MultiIndex.from_arrays([s.game, s.home])).values)),
+            dict(zip(s.game, k.reindex(pd.MultiIndex.from_arrays([s.game, s.away])).values)))
 
 
 def po_delta(team, rating, minutes, games, G, pace, po=PO):

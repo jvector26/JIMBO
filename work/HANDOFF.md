@@ -7,10 +7,17 @@ Design spec (Claude Doc): https://claude.ai/code/artifact/e5eebcf8-5649-4c33-b97
 To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs work/setup.sh, reads this file (repo CLAUDE.md says the same).
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
 
-## SESSION 37 (2026-10-29, user question: back-to-backs) -- TESTED, NOT APPLIED (awaiting OK)
-B2B was display-only. Night-2 team effect ~ -2.2 pts total (FE, t -12.6), -1.7 with actual minutes (research bar: LOSO 13.4633 -> 13.4367,
-t -4.2, both halves). Older 30+ mpg players sit +8-9 pts more on night 2. Season-sim effect +-0.3 wins. Proposal + numbers: RESEARCH_LOG
-"BACK-TO-BACKS"; code/b2b/.
+## SESSION 37 (2026-10-29, user question: back-to-backs) -- SHIPPED (user "ship 1")
+Second night of a back-to-back (team played the day before) = -2.0 points to that team's game margin; home court re-centred 2.6 -> 2.54
+(model/b2b.json; env JIMBO_B2B=0 = off). Applied in: nightly tonight + upcoming cards (fields rs = home-side change, b2b = [home, away]
+flags), past-game predictions for team offsets, rest-of-season sim (SIM.simulate_rest adj=; latest.json rem_rs aligned with rem;
+TBD Cup fills 0), play-in via SIM.HCA. App: in season D.meta.hca = SZ.cfg.hca; page sim uses REMA; tonightGames adds g.rs; game
+page waterfall "Back-to-back" row; context/How-it-works text updated. Playoff series (hca_po 4.0) and the preseason dashboard /
+simulate.py untouched. Evidence: RESEARCH_LOG "BACK-TO-BACKS" (total -2.2 t -12.6; fatigue -1.7 research bar LOSO -0.027 t -4.2).
+Effect on 10-29: SAC@NOP NOP 8.0 -> 5.9 (line -6.5); season wins -0.3 (CHI) .. +0.3 (SAC). sw.js jimbo-a008253995 (hand bump).
+Tests: local nightly on/off, phone + desktop playwright (cards = nightly margins, page sim vs nightly max 0.55, closer than without),
+skill drill passes, no page errors. OPEN (option 2, not done): night-2 sit chance for 30+ mpg / 30+ age players in tonight's minutes
+(then beta toward 1.7).
 
 ## SESSION 36 (2026-10-29, user request, display + pipeline data only) -- SHIPPED gh 803d9a8
 Tonight tab day stepper: ‹ › arrows step back through every game day so far and forward up to 3 GAME days; "Back to tonight" link.

@@ -678,7 +678,7 @@ body.pvopen #gv{display:none}
   <button data-go="set"><span class="ic" aria-hidden="true">⚙️</span>Settings</button>
 </nav>
 <footer>
-  <p>How it works. Each player's rating is points per 100 possessions over an average player: box-score evidence for twelve skills plus hustle stats (loose balls, 3-point contests), weighted by how much each has historically moved scoring margin, plus what lineup results show beyond the box score (raw lineup results count 60% on offense and 80% on defense, where past seasons predicted best; the lineup sliders scale from there), then adjusted for age (the age curve has its own slider). Minutes come from each player's history and age; team minutes always total 82 games of 240. The forecast blends the model with the betting market and roster age, the mix that best predicted 330 past preseasons, with the model and market shares adding to 100% (average miss 8.2 wins, against 8.4 for the betting line alone and 8.7 for the model alone). Weight sliders change the model; at the default mix the forecast moves about 0.35 wins for every model win (the model-vs-Vegas slider changes that). Playoff games use playoff minutes (stars play more, the rotation shortens; half weight) and a bigger home-court edge, 4 points, as in past playoffs. The accuracy box replays 2014-15 through 2025-26 with each season's ratings predicting the next using who actually played. Rosters and lines as of <span id="asof"></span>.</p>
+  <p>How it works. Each player's rating is points per 100 possessions over an average player: box-score evidence for twelve skills plus hustle stats (loose balls, 3-point contests), weighted by how much each has historically moved scoring margin, plus what lineup results show beyond the box score (raw lineup results count 60% on offense and 80% on defense, where past seasons predicted best; the lineup sliders scale from there), then adjusted for age (the age curve has its own slider). Minutes come from each player's history and age; team minutes always total 82 games of 240. The forecast blends the model with the betting market and roster age, the mix that best predicted 330 past preseasons, with the model and market shares adding to 100% (average miss 8.2 wins, against 8.4 for the betting line alone and 8.7 for the model alone). Weight sliders change the model; at the default mix the forecast moves about 0.35 wins for every model win (the model-vs-Vegas slider changes that). Playoff games use playoff minutes (stars play more, the rotation shortens; half weight) and a bigger home-court edge, 4 points, as in past playoffs. In season, a team playing the second night of a back-to-back loses 2 points in that game's odds and the season simulation (2015-25 games: about 1.7 from fatigue, the rest from regulars sitting). The accuracy box replays 2014-15 through 2025-26 with each season's ratings predicting the next using who actually played. Rosters and lines as of <span id="asof"></span>.</p>
 </footer>
 
 <dialog id="ed" aria-labelledby="edName">
@@ -828,7 +828,7 @@ function makeEngine(D){
       out[TI[t]]=d*(PO.weight!=null?PO.weight:1); }
     return out; }
   function simulate(margins, tau, n, opt){ // opt (app, in season): {sched: Int32Array home,away pairs of REMAINING games, w0: current wins}
-    opt=opt||{}; const sch=opt.sched||SCH, ng=sch.length/2, w0=opt.w0||null, rec=!opt.sched, post=!opt.noPost, pdl=opt.pd||null;  // pd: playoff strength change  // noPost: regular season only (win distribution)
+    opt=opt||{}; const sch=opt.sched||SCH, ng=sch.length/2, adj=opt.adj||null, w0=opt.w0||null, rec=!opt.sched, post=!opt.noPost, pdl=opt.pd||null;  // pd: playoff strength change  // noPost: regular season only (win distribution)
     const R=rng(20261), W=new Int16Array(n*NT), acc={po:new Float64Array(NT),pin:new Float64Array(NT),top6:new Float64Array(NT),seed1:new Float64Array(NT),r2:new Float64Array(NT),cf:new Float64Array(NT),fin:new Float64Array(NT),title:new Float64Array(NT)};
     const tr=new Float64Array(NT), w=new Int16Array(NT), key=new Float64Array(NT);
     const nrm=()=>{ const u=R()||1e-12, v=R(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); };
@@ -838,7 +838,7 @@ function makeEngine(D){
     const better=(a,b)=>w[b]>w[a]?[b,a]:[a,b];
     for(let s=0;s<n;s++){
       let mu=0; for(let i=0;i<NT;i++){ tr[i]=margins[i]+tau*nrm(); mu+=tr[i]; } mu/=NT; for(let i=0;i<NT;i++){ if(rec) tr[i]-=mu; w[i]=w0?w0[i]:0; }
-      for(let g=0;g<ng;g++){ const h=sch[2*g], a=sch[2*g+1]; if(R()<pg(tr[h]-tr[a]+HCA)) w[h]++; else w[a]++; }
+      for(let g=0;g<ng;g++){ const h=sch[2*g], a=sch[2*g+1]; if(R()<pg(tr[h]-tr[a]+HCA+(adj?adj[g]:0))) w[h]++; else w[a]++; }   // adj: back-to-back change per game (season)
       for(let i=0;i<NT;i++){ W[s*NT+i]=w[i]; key[i]=w[i]+R()*0.5; }
       if(!post) continue;
       if(pdl) for(let i=0;i<NT;i++) tr[i]+=pdl[i];   // play-in + playoffs at playoff strength
@@ -882,6 +882,7 @@ function makeEngine(D){
 <script>
 function jimboBoot(D, SZ, APP){  // SZ = nightly in-season state (app only), APP = app hooks (storage, history)
 if(SZ) seasonPrep(D, SZ);
+if(SZ&&SZ.cfg&&SZ.cfg.hca!=null) D.meta.hca=SZ.cfg.hca;   // in season: nightly home court (re-centred for back-to-backs, session 37)
 const E=makeEngine(D), M=D.meta, TEAMS=E.TEAMS, NSIM=APP&&APP.nsim||10000;
 const COMPS=M.components.concat(['lineup_o','lineup_d']);
 const LABEL={three_pt:'Three-point shooting', rim_finishing:'Rim finishing', pullup_mid:'Pull-ups and midrange', foul_drawing:'Foul drawing',
@@ -940,18 +941,18 @@ $('base').textContent=`Default weights: ${base.rmse.toFixed(2)} points, ${(base.
 
 // ---------- in season (app): nightly state layered on the preseason engine
 const SEASON=!!SZ, NT=TEAMS.length;
-let ZP=null, ZT=null, REMF=null, W0=null, GR={}, ANYPLAYED=false;
+let ZP=null, ZT=null, REMF=null, REMA=null, W0=null, GR={}, ANYPLAYED=false;
 const statusMult=z=>{ const s=(z&&z.status||'').toLowerCase(); return s.startsWith('out')||s.includes('suspen')?0:s.includes('day')?0.5:1; };
 if(SEASON){
   ZP=new Map(SZ.players.map(z=>[z.k,z])); ZT=Object.fromEntries(SZ.teams.map(t=>[t.t,t]));
   W0=Int16Array.from(TEAMS.map(t=>ZT[t].w)); TEAMS.forEach(t=>GR[t]=ZT[t].g_rem); ANYPLAYED=SZ.teams.some(t=>t.gp>0);
-  const rem=[]; SZ.rem.forEach(s=>{ const [h,a]=s.split('-'); if(h in E.TI&&a in E.TI) rem.push(E.TI[h],E.TI[a]); });
+  const rem=[], remA=[]; SZ.rem.forEach((s,i)=>{ const [h,a]=s.split('-'); if(h in E.TI&&a in E.TI){ rem.push(E.TI[h],E.TI[a]); remA.push((SZ.rem_rs&&SZ.rem_rs[i])||0); } });
   const cnt=new Array(NT).fill(0); rem.forEach(i=>cnt[i]++);
   const R=E.rng(7), extra=[];   // NBA Cup knockout-week slots are TBD until December: random same-conference games, as the nightly sim does
   for(const cf of ['E','W']){ const pool=[]; D.teams.forEach((t,i)=>{ if(t.conf===cf) for(let k=0;k<82-ZT[t.t].gp-cnt[i];k++) pool.push(i); });
     for(let i=pool.length-1;i>0;i--){ const j=Math.floor(R()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
     while(pool.length>=2){ const a=pool.pop(); let j=-1; for(let k=pool.length-1;k>=0;k--) if(pool[k]!==a){ j=k; break; } if(j<0) break; const b=pool.splice(j,1)[0]; if(R()<0.5) extra.push(a,b); else extra.push(b,a); } }
-  REMF=Int32Array.from(rem.concat(extra));
+  REMF=Int32Array.from(rem.concat(extra)); REMA=Float64Array.from(remA.concat(new Array(extra.length/2).fill(0)));   // back-to-back adjustment per game; TBD fills 0
 }
 function allocS(list, budget, cap){ // nightly.py allocate(): overrides locked, the rest trimmed from the bottom or scaled up to the budget
   let lockSum=0; list.forEach(r=>{ if(r.lock){ r.min=Math.min(r.want,cap); lockSum+=r.min; } });
@@ -1040,8 +1041,8 @@ function tonightGames(list, day){ // spread = (lineup pts + team offset + blend 
   if(!SEASON||!SZ.tonight) return [];
   const G=gameStrength(), T=Object.fromEntries(P.team.map(x=>[x.t,x]));
   const part=t=>{ const lin=G.st[t]-G.mean, pts=lin*SZ.pace/100, off=ZT[t].offset, bl=T[t].gap*ZT[t].dec; return {t, lin, pts, off, bl, dec:ZT[t].dec, m:pts+off+bl, rot:G.rot[t], x:T[t]}; };
-  return (list||SZ.tonight).map(g=>{ const H=part(g.home), A=part(g.away), sp=H.m-A.m+M.hca, spm=(H.pts+H.off)-(A.pts+A.off)+M.hca;
-    return {...g, day:day||SZ.game_day, sp, ph:E.Phi(sp/M.sig), spm, phm:E.Phi(spm/M.sig), H, A}; });
+  return (list||SZ.tonight).map(g=>{ const H=part(g.home), A=part(g.away), rs=g.rs||0, sp=H.m-A.m+M.hca+rs, spm=(H.pts+H.off)-(A.pts+A.off)+M.hca+rs;   // rs: back-to-back adjustment, home side (session 37)
+    return {...g, day:day||SZ.game_day, rs, sp, ph:E.Phi(sp/M.sig), spm, phm:E.Phi(spm/M.sig), H, A}; });
 }
 const ymd=d=>{ const s=String(d).replace(/-/g,''); return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}`; };
 function allGames(){ return tonightGames().concat(...(SZ.upcoming||[]).map(u=>tonightGames(u.games, ymd(u.day)))); }
@@ -1073,11 +1074,11 @@ function runSim(){
   $('simnote').textContent='Updating odds…';
   clearTimeout(simTimer);
   simTimer=setTimeout(()=>{ const PD=playoffDeltas(); P.team.forEach((x,i)=>x.pd=PD[i]);
-    SIMB=SEASON?E.simulate(P.team.map(x=>x.bmargin), seasonTau(), NSIM, {sched:REMF, w0:W0, pd:PD}):E.simulate(P.team.map(x=>x.bmargin), blendTau(), NSIM, {pd:PD});
+    SIMB=SEASON?E.simulate(P.team.map(x=>x.bmargin), seasonTau(), NSIM, {sched:REMF, adj:REMA, w0:W0, pd:PD}):E.simulate(P.team.map(x=>x.bmargin), blendTau(), NSIM, {pd:PD});
     $('simnote').textContent=`${NSIM.toLocaleString()} simulated seasons`; renderStandings(); renderTonight();
     // model alone (regular season only), for the win-distribution outline in the team view
     simTimer=setTimeout(()=>{ const tm=M.blend.tau_model||blendTau();
-      SIMM=SEASON?E.simulate(P.team.map(x=>x.margin), SZ.tau*tm/M.blend.tau, NSIM, {sched:REMF, w0:W0, noPost:true}):E.simulate(P.team.map(x=>x.margin), tm, NSIM, {noPost:true});
+      SIMM=SEASON?E.simulate(P.team.map(x=>x.margin), SZ.tau*tm/M.blend.tau, NSIM, {sched:REMF, adj:REMA, w0:W0, noPost:true}):E.simulate(P.team.map(x=>x.margin), tm, NSIM, {noPost:true});
       if(openTeams.size) renderStandings(); },30); },250);
 }
 let raf=0;
@@ -1444,6 +1445,7 @@ function renderGV(){
     ${r3('Lineup strength in points',`× league pace ${pace.toFixed(1)} possessions ÷ 100`,A.pts,H.pts,H.pts-A.pts)}
     ${r3('In-season team adjustment',offD,A.off,H.off,H.off-A.off)}
     ${r3('Forecast blend',`Pull toward the market's season view and roster age, weight ${decTxt} now (fades as games are played)`,A.bl,H.bl,H.bl-A.bl)}
+    ${g.rs?r3('Back-to-back',`Second night of a back-to-back: ${SZ.cfg&&SZ.cfg.b2b||2} points off (fatigue plus rest days for regulars; 2015-25 games)`,g.b2b&&g.b2b[1]?-(SZ.cfg.b2b||2):0,g.b2b&&g.b2b[0]?-(SZ.cfg.b2b||2):0,g.rs):''}
     ${r3('Home court','',null,M.hca,M.hca)}
     ${r3(`Expected margin: ${esc(mTxt(g.sp,g))}`,'',null,null,g.sp,'tot')}
     </tbody></table></div>
@@ -1457,7 +1459,7 @@ function renderGV(){
   const l10=t=>{ const L=(T[t]&&T[t].l10)||[]; if(!L.length) return '<p class="note">No games yet.</p>'; const w=L.filter(x=>x[3]>x[4]).length;
     return `<div class="note" style="margin:0">${w}-${L.length-w} in the last ${L.length}</div><div class="chips">${L.slice().reverse().map(x=>`<span class="chip ${x[3]>x[4]?'w':'l'}" title="${String(x[0]).slice(4,6)}/${String(x[0]).slice(6)}">${x[3]>x[4]?'W':'L'} ${x[2]==='H'?'vs':'@'} ${x[1]} ${x[3]}-${x[4]}</span>`).join('')}</div>`; };
   const mt=(g.meet||[]).map(x=>`<span class="chip">${String(x[0]).slice(4,6)}/${String(x[0]).slice(6)}: ${x[2]} ${x[4]} at ${x[1]} ${x[3]}</span>`).join('');
-  h+=`<div class="pvsec"><h3>Context</h3><p class="note">For reference only. JIMBO doesn't use rest, travel or schedule; results reach it only through the player ratings and the team adjustment above.</p>
+  h+=`<div class="pvsec"><h3>Context</h3><p class="note">For reference. JIMBO uses back-to-backs (shown above when one applies); other rest, travel and schedule details are not used. Results reach it through the player ratings and the team adjustment above.</p>
     <div class="ctxgrid"><div><h4>Rest</h4><div>${g.away}: ${rest(g.rest_a)}</div><div>${g.home}: ${rest(g.rest_h)}</div>
       <h4>Earlier meetings this season</h4>${mt?`<div class="chips">${mt}</div>`:'<p class="note">None yet.</p>'}</div>
       <div><h4>${g.away} recent results</h4>${l10(g.away)}<h4>${g.home} recent results</h4>${l10(g.home)}</div></div></div>`;

@@ -1675,7 +1675,7 @@ viewport-wide block). Checked: test_dashboard.js, ui_edit_test_db.py, phone scre
 See HANDOFF session 35. Checks: phone + desktop playwright (Leonard, Doncic, Barlow, Veesaar, Brunson), no page errors;
 skill_drill_test, test_dashboard.js (max 0.0010), ui_edit_test_db.py pass; local nightly ratings/mk identical to live.
 
-## BACK-TO-BACKS (2026-10-29, session 37, user question) -> TESTED, PASSES BAR, NOTHING APPLIED (awaiting user OK)
+## BACK-TO-BACKS (2026-10-29, session 37, user question) -> PASSES BAR; (a) APPLIED 2026-10-29 (user 'ship 1'), beta 2.0, HCA 2.54; (b) open
 Status before: rest/B2B was display only (tonight cards rest_h/rest_a); not in nightly margins, jimbo_sim, or any minutes rule.
 Code: code/b2b/b2b_team.py (team-season FE, 2004-25 -> data/b2b_games.parquet), b2b_bt.py (research-bar backtest, ACTUAL
 minutes), b2b_minutes.py (player night-2 minutes/absence 2014-25 -> data/b2b_player_games.parquet), b2b_age.py, b2b_season.py.
