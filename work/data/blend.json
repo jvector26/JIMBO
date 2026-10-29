@@ -1,0 +1,18 @@
+{
+ "w_model": 0.37290551766215724,
+ "w_vegas": 0.6270944823378428,
+ "w_age": -0.5951915674428258,
+ "tau_blend": 2.75,
+ "tau_model": 3.0345,
+ "min_age_mult": {
+  "<=22": 1.105,
+  "23-25": 1.058,
+  "26-28": 1.017,
+  "29-31": 0.94,
+  "32-34": 0.911,
+  "35+": 1.002
+ },
+ "constrained": true,
+ "tau_cal": 1.1365,
+ "tau_note": "2026-10-06 session 21: tau_blend and tau_model scaled by tau_cal so preseason p10-p90 win ranges cover ~80% (12-season nightly replay: fitted 2.42 covered ~73%). refit_blend.py applies tau_cal; regenerate blend_curve tau from tau_blend."
+}

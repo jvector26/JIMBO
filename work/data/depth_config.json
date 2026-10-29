@@ -1,0 +1,12 @@
+{
+ "exempt": {},
+ "carryover_teams": [
+  "POR",
+  "SAC",
+  "SAS",
+  "UTA",
+  "WAS"
+ ],
+ "min_team_players": 13,
+ "note": "code/depth_apply.py. Exempt keys keep their team and m0 (tier X). carryover_teams: base roster = 2025-26 roster + moves (no RealGM chart on 2026-09-18), so players there on NO chart are dropped to FA. Duren de-exempted 2026-10-20 (signed 10-01, on the chart)."
+}

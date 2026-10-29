@@ -1,0 +1,21 @@
+{
+ "coef": {
+  "S": [
+   351.68,
+   0.8453
+  ],
+  "R": [
+   187.93,
+   0.8418
+  ],
+  "L": [
+   26.19,
+   0.8999
+  ],
+  "N": [
+   -97.1,
+   0.63
+  ]
+ },
+ "note": "want = a[tier] + b[tier]*m0, clip 0..3000; tier S/R/L from RealGM, N = not on the team's chart; m0 = recal'd min_model incl age mult. Fit code/depth_fit.py (2026-09-23)."
+}

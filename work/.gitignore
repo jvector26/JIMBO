@@ -1,0 +1,5 @@
+# Big rebuildable data and research outputs stay out of git (they used to be dropped from the zip).
+# Files already tracked in data/ keep updating normally. A NEW production input must be added with: git add -f work/data/<file>
+data/*
+data/ncaa/*
+raw/*

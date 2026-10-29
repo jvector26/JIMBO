@@ -1,0 +1,51 @@
+// JIMBO phone app (GitHub Pages): loads the preseason model payload + the nightly in-season state, boots the dashboard,
+// and syncs player edits to overrides.json in the repo (read by the nightly run) when a GitHub token is saved.
+(async function(){
+  const OWNER='jvector26', REPO='JIMBO', FILE='overrides.json', TK='jimbo-gh-token', API=`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE}`;
+  const ld=document.getElementById('loading');
+  const say=t=>{ if(ld) ld.querySelector('p').textContent=t; };
+  const getJSON=async(u,o)=>{ const r=await fetch(u,o||{cache:'no-cache'}); if(!r.ok) throw new Error(`${r.status} ${u}`); return r.json(); };
+  const b64d=s=>decodeURIComponent(escape(atob(s.replace(/\n/g,''))));
+  const b64e=s=>btoa(unescape(encodeURIComponent(s)));
+  const tok=()=>{ try{ return localStorage.getItem(TK)||''; }catch(e){ return ''; } };
+  const hdr=t=>({Authorization:`Bearer ${t}`, Accept:'application/vnd.github+json'});
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+  let D, SZ, hist=null, remote=null;
+  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=__V__',{}), getJSON('data/latest.json')]); }
+  catch(e){ say('Could not load data. Check your connection and reopen.'); return; }
+  try{ hist=await getJSON('data/history.json'); }catch(e){}
+  let vg=null; try{ vg=await getJSON('data/vegas.json'); }catch(e){}
+  async function fetchRemote(){
+    const t=tok();
+    if(t){ const r=await fetch(API+'?ref=main',{headers:hdr(t),cache:'no-store'}); if(!r.ok) throw new Error('GitHub '+r.status); const j=await r.json(); return {data:JSON.parse(b64d(j.content)), sha:j.sha}; }
+    const r=await fetch(`https://raw.githubusercontent.com/${OWNER}/${REPO}/main/${FILE}?t=${Date.now()}`,{cache:'no-store'}); if(!r.ok) throw new Error('raw '+r.status); return {data:await r.json(), sha:null};
+  }
+  try{ remote=(await fetchRemote()).data; }catch(e){}
+  async function save(snap){
+    const t=tok();
+    if(!t) return 'Saved on this device. Add a GitHub token below to send edits to the nightly run.';
+    const cur=await fetchRemote();
+    const body={_note:(cur.data&&cur.data._note)||'User overrides (JIMBO app). players: key -> {t, g, mpg, r, d (role S/R/L/N)}.', players:snap.players, sliders:snap.sliders, updated:snap.updated};
+    const r=await fetch(API,{method:'PUT',headers:{...hdr(t),'Content-Type':'application/json'},
+      body:JSON.stringify({message:'app: player edits '+new Date().toISOString().slice(0,16), content:b64e(JSON.stringify(body,null,1)+'\n'), sha:cur.sha, branch:'main'})});
+    if(!r.ok) throw new Error('GitHub '+r.status+(r.status===401||r.status===403?' (check the token)':''));
+    return 'Saved and synced to GitHub. The next nightly run uses these edits.';
+  }
+  function afterBoot(ctx){
+    const el=ctx.$('ghsync'); el.hidden=false;
+    el.innerHTML=`<h2>Sync edits with the nightly run</h2>
+      <p class="note">Without a token, edits stay on this device. With one, they're saved to the repo so the nightly update (and your other devices) use them. Use a fine-grained token for ${OWNER}/${REPO} only, with Contents: read and write. It's stored only on this device.</p>
+      <input id="ghTok" type="password" autocomplete="off" placeholder="${tok()?'Token saved (paste a new one to replace)':'github_pat_…'}" aria-label="GitHub token">
+      <div class="row"><button class="btn" id="ghSave">Save token</button><button class="btn" id="ghForget"${tok()?'':' hidden'}>Remove token</button></div>
+      <p class="note" id="ghStat">${tok()?'Token saved. Edits sync to GitHub.':''}</p>
+      <p class="note">App data: nightly run ${SZ.generated_utc||SZ.asof}. <a href="https://github.com/${OWNER}/${REPO}/actions" target="_blank" rel="noopener">Runs on GitHub</a></p>`;
+    const st=ctx.$('ghStat');
+    ctx.$('ghSave').addEventListener('click',async()=>{ const v=ctx.$('ghTok').value.trim(); if(!v) return; st.textContent='Checking…';
+      try{ const r=await fetch(API+'?ref=main',{headers:hdr(v)}); if(!r.ok) throw new Error(r.status);
+        localStorage.setItem(TK,v); ctx.$('ghTok').value=''; ctx.$('ghForget').hidden=false; st.textContent='Token works. Syncing your current edits…'; ctx.changed(true); }
+      catch(e){ st.textContent='That token could not read the repo ('+e.message+'). Check its repository access and Contents permission.'; } });
+    ctx.$('ghForget').addEventListener('click',()=>{ localStorage.removeItem(TK); ctx.$('ghForget').hidden=true; st.textContent='Token removed. Edits now stay on this device.'; });
+  }
+  if(ld) ld.remove();
+  jimboBoot(D, SZ, {nsim: innerWidth<760?5000:10000, hist, vg, remote, save, afterBoot});
+})();

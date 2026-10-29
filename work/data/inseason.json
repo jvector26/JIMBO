@@ -1,0 +1,4 @@
+{"ratings": {"method": "M4", "box_dS": 1.0, "H0": 2000, "rapm_lam": 6000, "team_offset_lam": 80, "hca": 2.5},
+ "minutes": {"k_games": 5, "recency_l10": 0.5, "absence_fallback": {"streak_games": 5, "mult": 0.5},
+  "formula": "mpg = w*(0.5*last10 + 0.5*season_to_date) + (1-w)*preseason_mpg, w = n/(n+5), n = team games since joining; DNPs count 0; injured (report) -> 0 until return; no report but absent 5+ straight -> x0.5; rescale team to 240/game",
+  "src": "inseason_minutes.py 2026-09-19"}}

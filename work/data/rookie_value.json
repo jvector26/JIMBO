@@ -1,0 +1,12 @@
+{
+ "rk": -2.7251448336649875,
+ "rk_lp": -1.509529391175407,
+ "rk_age": 0.7721340513622723,
+ "center_lp": 2.0,
+ "center_age": 20.0,
+ "col_a": -3.0201313508029664,
+ "col_b": 3.6961232977920147,
+ "col_cap": 1.0,
+ "col_mean": -0.9936217004834925,
+ "note": "college first-rounders: col_a + col_b*clip(cscore-col_mean,+-cap); others: pick+age formula | 2026-09-20: rescaled with the refit age curve (code/rookie_refit.py) | 2026-09-21: slope refit under split lineup weights 1.070->1.050 (code/slope_refit.py), pre-slope values x old->new ratios"
+}

@@ -1,0 +1,15 @@
+const fs=require('fs');
+const html=fs.readFileSync('dashboard.html','utf8');
+const data=JSON.parse(html.match(/<script id="data" type="application\/json">([\s\S]*?)<\/script>/)[1]);
+const eng=html.match(/<script id="engine">([\s\S]*?)<\/script>/)[1];
+global.atob=s=>Buffer.from(s,'base64').toString('binary');
+require('vm').runInThisContext(eng+';globalThis.makeEngine=makeEngine;');
+const E=makeEngine(data); const DEF={}; data.meta.components.forEach(c=>DEF[c]=1); DEF.lineup_o=0.6; DEF.lineup_d=0.8;
+const OV={p1642857:{d:'S'},p204001:{d:'L'},p1629660:{d:'R'}};
+const P=E.project(DEF,OV);
+const rd=f=>{const L=fs.readFileSync(f,'utf8').trim().split('\n'); const h=L[0].split(','); return L.slice(1).map(l=>{const a=l.split(','); return Object.fromEntries(h.map((x,i)=>[x,a[i]]));});};
+const py=Object.fromEntries(rd('/tmp/teams_tier.csv').map(r=>[r[Object.keys(r)[0]],+r.wins]));
+let md=0; P.team.forEach(x=>md=Math.max(md,Math.abs(x.mw-py[x.t]))); console.log('max |model wins - project.py with role overrides|',md.toFixed(4));
+const pp=rd('/tmp/players_tier.csv'); let mm=0; P.rows.filter(r=>r.t!=='FA').forEach(r=>{ const q=pp.find(x=>x.player&&('p'+(+x.player))===r.p.k); if(q) mm=Math.max(mm,Math.abs(r.min-(+q.min_proj))); }); console.log('max player minutes diff',mm.toFixed(2));
+['p1642857','p204001','p1629660'].forEach(k=>{const r=P.rows.find(x=>x.p.k===k); console.log(r.p.n, r.t, Math.round(r.min));});
+['MIL','GSW','MEM'].forEach(t=>console.log(t,P.team.find(x=>x.t===t).mw.toFixed(2),py[t].toFixed(2)));

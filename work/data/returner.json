@@ -1,0 +1,2 @@
+{"adj": -0.35, "min_mpg": 20, "min_gp": 30, "max_avail": 0.2,
+ "src": "injury_return.py 2026-09-19: regulars (20+ mpg, 30+ gp in N-1) with <20% availability in N; actual box next season -0.35 vs projection (t -2.7), post-slope pts/100"}

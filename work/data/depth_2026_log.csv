@@ -1,0 +1,86 @@
+change,name,key,frm,to,tier,why
+moved,Ryan Nembhard,p1642948,ATL,DEN,L,
+moved,Buddy Hield,p1627741,ATL,CHI,R,
+dropped,Bez Mbeng,p1643016,CHA,FA,,on no chart (released?)
+moved,Dorian Finney-Smith,p1627827,CHA,ATL,R,
+dropped,Pat Connaughton,p1626192,CHA,FA,,on no chart (released?)
+dropped,Rob Dillingham,p1642265,CHI,FA,,on no chart (released?)
+dropped,John Poulakidas,p1642967,DAL,FA,,on no chart (released?)
+dropped,KJ Simpson,p1642354,DEN,FA,,on no chart (released?)
+dropped,Lonnie Walker,p1629022,DEN,FA,,on no chart (released?)
+dropped,Gary Harris,p203914,DET,FA,,on no chart (released?)
+dropped,Dalen Terry,p1631207,GSW,FA,,on no chart (released?)
+dropped,Sean Pedulla,p1642951,HOU,FA,,on no chart (released?)
+dropped,Yuki Kawamura,p1642530,LAC,FA,,on no chart (released?)
+dropped,Johni Broome,p1641780,LAC,FA,,on no chart (released?)
+dropped,Dalton Knecht,p1642261,LAL,FA,,on no chart (released?)
+dropped,Walter Clayton Jr.,p1642383,MEM,FA,,on no chart (released?)
+dropped,D'Angelo Russell,p1626156,MEM,FA,,on no chart (released?)
+moved,Jordan Hawkins,p1641722,MEM,CHI,L,
+dropped,Micah Peavy,p1642877,MEM,FA,,on no chart (released?)
+dropped,Kevin Porter Jr.,p1629645,MIL,FA,,on no chart (released?)
+dropped,Pete Nance,p1631250,MIL,FA,,on no chart (released?)
+dropped,John Butler,p1631219,MIL,FA,,on no chart (released?)
+dropped,Enrique Freeman,p1642402,MIN,FA,,on no chart (released?)
+dropped,Christian Koloko,p1631132,NOP,FA,,on no chart (released?)
+dropped,Caleb Houstan,p1631216,NOP,FA,,on no chart (released?)
+dropped,Kobe Bufkin,p1641723,NOP,FA,,on no chart (released?)
+dropped,Bruce Brown,p1628971,NYK,FA,,on no chart (released?)
+dropped,John Konchar,p1629723,NYK,FA,,on no chart (released?)
+dropped,Ochai Agbaji,p1630534,NYK,FA,,on no chart (released?)
+dropped,Drew Eubanks,p1629234,NYK,FA,,on no chart (released?)
+dropped,JD Davison,p1631120,ORL,FA,,on no chart (released?)
+dropped,Malaki Branham,p1631103,ORL,FA,,on no chart (released?)
+dropped,Dillon Jones,p1641794,PHI,FA,,on no chart (released?)
+dropped,Jameer Nelson Jr.,p2749,PHI,FA,,on no chart (released?)
+dropped,Haywood Highsmith,p1629312,PHX,FA,,on no chart (released?)
+dropped,Koby Brea,p1642886,PHX,FA,,on no chart (released?)
+dropped,Chucky Hepburn,p1642935,TOR,FA,,on no chart (released?)
+dropped,Andre Jackson Jr.,p1641748,TOR,FA,,on no chart (released?)
+dropped,Trey Jemison,p1641998,TOR,FA,,on no chart (released?)
+dropped,Jeremy Sochan,p1631110,POR,FA,,"carry-over roster, on no chart"
+dropped,Adam Flagler,p1641745,SAC,FA,,"carry-over roster, on no chart"
+dropped,Taelon Peter,p1643007,SAS,FA,,"carry-over roster, on no chart"
+dropped,Javonte Cooke,p1631451,POR,FA,,"carry-over roster, on no chart"
+moved,Duop Reath,p1641871,POR,PHX,L,
+dropped,Dario Saric,p203967,SAC,FA,,"carry-over roster, on no chart"
+dropped,DaQuan Jeffries,p1629610,SAC,FA,,"carry-over roster, on no chart"
+dropped,Bismack Biyombo,p202687,SAS,FA,,"carry-over roster, on no chart"
+dropped,Kelly Olynyk,p203482,SAS,FA,,"carry-over roster, on no chart"
+dropped,Mason Plumlee,p203486,SAS,FA,,"carry-over roster, on no chart"
+dropped,Lindy Waters III,p1630322,SAS,FA,,"carry-over roster, on no chart"
+dropped,Stanley Umude,p1630649,SAS,FA,,"carry-over roster, on no chart"
+dropped,Kevin Love,p201567,UTA,FA,,"carry-over roster, on no chart"
+dropped,Kennedy Chandler,p1631113,UTA,FA,,"carry-over roster, on no chart"
+dropped,Vince Williams Jr.,p1631246,UTA,FA,,"carry-over roster, on no chart"
+dropped,Hayden Gray,p1643060,UTA,FA,,"carry-over roster, on no chart"
+dropped,Andersson Garcia,p1643158,UTA,FA,,"carry-over roster, on no chart"
+dropped,Skal Labissiere,p1627746,WAS,FA,,"carry-over roster, on no chart"
+dropped,Sharife Cooper,p1630536,WAS,FA,,"carry-over roster, on no chart"
+dropped,Alondes Williams,p1631214,WAS,FA,,"carry-over roster, on no chart"
+moved,Leaky Black,p1641778,WAS,SAC,L,
+dropped,Kadary Richmond,p1642955,WAS,FA,,"carry-over roster, on no chart"
+dropped,Will Baker,n:Will Baker|ATL,ATL,FA,,on no chart (released?)
+dropped,Milos Uzan,n:Milos Uzan|BOS,BOS,FA,,on no chart (released?)
+dropped,Tucker DeVries,n:Tucker DeVries|BOS,BOS,FA,,on no chart (released?)
+dropped,Alex Toohey,n:Alex Toohey|GSW,GSW,FA,,on no chart (released?)
+dropped,Rafael Castro,n:Rafael Castro|HOU,HOU,FA,,on no chart (released?)
+dropped,Jamarion Sharp,n:Jamarion Sharp|LAC,LAC,FA,,on no chart (released?)
+dropped,J'Vonne Hadley,n:J'Vonne Hadley|MIA,MIA,FA,,on no chart (released?)
+dropped,Christoph Tilly,n:Christoph Tilly|OKC,OKC,FA,,on no chart (released?)
+dropped,Saint Thomas,n:Saint Thomas|PHI,PHI,FA,,on no chart (released?)
+dropped,Duke Miles,n:Duke Miles|PHI,PHI,FA,,on no chart (released?)
+dropped,Tamar Bates,n:Tamar Bates|UTA,UTA,FA,,"carry-over roster, on no chart"
+added,Graham Ike,n:Graham Ike|GSW,,GSW,L,no NBA history
+added,Carson Cooper,n:Carson Cooper|MEM,,MEM,L,no NBA history
+added,Julian Reese,p1642882,,NOP,L,NBA history
+added,Kevin McCullar Jr.,p1641755,,NYK,L,NBA history
+added,Jaden Akins,n:Jaden Akins|NYK,,NYK,L,no NBA history
+added,Tyler Nickel,n:Tyler Nickel|NYK,,NYK,L,no NBA history
+added,Pat Spencer,p1630311,,PHX,L,NBA history
+added,Koa Peat,n:Koa Peat|PHX,,PHX,L,no NBA history
+added,Khaman Maluach,p1642863,,PHX,L,NBA history
+added,Drew Timme,p1631166,,PHX,L,NBA history
+added,Josh Green,p1630182,,UTA,R,NBA history
+added,Tony Bradley,p1628396,,UTA,R,NBA history
+added,Reece Beekman,p1641736,,WAS,L,NBA history
