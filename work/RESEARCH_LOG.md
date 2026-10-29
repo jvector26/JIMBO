@@ -1670,3 +1670,7 @@ viewport-wide block). Checked: test_dashboard.js, ui_edit_test_db.py, phone scre
   order by minutes x chance he plays. Replay 10-20..10-27 (56 games): player-game RMSE 8.43 -> 7.13 (t -7.2); margin 15.06 -> 15.03.
   OWED: 2014-25 replay incl. non-appearing players. Doc: claude/tonight_minutes_fix_2026-10-28.md.
 - s34 housekeeping: all seven built-page patches folded into code/dash_v2.html + appsrc/app.js; build reproduces live index.html exactly.
+
+## MATCHUPS TAB REMOVED + PLAYER-CARD INJURY BOX (2026-10-29, session 35, user request) -> SHIPPED, display only
+See HANDOFF session 35. Checks: phone + desktop playwright (Leonard, Doncic, Barlow, Veesaar, Brunson), no page errors;
+skill_drill_test, test_dashboard.js (max 0.0010), ui_edit_test_db.py pass; local nightly ratings/mk identical to live.

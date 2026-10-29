@@ -158,18 +158,6 @@ tr.cut td{border-bottom:2px solid var(--rule)}
 .rsum{display:flex;flex-wrap:wrap;gap:4px 22px;font-size:13.5px;color:var(--muted);margin:0 2px 8px}
 .rsum b{color:var(--ink);font-family:var(--cond);font-size:17px}
 .popath{margin:0 2px 6px}
-/* head to head */
-.h2h{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:18px;margin-bottom:22px}
-.h2h .pick{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-.h2h select{font:inherit;font-family:var(--cond);font-size:20px;font-weight:600;padding:5px 10px;border:1px solid var(--rule);border-radius:6px;background:var(--surface);color:var(--ink)}
-.h2h .res{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin-top:18px}
-.h2h .side{text-align:center}
-.h2h .pct{font-family:var(--cond);font-size:clamp(44px,7vw,64px);font-weight:700;line-height:1}
-.h2h .who{font-family:var(--cond);font-size:22px;font-weight:600}
-.h2h .at{color:var(--muted);font-size:14px}
-.h2h .pbar{grid-column:1 / 4;height:10px;border-radius:5px;background:var(--rule);overflow:hidden}
-.h2h .pbar span{display:block;height:100%;background:var(--ink)}
-.h2h .sub{grid-column:1 / 4;text-align:center;color:var(--muted);font-size:14px}
 dialog{border:1px solid var(--rule);border-radius:12px;background:var(--surface);color:var(--ink);padding:0;width:min(460px,94vw)}
 dialog::backdrop{background:rgba(10,18,32,.45)}
 dialog form{padding:18px 20px}
@@ -269,7 +257,7 @@ h3{font-family:var(--text);font-size:15px;font-weight:700;color:var(--hd);text-t
 .tabs{border-bottom:2px solid var(--black);gap:6px;margin-bottom:0}
 .tabs button{font-family:var(--display);font-size:clamp(13px,1.9vw,16px);font-weight:400;color:var(--ink);border:2px solid var(--black);border-bottom:0;
   border-radius:10px 10px 0 0;padding:8px 14px 6px;margin-bottom:-2px;background:#FFEB99}
-#t-tn{background:#FFD9B8 !important} #t-pl{background:#FFD1E8} #t-hh{background:#C9F4F6} #t-vg{background:#D9F7C8}
+#t-tn{background:#FFD9B8 !important} #t-pl{background:#FFD1E8} #t-vg{background:#D9F7C8}
 /* JIMBO vs Vegas tab (session 29) */
 .vgtiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin:12px 0 18px}
 .vgt{border:2px solid var(--black);padding:9px 11px;box-shadow:4px 4px 0 var(--shadow2);background:var(--surface);display:flex;flex-direction:column;gap:2px}
@@ -304,18 +292,13 @@ tr.detail > td{background:var(--soft)}
 .strip .mk{background:var(--mark);width:3px}
 .lg-dot{background:var(--magenta)} .lg-ring{border-color:var(--ring)} .lg-line{background:var(--mark)}
 .bar span{top:2px;height:12px}
-/* cards / sections / h2h / dialog */
-.card,.pvsec,.h2h{border:2px solid var(--black);border-radius:0;box-shadow:4px 4px 0 var(--shadow2)}
+/* cards / sections / dialog */
+.card,.pvsec{border:2px solid var(--black);border-radius:0;box-shadow:4px 4px 0 var(--shadow2)}
 .card .v{font-size:30px;font-weight:700}
 .pvh h2{font-family:var(--text);font-weight:700}
 dialog h2{font-family:var(--text);font-weight:700}
 .pvsec h3{text-transform:none;letter-spacing:0;font-size:17px}
-.h2h select,.tools input,.tools select,dialog input,dialog select,.chartbar select{border:1.5px solid var(--black);border-radius:4px;font-family:var(--text)}
-.h2h select{font-family:var(--text);font-weight:600;font-size:17px}
-.h2h .pct{font-family:var(--cond);font-weight:700;font-size:clamp(52px,8vw,76px);color:var(--magenta)}
-.h2h .who{font-family:var(--text);font-weight:700;font-size:19px}
-.h2h .pbar{height:14px;border-radius:0;border:1.5px solid var(--black);background:var(--yellow)}
-.h2h .pbar span{background:var(--purple)}
+.tools input,.tools select,dialog input,dialog select,.chartbar select{border:1.5px solid var(--black);border-radius:4px;font-family:var(--text)}
 dialog{border:2px solid var(--black);border-radius:0;box-shadow:8px 8px 0 var(--shadow)}
 footer{color:var(--muted)}
 footer p{border-top:2px dashed var(--shadow);padding-top:12px}
@@ -324,6 +307,9 @@ th .axis span{color:#fff;opacity:.85}
 /* app: freshness, injuries, tonight, history, bottom nav */
 .fresh{font-size:13.5px;font-weight:600;color:var(--purple);margin:0 0 8px}
 .inj.dtd{background:#E8A200}
+.pvinj{border:2px solid var(--black);border-left:8px solid var(--neg);background:var(--surface);padding:10px 12px;margin:0 0 14px;box-shadow:4px 4px 0 var(--shadow2)}
+.pvinj.dtd{border-left-color:#E8A200}
+.pvinj .l1{font-size:16px} .pvinj .l1 .inj{margin:0 8px 0 0} .pvinj .l2{color:var(--muted);font-size:13px;margin-top:3px}
 tr.benchhd td{text-align:left;background:var(--soft);color:var(--muted);font-size:13px;font-weight:600;padding:8px 8px 6px;border-top:2px solid var(--line)}
 td.muted{color:var(--muted)}
 .rk2 small.p100{font-family:var(--text);font-weight:400;font-size:11px;color:var(--muted);margin-left:3px}
@@ -572,7 +558,7 @@ body.pvopen #gv{display:none}
 <header>
   <h1><span class="jam" data-text="JIMBO">JIMBO</span><span class="h1sub">NBA 2026-27 projections</span></h1>
   <p class="fresh" id="fresh" hidden></p>
-  <p class="lede">Every team's win total and playoff odds, built up from player ratings and projected minutes. Move a weight, change a player's minutes or rating, or move him to another team: standings, odds and matchups recompute from 10,000 simulated seasons.</p>
+  <p class="lede">Every team's win total and playoff odds, built up from player ratings and projected minutes. Move a weight, change a player's minutes or rating, or move him to another team: standings and odds recompute from 10,000 simulated seasons.</p>
 </header>
 <main>
   <section aria-label="Projections">
@@ -580,7 +566,6 @@ body.pvopen #gv{display:none}
       <button role="tab" id="t-st" aria-controls="p-st" aria-selected="true">Standings</button>
       <button role="tab" id="t-tn" aria-controls="p-tn" aria-selected="false" tabindex="-1" hidden>Tonight</button>
       <button role="tab" id="t-pl" aria-controls="p-pl" aria-selected="false" tabindex="-1">Players</button>
-      <button role="tab" id="t-hh" aria-controls="p-hh" aria-selected="false" tabindex="-1">Head to head</button>
       <button role="tab" id="t-vg" aria-controls="p-vg" aria-selected="false" tabindex="-1" hidden>vs Vegas</button>
     </div>
 
@@ -647,19 +632,6 @@ body.pvopen #gv{display:none}
       <button class="btn more" id="more">Show 50 more</button>
     </div>
 
-    <div class="panel" id="p-hh" role="tabpanel" aria-labelledby="t-hh" hidden>
-      <div class="h2h">
-        <div class="pick">
-          <select id="hA" aria-label="Away team"></select><span class="at">at</span><select id="hH" aria-label="Home team"></select>
-          <button class="btn" id="hSwap">Swap venue</button>
-        </div>
-        <div class="res" id="hRes" aria-live="polite"></div>
-      </div>
-      <div class="conf"><h2 id="hTeamH">Every opponent</h2></div>
-      <div class="tbl"><table style="min-width:520px">
-        <thead><tr><th class="l">Opponent</th><th id="hHomeH">Win % at home</th><th id="hAwayH">Win % away</th><th class="hide-s">Expected margin, neutral</th></tr></thead>
-        <tbody id="hRows"></tbody></table></div>
-    </div>
     <div id="pv" hidden></div>
     <div id="gv" hidden></div>
   </section>
@@ -694,7 +666,6 @@ body.pvopen #gv{display:none}
   <button data-go="t-st" aria-current="page"><span class="ic" aria-hidden="true">📊</span>Standings</button>
   <button data-go="t-tn"><span class="ic" aria-hidden="true">🏀</span>Tonight</button>
   <button data-go="t-pl"><span class="ic" aria-hidden="true">⭐</span>Players</button>
-  <button data-go="t-hh"><span class="ic" aria-hidden="true">🆚</span>Matchups</button>
   <button data-go="t-vg" id="bn-vg" hidden><span class="ic" aria-hidden="true">🎰</span>vs Vegas</button>
   <button data-go="set"><span class="ic" aria-hidden="true">⚙️</span>Settings</button>
 </nav>
@@ -1063,6 +1034,20 @@ function tonightGames(){ // spread = (lineup pts + team offset + blend adj)_home
   return SZ.tonight.map(g=>{ const H=part(g.home), A=part(g.away), sp=H.m-A.m+M.hca, spm=(H.pts+H.off)-(A.pts+A.off)+M.hca;
     return {...g, sp, ph:E.Phi(sp/M.sig), spm, phm:E.Phi(spm/M.sig), H, A}; });
 }
+function injWhat(z){ // "left knee inflammation" from factual report fields (side, body part, injury type)
+  if(!z) return ''; const ok=x=>x&&!/^(nan|not specified)$/i.test(x);
+  const side=ok(z.is)?z.is.toLowerCase():'', part=ok(z.ib)?z.ib:'', typ=ok(z.inj)?z.inj.replace(/\s*(Left|Right|Not Specified)$/i,'').trim():'';
+  if(!part&&!typ) return ''; const lc=w=>/^[A-Z]{2,}$/.test(w)||/^Achilles/.test(w)?w:w.toLowerCase();
+  if(!part) return (side?side+' ':'')+lc(typ);
+  const noside=/^(illness|personal|rest|suspension|concussion|mononucleosis)$/i.test(part);
+  return `${!noside&&side?side+' ':''}${lc(part)}${typ&&!noside?' '+lc(typ):''}`; }
+const injDate=(d,o)=>{ const x=d?new Date(d+'T12:00:00'):null; return x&&!isNaN(x)?x.toLocaleDateString(undefined,o||{month:'short',day:'numeric'}):''; };
+function injCard(r){ const z=r.z; if(!SEASON||!z||!z.status) return '';
+  const st=z.status, dtd=/^day/i.test(st), what=injWhat(z), back=injDate(z.ret,{weekday:'short',month:'short',day:'numeric'}), up=injDate(z.iu);
+  const games=!dtd&&z.miss>=1?` · about ${Math.round(z.miss)} game${Math.round(z.miss)===1?'':'s'}`:'';
+  const season=!dtd&&z.ret&&z.ret>'2027-04-20';   // ESPN puts season-ending injuries at Jul 1
+  return `<div class="pvinj${dtd?' dtd':''}"><div class="l1"><b>${esc(st)}</b>${what?` · ${esc(what)}`:''}</div>
+    <div class="l2">${season?'Out for the season':back?`Expected back ${back}${games}`:dtd?'Game-time decisions count as a 50% chance he plays':'No return date given'}${up?` · reported ${up}`:''}</div></div>`; }
 function injBadge(r){ const st=r.z&&r.z.status; if(!st) return ''; const lab=/^day/i.test(st)?'DTD':st.split(/[ -]/)[0];
   return `<span class="inj${lab==='DTD'?' dtd':''}" title="${esc(st)} (injury report)">${esc(lab)}</span>`; }
 function recompute(){ P=E.project(S,OV); if(SEASON) seasonOverlay(P); }
@@ -1078,7 +1063,7 @@ function runSim(){
   clearTimeout(simTimer);
   simTimer=setTimeout(()=>{ const PD=playoffDeltas(); P.team.forEach((x,i)=>x.pd=PD[i]);
     SIMB=SEASON?E.simulate(P.team.map(x=>x.bmargin), seasonTau(), NSIM, {sched:REMF, w0:W0, pd:PD}):E.simulate(P.team.map(x=>x.bmargin), blendTau(), NSIM, {pd:PD});
-    $('simnote').textContent=`${NSIM.toLocaleString()} simulated seasons`; renderStandings(); renderH2H(); renderTonight();
+    $('simnote').textContent=`${NSIM.toLocaleString()} simulated seasons`; renderStandings(); renderTonight();
     // model alone (regular season only), for the win-distribution outline in the team view
     simTimer=setTimeout(()=>{ const tm=M.blend.tau_model||blendTau();
       SIMM=SEASON?E.simulate(P.team.map(x=>x.margin), SZ.tau*tm/M.blend.tau, NSIM, {sched:REMF, w0:W0, noPost:true}):E.simulate(P.team.map(x=>x.margin), tm, NSIM, {noPost:true});
@@ -1323,26 +1308,6 @@ $('rows').addEventListener('click',e=>{ const b=e.target.closest('[data-edit]');
   const tr=e.target.closest('tr.p'); if(tr) openPlayer(tr.dataset.k); });
 $('rows').addEventListener('keydown',e=>{ const tr=e.target.closest('tr.p'); if(tr&&e.target===tr&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); tr.click(); } });
 
-// ---------- head to head
-const hA=$('hA'), hH=$('hH'); const topts=TEAMS.map(t=>`<option>${t}</option>`).join('');
-hA.innerHTML=topts; hH.innerHTML=topts; hA.value='NYK'; hH.value='BOS';
-function renderH2H(){
-  if(!P) return;
-  const T=Object.fromEntries(P.team.map(x=>[x.t,x])), a=T[hA.value], h=T[hH.value];
-  if(a===h){ $('hRes').innerHTML='<p class="sub">Pick two different teams.</p>'; }
-  else { const sp=h.bmargin-a.bmargin+M.hca, ph=E.Phi(sp/M.sig), pm=E.Phi((h.margin-a.margin+M.hca)/M.sig);
-    $('hRes').innerHTML=`<div class="side"><div class="pct">${Math.round((1-ph)*100)}%</div><div class="who">${a.t}</div><div class="at">away</div></div>
-      <div class="at">vs</div><div class="side"><div class="pct">${Math.round(ph*100)}%</div><div class="who">${h.t}</div><div class="at">home</div></div>
-      <div class="pbar" aria-hidden="true"><span style="width:${(1-ph)*100}%"></span></div>
-      <div class="sub">Expected margin: ${sp>=0?h.t:a.t} by ${Math.abs(sp).toFixed(1)}. Model alone gives ${h.t} ${Math.round(pm*100)}%.</div>`; }
-  const me=h; $('hTeamH').textContent=`Every opponent for ${me.t}`; $('hHomeH').textContent=`${me.t} win % at home`; $('hAwayH').textContent=`${me.t} win % away`;
-  $('hRows').innerHTML=P.team.filter(x=>x!==me).sort((x,y)=>y.bmargin-x.bmargin).map(o=>{
-    const home=E.Phi((me.bmargin-o.bmargin+M.hca)/M.sig), away=E.Phi((me.bmargin-o.bmargin-M.hca)/M.sig), n=me.bmargin-o.bmargin;
-    return `<tr><td class="l"><span class="nm">${o.t}</span></td><td class="num">${Math.round(home*100)}%</td><td class="num">${Math.round(away*100)}%</td><td class="num hide-s ${cls(n)}">${fmt(n)}</td></tr>`; }).join('');
-}
-hA.addEventListener('change',renderH2H); hH.addEventListener('change',renderH2H);
-$('hSwap').addEventListener('click',()=>{ const t=hA.value; hA.value=hH.value; hH.value=t; renderH2H(); });
-
 // ---------- tonight's games (app)
 function tipTime(t){ if(!t) return ''; const d=new Date(t); return isNaN(d)?'':d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}); }
 function mktSpread(g){ const m=/^([A-Z]{2,4})\s*([+-]?\d+(?:\.\d+)?)$/.exec((g.line||'').trim()); if(!m) return null; const v=+m[2]; return m[1]===g.home?-v:m[1]===g.away?v:null; } // home margin implied by the line
@@ -1389,7 +1354,7 @@ function rotHTML(Q,g){
   const list=Q.rot.slice().sort((a,b)=>b.em-a.em||b.r.tot-a.r.tot), on=list.filter(q=>q.em>=0.5), off=list.filter(q=>q.em<0.5);
   const reg=on.filter(q=>q.em>=8), spot=on.filter(q=>q.em<8), spotMin=spot.reduce((a,q)=>a+q.em,0);
   const why=r=>{ const z=r.z; if(r.o.g===0) return 'your edit: not playing';
-    if(z&&z.status){ const d=z.ret?new Date(z.ret+'T12:00:00'):null; return `${esc(z.status)}${z.inj?`: ${esc(z.inj.toLowerCase())}`:''}${d&&!isNaN(d)?` · expected back ${d.toLocaleDateString(undefined,{month:'short',day:'numeric'})}`:''}`; }
+    if(z&&z.status){ const w=injWhat(z), d=injDate(z.ret); return `${esc(z.status)}${w?`: ${esc(w)}`:''}${d?` · expected back ${d}`:''}`; }
     return 'outside the expected rotation'; };
   const row=(q,zero)=>{ const r=q.r, ch=Object.keys(r.o).length>0, add=r.tot*q.em/48;
     return `<tr class="pr" data-pv="${esc(r.p.k)}"><td class="l"><span class="nm pvlink">${esc(r.p.n)}</span>${ch?'<span class="flag">edited</span>':''}${injBadge(r)}<span class="tm">${POS5(r.p.ps)}</span>${zero?`<span class="why">${why(r)}</span>`:''}${!zero&&q.ifp!=null?`<span class="why">${Math.round(q.ifp)} min if he plays</span>`:''}</td>
@@ -1685,7 +1650,7 @@ function renderPV(){
   const nextAge=p.a!=null?Math.floor(p.a):null;
   let h=`<div class="pvtop"><button class="back" id="pvBack">← Back</button><button class="edit" data-edit="${esc(k)}">Edit</button></div>
   <div class="pvh"><h2>${esc(p.n)}</h2><p class="pvsub">${r.t==='FA'?'Free agent':r.t}${nextAge!=null?` · age ${nextAge} for 2026-27`:''}${roleNote(r)?` · ${roleNote(r)}`:''}${chNR(r)?' · <span class="ov">edited</span>':''}</p></div>
-  <div class="cards">
+  ${injCard(r)}<div class="cards">
     <div class="card"><div class="k">2026-27 rating</div><div class="v ${r.o.r!=null?'ov':cls(r.tot)}">${fmt(r.tot)}</div><div class="s">${rank?`#${rank} of ${rostered.length}`:'not on a roster'}</div></div>
     <div class="card"><div class="k">Offense</div><div class="v ${cls(r.off)}">${fmt(r.off)}</div><div class="s">pts/100 vs average</div></div>
     <div class="card"><div class="k">Defense</div><div class="v ${cls(r.def)}">${fmt(r.def)}</div><div class="s">pts/100 vs average</div></div>
@@ -1785,7 +1750,7 @@ function seasHTML(k){
     return {date:g[0], tm, opp:(home?'vs ':'@ ')+op, w:mp>opp, score:`${mp}-${opp}`}; };
   const asof=G.asof?` · through ${seaDate(new Date(new Date(G.asof+'T12:00:00')-864e5).toISOString().slice(0,10))}`:'';
   if(!pl.length){
-    const st=z.status?`${esc(z.status)}${z.inj?` (${esc(z.inj)})`:''}. `:'';
+    const st=z.status?`${esc(z.status)}${injWhat(z)?` (${esc(injWhat(z))})`:''}. `:'';
     const dn=rows.length?` Listed but didn't play in ${rows.length} game${rows.length>1?'s':''}${rows[rows.length-1][3]?` (latest: ${esc(rows[rows.length-1][3])})`:''}.`:'';
     return sec('Season so far',`<p class="note">${st}No games played yet this season.${dn} Projection and Career tabs have his outlook.</p>`);
   }
@@ -1960,7 +1925,7 @@ function renderAcc(){
 }
 function renderSetSum(){ const nw=Object.keys(DEF).filter(k=>Math.abs((S[k]==null?DEF[k]:S[k])-DEF[k])>(k==='bm'?0.004:1e-9)).length, np=Object.keys(OV).length;
   $('setSum').innerHTML=(nw||np)?[nw?`<b>${nw} slider${nw>1?'s':''} changed</b>`:'Default weights',np?`<b>${np} player change${np>1?'s':''}</b>`:'no player changes'].join(' · '):'Default weights · no player changes · tap to adjust sliders'; }
-function renderAll(){ renderStandings(); renderPlayers(); renderH2H(); renderChanges(); renderAcc(); renderPV(); renderSetSum(); renderTonight(); renderGV(); }
+function renderAll(){ renderStandings(); renderPlayers(); renderChanges(); renderAcc(); renderPV(); renderSetSum(); renderTonight(); renderGV(); }
 
 // ---------- saving: shared dashboard storage when available, otherwise this browser
 let db=null, saveTimer=0; const LS='nba27-dash-state';

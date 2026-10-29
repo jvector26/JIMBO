@@ -250,7 +250,18 @@ for kk, o in OV.items():
 inj_f = os.path.join(live, "injuries.csv")
 if a.asof and os.path.exists(os.path.join(live, "injuries_hist", f"{asof_i}.csv.gz")):   # replays: that day's report
     inj_f = os.path.join(live, "injuries_hist", f"{asof_i}.csv.gz")
-P["status"] = ""; P["miss"] = 0.0; P["inj"] = ""; P["ret"] = ""
+P["status"] = ""; P["miss"] = 0.0; P["inj"] = ""; P["ret"] = ""; P["ib"] = ""; P["iu"] = ""; P["side_"] = ""
+_INJ_WORDS = ["ACL", "MCL", "Achilles", "meniscus", "concussion", "rotator cuff", "hamstring", "quadriceps", "adductor", "groin",
+              "calf", "soleus", "knee", "ankle", "foot", "toe", "heel", "hip", "back", "oblique", "abdominal", "shoulder", "elbow",
+              "wrist", "hand", "thumb", "finger", "forearm", "leg", "thigh", "neck", "rib", "face", "nose", "eye", "illness",
+              "mononucleosis", "personal", "suspension", "rest"]
+def inj_part(c):   # '(knee)' right after the name, else the first known word in the note; one word only goes to the site
+    import re
+    if not isinstance(c, str): return ""
+    mm = re.match(r"[^(]{0,60}?\(([^)]{2,30})\)", c)
+    if mm: return mm.group(1).split("/")[0].strip()
+    lo = c.lower(); hits = [(lo.find(w.lower()), w) for w in _INJ_WORDS if re.search(r"\b" + re.escape(w.lower()) + r"\b", lo)]
+    return min(hits)[1] if hits else ""
 G_rem = (82 - played).clip(lower=0).astype(int)   # includes TBD Cup-week games
 if os.path.exists(inj_f) and not a.schedule_from_parsed:
     I = pd.read_csv(inj_f); I["k"] = I.name.map(norm_name)
@@ -278,6 +289,10 @@ if os.path.exists(inj_f) and not a.schedule_from_parsed:
         det_ = " ".join(str(x) for x in (row.get("detail"), row.get("side")) if pd.notna(x) and str(x).strip() and str(x) != "nan")
         rd_ = pd.to_datetime(row.get("return_date"), errors="coerce")
         P.loc[m, "inj"] = det_; P.loc[m, "ret"] = rd_.strftime("%Y-%m-%d") if pd.notna(rd_) else ""
+        # player card (2026-10-29): body part / ailment as a single word from the note, and the report date (still no report text)
+        P.loc[m, "ib"] = inj_part(row.get("comment")); P.loc[m, "side_"] = str(row.get("side")) if pd.notna(row.get("side")) else ""
+        ud_ = pd.to_datetime(row.get("date"), errors="coerce", utc=True)
+        P.loc[m, "iu"] = ud_.tz_convert("America/New_York").strftime("%Y-%m-%d") if pd.notna(ud_) else ""
 P["g_rem"] = P.team.map(G_rem).fillna(0)
 P.loc[(P.status.fillna("") == "") & (P.streak >= K_STREAK), "m_tg"] *= 0.5
 P["m_tg"] = P.m_tg.where(P.team != "FA", 0)
@@ -511,7 +526,7 @@ players = [{"k": row.key, "n": row["name"], "t": row.team, "pos": round(float(ro
             "mpg": round(float(row.mpg_season), 1), "min_rem": round(float(row.min_rem)), "status": row.status or "",
             # app fields: pre-allocation minutes wanted, mpg estimate, availability, games out
             "mw": round(float(row.min_want)), "me": round(float(row.mpg_est), 2), "mg": round(float(row.m_tg), 3), "mr": round(float(row.m_raw), 3), "mc": round(float(row.m_c), 2), "mk": round(float(row.m_pk), 2), "av": round(float(row.avail), 3),
-            "miss": round(float(row.miss), 1), **({"inj": row.inj, "ret": row.ret} if row.status else {}),
+            "miss": round(float(row.miss), 1), **({"inj": row.inj, "ret": row.ret, "ib": row.ib, "is": row.side_, "iu": row.iu} if row.status else {}),
             **({"dt": row.tier} if isinstance(row.get("tier"), str) else {}),              # role tier used (chart or user)
             **({"dc": row.tier_chart} if isinstance(row.get("tier_chart"), str) else {})}   # chart tier
            for _, row in pl.sort_values("rating", ascending=False).iterrows() if row.team != "FA" or row.gp > 0]   # every rostered player (injured ones carry their status to the app)

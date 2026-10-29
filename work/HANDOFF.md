@@ -1,11 +1,21 @@
 # JIMBO handoff: current state (read this first)
 JIMBO = judgment-induced model for basketball outcomes. NBA 2026-27 player ratings, minutes, team win totals, playoff odds,
-game odds, nightly in-season updates. Updated 2026-10-29 (session 34: NO MORE ZIP; everything lives in the repo, sandbox tree in work/). 
+game odds, nightly in-season updates. Updated 2026-10-29 (session 35: matchups tab removed, injury box; session 34: NO MORE ZIP; everything lives in the repo, sandbox tree in work/). 
 Full history of every test and decision: RESEARCH_LOG.md (1,650 lines; don't read it whole:
 `grep -n "^## " RESEARCH_LOG.md`, then read the section you need).
 Design spec (Claude Doc): https://claude.ai/code/artifact/e5eebcf8-5649-4c33-b974-23aa18e5c675
 To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs work/setup.sh, reads this file (repo CLAUDE.md says the same).
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
+
+## SESSION 35 (2026-10-29, user requests, display only) -- SHIPPED
+1. Head to head / Matchups tab REMOVED (user: "I don't use it, and won't"): tab, panel, bottom-nav button, renderH2H and its CSS
+   gone from code/dash_v2.html (also leaves the claude.ai artifact at its next rebuild; v43 still has it).
+2. Player card injury box (app, SEASON only, injCard()): under the name for anyone on the ESPN report: status, side + body part +
+   type ("Out · left knee inflammation"), expected back date + about N games (z.miss), "Out for the season" when ret > 2027-04-20
+   (ESPN's Jul 1 placeholder), reported date. Same wording (injWhat) on the game-page rotation note and the This-season tab.
+   nightly.py: new per-player fields ib (body part: '(knee)' after the name, else first known word in the note), is (side),
+   iu (report date, ET). Still NO ESPN comment text on the public site (session 13 rule). Ratings/minutes unchanged.
+   sw.js cache jimbo-a008253993 (hand bump: payload unchanged).
 
 ## SESSION 34 (2026-10-29, housekeeping) -- read first
 ZIP RETIRED: the sandbox tree (code/, data/, raw/, dashboard.html, this file, RESEARCH_LOG.md, rebuild scripts) is now
