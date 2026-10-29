@@ -1,11 +1,19 @@
 # JIMBO handoff: current state (read this first)
 JIMBO = judgment-induced model for basketball outcomes. NBA 2026-27 player ratings, minutes, team win totals, playoff odds,
-game odds, nightly in-season updates. Updated 2026-10-29 (session 35: matchups tab removed, injury box; session 34: NO MORE ZIP; everything lives in the repo, sandbox tree in work/). 
+game odds, nightly in-season updates. Updated 2026-10-29 (session 38: consistent availability; session 35: matchups tab removed, injury box; session 34: NO MORE ZIP; everything lives in the repo, sandbox tree in work/). 
 Full history of every test and decision: RESEARCH_LOG.md (1,650 lines; don't read it whole:
 `grep -n "^## " RESEARCH_LOG.md`, then read the section you need).
 Design spec (Claude Doc): https://claude.ai/code/artifact/e5eebcf8-5649-4c33-b974-23aa18e5c675
 To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs work/setup.sh, reads this file (repo CLAUDE.md says the same).
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
+
+## SESSION 38 (2026-10-29, user question: Giannis 37.5 min/game) -- SHIPPED (user OK)
+Bug: app min-when-playing (and po_delta) = min_rem/(games x av), but av moved at n/(n+20) while m_tg moves at n/(n+5): healthy fragile stars
+got 37-42 min. Fix (pipeline/nightly.py): av = (K_MIN avail_pre + games played)/(K_MIN + team games since joining), consistent with m_tg.
+Ratings, minutes, wins unchanged; playoff term <= 0.28 pts. Replay test (code/season_avail_test.py, RESEARCH_LOG "SEASON MINUTES:
+AVAILABILITY DOUBLE COUNT"): a slow-availability split of the minutes rule itself is WORSE for teams (t +2.5), so model minutes kept;
+note it runs ~9% high per team game for fragile players on a healthy run (21.3 vs 19.5 actual). Possible later angle: preseason
+allocation inflates min-when-playing for low-availability stars (Giannis prior 34.4 vs raw 29.0); test with the preseason backtest.
 
 ## SESSION 37 (2026-10-29, user question: back-to-backs) -- SHIPPED (user "ship 1")
 Second night of a back-to-back (team played the day before) = -2.0 points to that team's game margin; home court re-centred 2.6 -> 2.54

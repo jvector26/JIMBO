@@ -1723,3 +1723,7 @@ Verdict: the fast per-team-game blend is the better TEAM predictor overall (keep
 The 37.5 itself is an inconsistency: av should use the same blend as the minutes, av_c = (5 avail_pre + gp)/(5 + n). Then min_rem/(g x av_c)
 = weighted mean of minutes when playing: Giannis 31.6 (61 g), Davis 33.5, Trae 33.3, Tatum 34.5; 36+ count 21 -> 0; median vs own mpg -0.2.
 Team strength unchanged; po_delta moves <= 0.23 pts (MEM -0.23 .. MIA +0.19). Awaiting user OK (display + playoff term; model minutes unchanged).
+SHIPPED same day (user: "Yes let's fix it for consistency"): pipeline/nightly.py avail = (K_MIN avail_pre + np_c)/(K_MIN + n_tm) (cfg avail_rule "k20" = old).
+Local run 10-29: ratings, minutes, wins identical; po_delta -0.04 (DAL) .. +0.28 (DET); title <= 0.005; playoffs <= 0.002. App (phone + desktop,
+no page errors): Giannis 31.6 min x 66 g (was 37.5 x 56), Davis 33.5, Tatum 34.5; players at 36+ when playing 25 -> 1. No app rebuild needed
+(page poDelta and minutes-when-playing both read z.av).

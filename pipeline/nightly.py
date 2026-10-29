@@ -241,7 +241,14 @@ else:                        # prior = preseason WANTED minutes (before the rost
 w_ = P.n_tm / (P.n_tm + K_MIN)
 P["m_tg"] = w_ * (RW * P.l10_tg + (1 - RW) * P.std_tg) + (1 - w_) * pre_tg.fillna(0)   # FA zeroed after team overrides
 tg = P.team.map(played).fillna(0)
-P["avail"] = ((cfg.get("avail_k", 20) * P.avail_pre.fillna(.7) + P.gp) / (cfg.get("avail_k", 20) + tg)).clip(0, 1)
+# availability (games he plays / team games) for the app's minutes-when-playing and po_delta. 2026-10-29 (session 38, Giannis
+# 37.5 min): it must match the m_tg blend above, which already moves availability at n/(n+K_MIN). The old k=20 rule kept av low
+# while m_tg rose for healthy players, so min_rem/(games x av) exploded (21 players at 36+). Consistent: same weight, observed
+# availability = games played / team games since joining (never appeared: preseason). cfg avail_rule "k20" = old rule.
+if cfg.get("avail_rule", "consistent") == "k20":
+    P["avail"] = ((cfg.get("avail_k", 20) * P.avail_pre.fillna(.7) + P.gp) / (cfg.get("avail_k", 20) + tg)).clip(0, 1)
+else:
+    P["avail"] = ((K_MIN * P.avail_pre.fillna(.7) + P.np_c) / (K_MIN + P.n_tm)).clip(0, 1)
 # user overrides (dashboard settings, migrated to overrides.json)
 ovf = os.path.join(ROOT, "overrides.json")
 OV = json.load(open(ovf)).get("players", {}) if os.path.exists(ovf) else {}
