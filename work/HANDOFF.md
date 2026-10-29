@@ -15,6 +15,12 @@ AVAILABILITY DOUBLE COUNT"): a slow-availability split of the minutes rule itsel
 note it runs ~9% high per team game for fragile players on a healthy run (21.3 vs 19.5 actual). Possible later angle: preseason
 allocation inflates min-when-playing for low-availability stars (Giannis prior 34.4 vs raw 29.0); test with the preseason backtest.
 
+## SESSION 38 (2026-10-29, user report "ATL B2B not adjusted") -- display fix SHIPPED
+Not a model bug: CLE@ATL both teams on night 2 (ATL lost to MIA, CLE beat WAS on 10-28), b2b [1,1], net rs 0. The game page hid the
+Back-to-back row whenever rs = 0. Now shown whenever either flag is set; both-sides text "Both teams on the second night ... cancels
+out", net 0.0 (rs||0 avoids -0.0). site/index.html + work/code/dash_v2.html (template synced), sw.js jimbo-a008253996.
+Checked phone + desktop: ATL 0.0 row, NOP -2.0 row, POR no row, no page errors.
+
 ## SESSION 37 (2026-10-29, user question: back-to-backs) -- SHIPPED (user "ship 1")
 Second night of a back-to-back (team played the day before) = -2.0 points to that team's game margin; home court re-centred 2.6 -> 2.54
 (model/b2b.json; env JIMBO_B2B=0 = off). Applied in: nightly tonight + upcoming cards (fields rs = home-side change, b2b = [home, away]

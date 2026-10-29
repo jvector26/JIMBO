@@ -1434,7 +1434,7 @@ function renderGV(){
     ${r3('Lineup strength in points',`× league pace ${pace.toFixed(1)} possessions ÷ 100`,A.pts,H.pts,H.pts-A.pts)}
     ${r3('In-season team adjustment',offD,A.off,H.off,H.off-A.off)}
     ${r3('Forecast blend',`Pull toward the market's season view and roster age, weight ${decTxt} now (fades as games are played)`,A.bl,H.bl,H.bl-A.bl)}
-    ${g.rs?r3('Back-to-back',`Second night of a back-to-back: ${SZ.cfg&&SZ.cfg.b2b||2} points off (fatigue plus rest days for regulars; 2015-25 games)`,g.b2b&&g.b2b[1]?-(SZ.cfg.b2b||2):0,g.b2b&&g.b2b[0]?-(SZ.cfg.b2b||2):0,g.rs):''}
+    ${(g.rs||(g.b2b&&(g.b2b[0]||g.b2b[1])))?r3('Back-to-back',(g.b2b&&g.b2b[0]&&g.b2b[1])?`Both teams on the second night of a back-to-back: ${SZ.cfg&&SZ.cfg.b2b||2} points off each side, cancels out`:`Second night of a back-to-back: ${SZ.cfg&&SZ.cfg.b2b||2} points off (fatigue plus rest days for regulars; 2015-25 games)`,g.b2b&&g.b2b[1]?-(SZ.cfg.b2b||2):0,g.b2b&&g.b2b[0]?-(SZ.cfg.b2b||2):0,g.rs||0):''}
     ${r3('Home court','',null,M.hca,M.hca)}
     ${r3(`Expected margin: ${esc(mTxt(g.sp,g))}`,'',null,null,g.sp,'tot')}
     </tbody></table></div>
