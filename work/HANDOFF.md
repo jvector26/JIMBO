@@ -7,6 +7,11 @@ Design spec (Claude Doc): https://claude.ai/code/artifact/e5eebcf8-5649-4c33-b97
 To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs work/setup.sh, reads this file (repo CLAUDE.md says the same).
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
 
+## SESSION 37 (2026-10-29, user question: back-to-backs) -- TESTED, NOT APPLIED (awaiting OK)
+B2B was display-only. Night-2 team effect ~ -2.2 pts total (FE, t -12.6), -1.7 with actual minutes (research bar: LOSO 13.4633 -> 13.4367,
+t -4.2, both halves). Older 30+ mpg players sit +8-9 pts more on night 2. Season-sim effect +-0.3 wins. Proposal + numbers: RESEARCH_LOG
+"BACK-TO-BACKS"; code/b2b/.
+
 ## SESSION 36 (2026-10-29, user request, display + pipeline data only) -- SHIPPED gh 803d9a8
 Tonight tab day stepper: ‹ › arrows step back through every game day so far and forward up to 3 GAME days; "Back to tonight" link.
 - Past days ("Results"): from vegas.json rows, which now carry [.., home pts, away pts, game id, JIMBO p_home] (fields 6-9; vs Vegas

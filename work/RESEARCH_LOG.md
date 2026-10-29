@@ -1674,3 +1674,25 @@ viewport-wide block). Checked: test_dashboard.js, ui_edit_test_db.py, phone scre
 ## MATCHUPS TAB REMOVED + PLAYER-CARD INJURY BOX (2026-10-29, session 35, user request) -> SHIPPED, display only
 See HANDOFF session 35. Checks: phone + desktop playwright (Leonard, Doncic, Barlow, Veesaar, Brunson), no page errors;
 skill_drill_test, test_dashboard.js (max 0.0010), ui_edit_test_db.py pass; local nightly ratings/mk identical to live.
+
+## BACK-TO-BACKS (2026-10-29, session 37, user question) -> TESTED, PASSES BAR, NOTHING APPLIED (awaiting user OK)
+Status before: rest/B2B was display only (tonight cards rest_h/rest_a); not in nightly margins, jimbo_sim, or any minutes rule.
+Code: code/b2b/b2b_team.py (team-season FE, 2004-25 -> data/b2b_games.parquet), b2b_bt.py (research-bar backtest, ACTUAL
+minutes), b2b_minutes.py (player night-2 minutes/absence 2014-25 -> data/b2b_player_games.parquet), b2b_age.py, b2b_season.py.
+B2B = team played the day before (rest 0). Season openers dropped. Margin = home - away.
+1. TOTAL effect vs the team's own season level (FE): home B2B -1.96 (t -6.1), away B2B +2.35 (t 11.9) 2015-25; one-coef diff
+   -2.24 (t -12.6); 2015-19 -1.86, 2020-25 -2.49; 2004-14 similar. Road B2B after a home game hurts more (+3.35 vs +1.75 when
+   previous game also away, t -2.8). 3rd game in 4 nights adds ~0.4-0.8 (road t 3.8). No team-age interaction (+0.07/yr, t 1.1).
+2. Research bar (actual minutes, so FATIGUE beyond who played): diff coef -1.68 (t -8.8; 2015-19 -1.50 t -6.4, 2020-25 -1.74
+   t -5.7); LOSO 13.4633 -> 13.4367 (-0.027, better 9/11 seasons, t -4.2). Home/away split 13.4374; + travel 13.4350; + 3-in-4
+   13.4349. Largest single gain logged. So ~1.7 of the ~2.2 is tiredness, ~0.5 is who sits.
+3. Player minutes, night 2 vs his own other games (within player-season, absence = no appearance inside his roster span):
+   30+ mpg players absent +5.2 pts (11.9% -> 17%), expected min -1.9; 30+ mpg AND age 30+ absent +8-9 pts, -3.2 min
+   (2020-25 +10.1 pts); minutes WHEN playing barely move for starters (-0.2 to -0.6) while <24 mpg players gain +0.9-1.3.
+   Young players (<=24) slightly MORE available. Night 1 (before a B2B): no change. So the skew is DNPs of older starters.
+4. Season sim effect (b2b_season.py, beta 2.1, rest of 2026-27, HCA re-centred 2.60 -> 2.54): -0.27 (CHI) .. +0.30 (SAC) wins,
+   sd 0.17. 2026-27 B2Bs per team 13-16 (league cut B2Bs; home/away imbalance smaller than history).
+Proposal (not applied): (a) game margin term -beta x (B2B_home - B2B_away) in nightly cards + jimbo_sim remaining games, beta ~2.0
+(total, since nightly minutes don't foresee rest DNPs; rest listings on ESPN DTD already count half), HCA re-centred; optional
+travel split. (b) later: night-2 sit probability in the tonight-minutes rule for 30+ mpg / 30+ age (display realism; would then
+cut beta toward 1.7). Season minutes need nothing (availability already includes B2B rests).
