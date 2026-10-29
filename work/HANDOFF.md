@@ -7,6 +7,19 @@ Design spec (Claude Doc): https://claude.ai/code/artifact/e5eebcf8-5649-4c33-b97
 To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs work/setup.sh, reads this file (repo CLAUDE.md says the same).
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
 
+## SESSION 36 (2026-10-29, user request, display + pipeline data only) -- SHIPPED gh 803d9a8
+Tonight tab day stepper: ‹ › arrows step back through every game day so far and forward up to 3 GAME days; "Back to tonight" link.
+- Past days ("Results"): from vegas.json rows, which now carry [.., home pts, away pts, game id, JIMBO p_home] (fields 6-9; vs Vegas
+  tab still reads 0-5). Card = final score (winner bold), JIMBO pre-tip margin + win chance, line, final margin, who was closer
+  (miss vs miss), whether JIMBO's side vs the line covered; day summary (closer X of N, side W-L, average miss) via vgStats.
+  Not tappable (idea: tap -> box score from gamelog.json).
+- Future days ("Coming up"): nightly.py day_games(day) builds cards for game_day (= tonight) and latest.json "upcoming"
+  [{day, games}] for the next 3 game days, same team strengths as tonight (today's rotations + injury report; injured players'
+  return dates are NOT applied to later days), own rest + odds/{day}.csv. The page recomputes spreads client-side
+  (tonightGames(list, day)), so user edits apply; game page opens for any of these days (allGames()).
+- Workflow fetches ESPN odds for today+1..+3 (ESPN usually posts ~1 day ahead; "No line yet" otherwise).
+sw.js jimbo-a008253994 (hand bump). Tested: playwright phone + desktop, every day back to 10-20, no overflow, no page errors; skill drill passes.
+
 ## SESSION 35 (2026-10-29, user requests, display only) -- SHIPPED
 1. Head to head / Matchups tab REMOVED (user: "I don't use it, and won't"): tab, panel, bottom-nav button, renderH2H and its CSS
    gone from code/dash_v2.html (also leaves the claude.ai artifact at its next rebuild; v43 still has it).
