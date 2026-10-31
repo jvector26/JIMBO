@@ -11,7 +11,7 @@ The claude.ai project doc HANDOFF-3.md only points here; this file is the one so
 vs Vegas calibration chart (2nd request same day): "Does a 70% call win 70% of the time?" section above the game log (vgCalib in template +
 site/index.html). Home win chance in 10% buckets, x = mean chance in bucket, y = home win rate, dot size ~ sqrt(games), Wilson 95% bars,
 dashed diagonal; JIMBO = vegas.json p_home (field 9), line = Phi(line/sig) (same sig 12.8); Brier tile JIMBO vs line (81 games: .200 vs .198);
-tap a bucket for counts. Not folded to favorite (keeps home bias visible). sw.js jimbo-a008253998. Phone + desktop, no page errors, no overflow.
+tap a bucket for counts (sticky on touch: stays until a tap elsewhere; same for the two line charts; long-press selection off). Not folded to favorite (keeps home bias visible). sw.js jimbo-a008253999. Phone + desktop, no page errors, no overflow.
 vs Vegas game log: new ATS column = team JIMBO sided with vs the line (JIMBO margin > line -> home side), "TEAM ✓" covered (pwin),
 "TEAM ✗" didn't (ploss), "TEAM push", "–" when JIMBO = line; same rule as vgStats w/l, column totals = the ATS tile (39-41 on 10-30).
 Phone table padding 4->2px, font 13->12px so six columns fit an iPhone 13 (344px) without side scroll. Template + site/index.html,
