@@ -7,6 +7,12 @@ Design spec (Claude Doc): https://claude.ai/code/artifact/e5eebcf8-5649-4c33-b97
 To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs work/setup.sh, reads this file (repo CLAUDE.md says the same).
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
 
+## SESSION 39 (2026-10-31, user request, display only) -- SHIPPED
+vs Vegas game log: new ATS column = team JIMBO sided with vs the line (JIMBO margin > line -> home side), "TEAM ✓" covered (pwin),
+"TEAM ✗" didn't (ploss), "TEAM push", "–" when JIMBO = line; same rule as vgStats w/l, column totals = the ATS tile (39-41 on 10-30).
+Phone table padding 4->2px, font 13->12px so six columns fit an iPhone 13 (344px) without side scroll. Template + site/index.html,
+build_app.py output = live index.html; sw.js jimbo-a008253997 (hand bump). Checked phone + desktop, no page errors.
+
 ## SESSION 38 (2026-10-29, user question: Giannis 37.5 min/game) -- SHIPPED (user OK)
 Bug: app min-when-playing (and po_delta) = min_rem/(games x av), but av moved at n/(n+20) while m_tg moves at n/(n+5): healthy fragile stars
 got 37-42 min. Fix (pipeline/nightly.py): av = (K_MIN avail_pre + games played)/(K_MIN + team games since joining), consistent with m_tg.

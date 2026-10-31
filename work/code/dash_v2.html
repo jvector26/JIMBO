@@ -266,7 +266,7 @@ h3{font-family:var(--text);font-size:15px;font-weight:700;color:var(--hd);text-t
 .vgh{font-size:15px;font-weight:700;margin:18px 0 2px} .vgread{min-height:2.6em;margin:2px 0 6px}
 .vgtab td.vgbig{font-weight:700} .vgtab tr.vgday td{background:var(--soft);font-weight:700;font-size:12.5px;color:var(--muted);padding-top:5px;padding-bottom:5px} .vgj{color:var(--magenta)}
 .bnav button[hidden]{display:none !important}
-@media (max-width:640px){ .vgtab td,.vgtab th{padding-left:4px;padding-right:4px;font-size:13px} .vgtiles{grid-template-columns:1fr 1fr;gap:10px} .vgv{font-size:26px} }
+@media (max-width:640px){ .vgtab td,.vgtab th{padding-left:2px;padding-right:2px;font-size:12px} .vgtiles{grid-template-columns:1fr 1fr;gap:10px} .vgv{font-size:26px} }
 .tabs button[aria-selected="true"]{background:var(--surface) !important;border-bottom:2px solid var(--surface);transform:translateY(-2px)}
 .panel{background:var(--surface);border:2px solid var(--black);border-top:0;padding:14px;margin-bottom:18px;box-shadow:5px 5px 0 var(--shadow)}
 #pv{background:var(--surface);border:2px solid var(--black);padding:14px;box-shadow:5px 5px 0 var(--shadow)}
@@ -1518,10 +1518,12 @@ function renderVegas(){
     +(tt.some(v=>v!=null)?vgChart(xs,[{v:tt,c:'var(--magenta)'}],[{y:0,dash:'2 3'},{y:2.5,label:'2.5'}],i=>tt[i]==null?`Through ${xs[i].d}: too few games.`:`Through ${xs[i].d} (${xs[i].n} games): t ${tt[i].toFixed(2)}${xs[i].n>=50?`; best weight on JIMBO vs the line ${Math.round(Math.max(0,Math.min(1,xs[i].s.b))*100)}%`:''}; ATS ${xs[i].s.w}–${xs[i].s.l}.`,'Running t-statistic of JIMBO vs the line'):'<p class="note">Needs a few more games.</p>');
   h+=`<p class="note">Rough guide: if JIMBO deserves half the weight against the line, t should pass 2.5 around 600 games (early January); a third, around 1,100 (late March); less than that, not this season. Games are noisy: a perfect forecast still misses by about 13 points.</p>`;
   const who=(r,v,k)=>Math.abs(v)<0.05?'even':`${v>0?r[1]:r[2]} ${Math.abs(v).toFixed(k)}`;
-  h+=`<h3 class="vgh">Game log</h3><div class="tbl"><table class="vgtab"><thead><tr><th class="l">Game</th><th>JIMBO</th><th>Line</th><th>Final</th><th>Closer</th></tr></thead><tbody>`
-    +days.slice().reverse().map(d=>`<tr class="vgday"><td class="l" colspan="5">${dl(d)}</td></tr>`+rows.filter(r=>r[0]===d).reverse().map(r=>{ const [,hm,aw,m,v,a]=r, dm=Math.abs(m-a), dv=Math.abs(v-a), big=Math.abs(m-v)>=3;
-      return `<tr><td class="l">${aw}@${hm}</td><td${big?' class="vgbig"':''}>${who(r,m,1)}</td><td>${who(r,v,1)}</td><td>${who(r,a,0)}</td><td>${dm<dv?'<b class="vgj">JIMBO</b>':dm>dv?'Line':'Tie'}</td></tr>`; }).join('')).join('')
-    +`</tbody></table></div><p class="note">Margins name the team favored and by how much. Bold JIMBO numbers: 3+ points off the line.</p>`;
+  // ATS (user request 2026-10-31): JIMBO's side vs the line; same rule as vgStats w/l (g = JIMBO - line, rr = final - line)
+  const ats=r=>{ const g=r[3]-r[4], rr=r[5]-r[4], s=g>0?r[1]:r[2]; return g===0?'<span class="note">–</span>':rr===0?`${s} push`:(g>0)===(rr>0)?`<b class="pwin">${s} ✓</b>`:`<span class="ploss">${s} ✗</span>`; };
+  h+=`<h3 class="vgh">Game log</h3><div class="tbl"><table class="vgtab"><thead><tr><th class="l">Game</th><th>JIMBO</th><th>Line</th><th>Final</th><th>Closer</th><th>ATS</th></tr></thead><tbody>`
+    +days.slice().reverse().map(d=>`<tr class="vgday"><td class="l" colspan="6">${dl(d)}</td></tr>`+rows.filter(r=>r[0]===d).reverse().map(r=>{ const [,hm,aw,m,v,a]=r, dm=Math.abs(m-a), dv=Math.abs(v-a), big=Math.abs(m-v)>=3;
+      return `<tr><td class="l">${aw}@${hm}</td><td${big?' class="vgbig"':''}>${who(r,m,1)}</td><td>${who(r,v,1)}</td><td>${who(r,a,0)}</td><td>${dm<dv?'<b class="vgj">JIMBO</b>':dm>dv?'Line':'Tie'}</td><td>${ats(r)}</td></tr>`; }).join('')).join('')
+    +`</tbody></table></div><p class="note">Margins name the team favored and by how much. Bold JIMBO numbers: 3+ points off the line. ATS: the team JIMBO sided with against the line, ✓ if it covered; – when JIMBO matched the line.</p>`;
   el.innerHTML=h;
 }
 // ---------- forecast history chart (app)

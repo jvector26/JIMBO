@@ -1,5 +1,5 @@
 // JIMBO service worker: app shell + model payload cached; nightly data network-first with offline fallback.
-const CACHE='jimbo-a008253996';
+const CACHE='jimbo-a008253997';
 const SHELL=['./','index.html','manifest.webmanifest','icons/icon-192.png','icons/icon-512.png','data/dash.json?v=2e949ae8f1'];
 self.addEventListener('install',e=>{ e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting())); });
 self.addEventListener('activate',e=>{ e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())); });
