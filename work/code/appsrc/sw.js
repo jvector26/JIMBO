@@ -10,6 +10,6 @@ self.addEventListener('fetch',e=>{
   if(fonts||u.search.includes('v=')){                                   // versioned payload and fonts: cache first
     e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(n=>{ const c=n.clone(); caches.open(CACHE).then(x=>x.put(e.request,c)); return n; })));
     return; }
-  e.respondWith(fetch(e.request).then(n=>{ const c=n.clone(); caches.open(CACHE).then(x=>x.put(e.request,c)); return n; })
+  e.respondWith(fetch(e.request.url,{cache:'no-cache'}).then(n=>{ const c=n.clone(); caches.open(CACHE).then(x=>x.put(e.request,c)); return n; })
     .catch(()=>caches.match(e.request,{ignoreSearch:true})));          // index + nightly JSON: network first, offline fallback
 });
