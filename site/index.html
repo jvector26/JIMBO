@@ -1503,6 +1503,40 @@ function vgChart(xs, series, refs, lab, aria){   // one y-axis line chart, x = g
     sv.addEventListener('pointerleave',()=>{ ln.setAttribute('visibility','hidden'); rd.textContent=base; }); },0);
   return `<div class="cchart"><svg id="${id}" viewBox="0 0 ${W} ${Hh}" width="100%" style="max-height:200px;touch-action:pan-y" role="img" aria-label="${esc(aria)}">${g}</svg></div><p class="note vgread">${esc(lab(n-1))}</p>`;
 }
+// Calibration chart (user request 2026-10-31): home win chance in 10% buckets vs how often the home team won.
+// JIMBO chance = r[9] (pregame p_home; Φ(margin/sig) when missing); line chance = Φ(line/sig), same conversion. x = mean chance in the bucket.
+function vgCalib(rows){
+  const fin=rows.filter(r=>r[5]!=null&&r[5]!==0), N=fin.length; if(N<10) return '<p class="note">Needs a few more games.</p>';
+  const pj=r=>r[9]!=null?r[9]:E.Phi(r[3]/M.sig), pv=r=>E.Phi(r[4]/M.sig), won=r=>r[5]>0?1:0;
+  const wil=(k,n)=>{ const z=1.96, p=k/n, d=1+z*z/n, c=(p+z*z/(2*n))/d, h=z*Math.sqrt(p*(1-p)/n+z*z/(4*n*n))/d; return [Math.max(0,c-h),Math.min(1,c+h)]; };
+  const bins=f=>{ const B=Array.from({length:10},(_,i)=>({i,n:0,k:0,sp:0})); fin.forEach(r=>{ const p=f(r), b=B[Math.min(9,Math.floor(p*10))]; b.n++; b.k+=won(r); b.sp+=p; });
+    return B.map(b=>b.n?{...b, x:b.sp/b.n, y:b.k/b.n, ci:wil(b.k,b.n)}:null); };
+  const brier=f=>fin.reduce((s,r)=>s+(f(r)-won(r))**2,0)/N, BJ=brier(pj), BV=brier(pv), hw=fin.reduce((s,r)=>s+won(r),0)/N;
+  const SJ=bins(pj), SV=bins(pv), nmax=Math.max(...SJ.concat(SV).filter(Boolean).map(b=>b.n));
+  const W=330, Hh=300, L=46, R=16, T=10, B=34, pw=W-L-R, ph=Hh-T-B, X=p=>L+p*pw, Y=p=>T+(1-p)*ph, rad=n=>3+7*Math.sqrt(n/nmax);
+  let g='';
+  [0,.25,.5,.75,1].forEach(v=>{ g+=`<line x1="${X(0)}" x2="${X(1)}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-5}" y="${Y(v)+4}" text-anchor="end">${v*100}%</text><text x="${X(v)}" y="${Hh-B+15}" text-anchor="middle">${v*100}%</text>`; });
+  g+=`<line x1="${X(0)}" y1="${Y(0)}" x2="${X(1)}" y2="${Y(1)}" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+  g+=`<text x="${X(.5)}" y="${Hh-3}" text-anchor="middle">Predicted home win chance</text><text transform="translate(9 ${Y(.5)}) rotate(-90)" text-anchor="middle">Home team won</text>`;
+  const dots=(S,c,fill,dx)=>S.forEach(b=>{ if(!b) return; const x=X(b.x)+dx;
+    g+=`<line x1="${x}" x2="${x}" y1="${Y(b.ci[0])}" y2="${Y(b.ci[1])}" stroke="${c}" stroke-width="1.5" opacity=".45"/>`;
+    g+=`<circle cx="${x}" cy="${Y(b.y)}" r="${rad(b.n).toFixed(1)}" fill="${fill}" stroke="${c}" stroke-width="2"/>`; });
+  dots(SV,'var(--ink)','var(--surface)',-2); dots(SJ,'var(--magenta)','var(--magenta)',2);
+  g+=`<rect class="vgcb" x="0" y="${T}" width="0" height="${ph}" fill="var(--ink)" opacity=".06" visibility="hidden"/>`;
+  const pc=v=>Math.round(v*100)+'%', one=(nm,b)=>b?`${nm}: ${b.n} game${b.n>1?'s':''}, said ${pc(b.x)}, home won ${pc(b.y)} (${b.k} of ${b.n})`:`${nm}: no games`;
+  const lab=i=>`${i*10}–${i*10+10}%. ${one('JIMBO',SJ[i])}. ${one('Line',SV[i])}.`;
+  const base=`Tap a range for its numbers. Home teams have won ${pc(hw)} of ${N} games.`;
+  const id='vc'+Math.random().toString(36).slice(2,8);
+  setTimeout(()=>{ const sv=document.getElementById(id); if(!sv) return; const rd=sv.parentNode.nextElementSibling, bx=sv.querySelector('.vgcb');
+    const at=e=>{ const r=sv.getBoundingClientRect(), px=(e.clientX-r.left)/r.width*W, i=Math.max(0,Math.min(9,Math.floor((px-L)/pw*10)));
+      bx.setAttribute('x',X(i/10)); bx.setAttribute('width',pw/10); bx.setAttribute('visibility','visible'); rd.textContent=lab(i); };
+    sv.addEventListener('pointermove',at); sv.addEventListener('pointerdown',at);
+    sv.addEventListener('pointerleave',()=>{ bx.setAttribute('visibility','hidden'); rd.textContent=base; }); },0);
+  return `<div class="vgtiles"><div class="vgt"><span class="vgk">Brier score</span><span class="vgv">${BJ.toFixed(3)} <small>vs ${BV.toFixed(3)}</small></span><span class="note">JIMBO vs the line; lower is better (a coin flip scores .250)</span></div></div>
+    <div class="cleg"><span><i style="background:var(--magenta)"></i>JIMBO</span><span><i style="background:var(--surface);border:2px solid var(--ink);box-sizing:border-box"></i>Vegas line</span><span>dashed: perfect calibration</span></div>
+    <div class="cchart" style="max-width:420px"><svg id="${id}" viewBox="0 0 ${W} ${Hh}" width="100%" style="touch-action:pan-y" role="img" aria-label="Calibration: predicted home win chance vs how often the home team won, JIMBO and the Vegas line">${g}</svg></div><p class="note vgread">${esc(base)}</p>
+    <p class="note">Games are grouped by the home team's predicted chance in 10% steps; each dot sits at the average chance in its group, sized by games, with a 95% range. A well calibrated forecast stays on the diagonal. The line's chance comes from its spread the same way JIMBO's comes from its margin (σ ${M.sig} points). Expect wide ranges until a few hundred games.</p>`;
+}
 function renderVegas(){
   const el=$('vegas'); if(!el) return;
   const VG=APP&&APP.vg, rows=(VG&&VG.games||[]).filter(r=>r[4]!=null);
@@ -1528,6 +1562,7 @@ function renderVegas(){
     <div class="cleg"><span><i style="background:var(--magenta)"></i>t-statistic: do games move the way JIMBO leans?</span><span>dashed: research bar 2.5</span></div>`
     +(tt.some(v=>v!=null)?vgChart(xs,[{v:tt,c:'var(--magenta)'}],[{y:0,dash:'2 3'},{y:2.5,label:'2.5'}],i=>tt[i]==null?`Through ${xs[i].d}: too few games.`:`Through ${xs[i].d} (${xs[i].n} games): t ${tt[i].toFixed(2)}${xs[i].n>=50?`; best weight on JIMBO vs the line ${Math.round(Math.max(0,Math.min(1,xs[i].s.b))*100)}%`:''}; ATS ${xs[i].s.w}–${xs[i].s.l}.`,'Running t-statistic of JIMBO vs the line'):'<p class="note">Needs a few more games.</p>');
   h+=`<p class="note">Rough guide: if JIMBO deserves half the weight against the line, t should pass 2.5 around 600 games (early January); a third, around 1,100 (late March); less than that, not this season. Games are noisy: a perfect forecast still misses by about 13 points.</p>`;
+  h+=`<h3 class="vgh">Does a 70% call win 70% of the time?</h3>`+vgCalib(rows);
   const who=(r,v,k)=>Math.abs(v)<0.05?'even':`${v>0?r[1]:r[2]} ${Math.abs(v).toFixed(k)}`;
   // ATS (user request 2026-10-31): JIMBO's side vs the line; same rule as vgStats w/l (g = JIMBO - line, rr = final - line)
   const ats=r=>{ const g=r[3]-r[4], rr=r[5]-r[4], s=g>0?r[1]:r[2]; return g===0?'<span class="note">–</span>':rr===0?`${s} push`:(g>0)===(rr>0)?`<b class="pwin">${s} ✓</b>`:`<span class="ploss">${s} ✗</span>`; };
