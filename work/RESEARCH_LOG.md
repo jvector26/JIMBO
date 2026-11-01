@@ -1727,3 +1727,22 @@ SHIPPED same day (user: "Yes let's fix it for consistency"): pipeline/nightly.py
 Local run 10-29: ratings, minutes, wins identical; po_delta -0.04 (DAL) .. +0.28 (DET); title <= 0.005; playoffs <= 0.002. App (phone + desktop,
 no page errors): Giannis 31.6 min x 66 g (was 37.5 x 56), Davis 33.5, Tatum 34.5; players at 36+ when playing 25 -> 1. No app rebuild needed
 (page poDelta and minutes-when-playing both read z.av).
+
+## HOME COURT: RECENCY / LEVEL  [2026-11-01, session 40, user OK after vs-Vegas review] -> FAILS BAR, NOTHING APPLIED
+Trigger: vs Vegas, 88 games 10-20..10-31: JIMBO RMSE 15.19 vs line 14.74 (dMSE t 1.7; top-5 blowouts carry most of it).
+JIMBO home margin averages +0.94 above the line (t 3.3); a team ridge puts 0.91 of it in the home-court term. Team leans
+vs cover: corr -0.04; through-origin slope of (final-line) on (JIMBO-line) -0.37 (t -0.6) -> no info either way yet.
+Production 2.54 = 2.6 (RAPM intercept 1996-2025, 2.70/100 x pace; never game-tested) minus the b2b re-centring.
+Code: code/hca/hca_bt.py (recency variants), code/hca/hca_fe.py (season FE home court + fixed levels). Research-bar base +
+b2b_diff (production since s37); only the intercept varies. Rebuilt data/b2b_games.parquet (b2b_team.py) first.
+Home court by season (team-season FE + b2b): 2004-14 2.69, 2015-19 2.39, 2021-25 1.87 (2024 1.64, 2025 1.72; 2020 bubble 0.94).
+1. Recency (prior-only estimates: since 2004, 10/5/3/2/1 seasons, decay hl 2/3/5, bubble excluded): none beats a fitted
+   constant (LOSO const 1.92-2.07, RMSE 13.4367); best hl2 -0.0003, prior-5 -0.0002 (t ~0). Season-to-season noise (~0.4)
+   swamps the drift. FAILS.
+2. Level: fixed 2.54 vs fitted const +0.0100 (worse 7/11, t 1.6; 15-19 -0.09, 20-25 +0.59 MSE). 2.0 vs 2.54: dMSE -0.33,
+   t -1.94, 7/11 (15-19 +0.025, 20-25 -0.63); 2.1 vs 2.54: t -2.24, 8/11, 15-19 -0.022, 20-25 -0.56. Below t 2.5 -> FAILS
+   (closest: 2.1 has the right sign in both halves). 2026-27 estimates by variant 1.68-2.01 (since-2004 2.34).
+   Preseason stage moot (every team plays 41 home games; HCA moves game odds, not win totals).
+   88-game check: home 2.54 -> 2.0 takes the vs-line home gap +0.94 -> +0.40, JIMBO RMSE 15.19 -> 15.16 (line 14.74).
+Verdict: recency fails outright; the level points ~0.5 lower (t ~2, all from 2020-25). Retest level after 2026-27 (adds a
+season of the recent era) and keep watching the home gap on the vs Vegas tab. Model unchanged.

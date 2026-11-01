@@ -7,6 +7,9 @@ Design spec (Claude Doc): https://claude.ai/code/artifact/e5eebcf8-5649-4c33-b97
 To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs work/setup.sh, reads this file (repo CLAUDE.md says the same).
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
 
+## SESSION 40 (2026-11-01, user question: gap vs Vegas) -- RESEARCH ONLY, nothing applied
+vs Vegas 88 games: gap = noise + JIMBO home +0.94 vs line. Home-court test fails bar (RESEARCH_LOG "HOME COURT: RECENCY / LEVEL").
+
 ## SESSION 39 (2026-10-31, user request, display only) -- SHIPPED
 vs Vegas calibration chart (2nd request same day): "Does a 70% call win 70% of the time?" section above the game log (vgCalib in template +
 site/index.html). Home win chance in 10% buckets, x = mean chance in bucket, y = home win rate, dot size ~ sqrt(games), Wilson 95% bars,
@@ -247,7 +250,8 @@ self-creation at lineup level, not added to team projections) | rim DFG% / defen
 shrink for stapled teammates (2026-10-15; beats total poss at every setting, both halves, but game -0.003, t ~2.0;
 direct test neff t 2.50, 2015-19 t 0.3 / 2020-25 t 4.1; preseason flat; 2026 effect max 0.18: retest neff after 2026-27) |
 contested-3 for centers (2026-10-18, Clingan +0.44; centers' coef -0.03 vs non-centers +0.27, difference t -0.7, fails halves;
-user: leave it; retest after 2026-27).
+user: leave it; retest after 2026-27) | home court recency/level (2026-11-01; recency variants = constant; 2.1 vs 2.54 t -2.24, 2.0 t -1.94, all from
+2020-25; JIMBO home +0.94 vs DK line on 88 games; retest level after 2026-27).
 APPLIED over time: always-five-starters role rule (user call, 2026-10-09), thin-sample lineup shrink (judgment, 2026-10-07), playoff minutes (half weight, 2026-10-07), lineup 0.6/0.8 split, dreb 0.5x, box decay (.1,.4,1), age-curve refit, slope refit, 3PT talent prior,
 college rookie prior, returner -0.35, hustle term, minutes recal, depth-chart tiers, game-level tonight minutes.
 
