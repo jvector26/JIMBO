@@ -7,6 +7,13 @@ Design spec (Claude Doc): https://claude.ai/code/artifact/e5eebcf8-5649-4c33-b97
 To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs work/setup.sh, reads this file (repo CLAUDE.md says the same).
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
 
+## SESSION 41 (2026-11-01, user request, display only) -- SHIPPED gh 18113da
+Standings in season (SEASON only; preseason artifact unchanged): columns Record, Forecast, Model, Off rtg, Def rtg, Age adj, Playoffs
+(Off/Def now shown on phones). Line, Forecast vs line, Over line, Title, Net rtg, Avg age hidden in season (only:()=>!SEASON); strip
+drops the line marker and the legend its 'Betting line' entry. The preseason line lives in the team view: poPath adds
+'Preseason line X · over Y%' (Title still there); win histogram keeps its line marker. User: no need to update the season win-total
+line nightly (it stays the fixed preseason win_totals_2026.csv). sw.js jimbo-a008254001, footnote 'Build 11-01'. Phone + desktop, no errors.
+
 ## SESSION 40 (2026-11-01, user question: gap vs Vegas) -- HOME COURT 2.54 -> 2.0 SHIPPED (user judgment call 'Ship 2.0')
 vs Vegas 88 games: gap = noise + JIMBO home +0.94 vs line. Home-court test fails the t bar (RESEARCH_LOG "HOME COURT: RECENCY /
 LEVEL"), but 2.54 was never game-tested (1996-2025 RAPM intercept); 2015-25 games fit ~2.0, 2021-25 1.87. Applied as JUDGMENT:
