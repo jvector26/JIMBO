@@ -1728,7 +1728,7 @@ Local run 10-29: ratings, minutes, wins identical; po_delta -0.04 (DAL) .. +0.28
 no page errors): Giannis 31.6 min x 66 g (was 37.5 x 56), Davis 33.5, Tatum 34.5; players at 36+ when playing 25 -> 1. No app rebuild needed
 (page poDelta and minutes-when-playing both read z.av).
 
-## HOME COURT: RECENCY / LEVEL  [2026-11-01, session 40, user OK after vs-Vegas review] -> FAILS BAR, NOTHING APPLIED
+## HOME COURT: RECENCY / LEVEL  [2026-11-01, session 40, user OK after vs-Vegas review] -> FAILS BAR; LEVEL 2.0 APPLIED BY USER JUDGMENT
 Trigger: vs Vegas, 88 games 10-20..10-31: JIMBO RMSE 15.19 vs line 14.74 (dMSE t 1.7; top-5 blowouts carry most of it).
 JIMBO home margin averages +0.94 above the line (t 3.3); a team ridge puts 0.91 of it in the home-court term. Team leans
 vs cover: corr -0.04; through-origin slope of (final-line) on (JIMBO-line) -0.37 (t -0.6) -> no info either way yet.
@@ -1746,3 +1746,5 @@ Home court by season (team-season FE + b2b): 2004-14 2.69, 2015-19 2.39, 2021-25
    88-game check: home 2.54 -> 2.0 takes the vs-line home gap +0.94 -> +0.40, JIMBO RMSE 15.19 -> 15.16 (line 14.74).
 Verdict: recency fails outright; the level points ~0.5 lower (t ~2, all from 2020-25). Retest level after 2026-27 (adds a
 season of the recent era) and keep watching the home gap on the vs Vegas tab. Model unchanged.
+UPDATE same day: user 'Ship 2.0' (judgment: 2.54 never game-tested; every recent estimate 1.7-2.0). model/b2b.json hca 2.54 -> 2.0,
+base constants 2.6 -> 2.06. 1.6 (Vegas-like) rejected: worse than 2.0 in the backtest (2015-19 +0.32 MSE vs fitted const).

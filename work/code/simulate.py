@@ -15,7 +15,7 @@ TEAMS = sorted(t for v in DIV.values() for t in v.split())
 IDX = {t: i for i, t in enumerate(TEAMS)}
 div_of = {t: d for d, v in DIV.items() for t in v.split()}
 conf_of = {t: "E" if div_of[t] in EAST else "W" for t in TEAMS}
-SIG, HCA = 12.8, 2.6     # per-game margin sd (as in project.py); home edge in points (~2.7/100 poss * pace)
+SIG, HCA = 12.8, 2.06    # per-game margin sd; home edge 2.06 (session 40, was 2.6 = 1996-2025 RAPM intercept)
 import json
 _B = json.load(open(f"{D}/blend.json"))  # fit in preseason backtest 2014-25 (see HANDOFF)
 TAU_MODEL, TAU_BLEND = _B["tau_model"], _B["tau_blend"]  # sd of true margin around projection (pts/game)

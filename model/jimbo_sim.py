@@ -11,7 +11,7 @@ TEAMS = sorted(t for v in DIV.values() for t in v.split())
 IDX = {t: i for i, t in enumerate(TEAMS)}
 div_of = {t: d for d, v in DIV.items() for t in v.split()}
 conf_of = {t: "E" if div_of[t] in EAST else "W" for t in TEAMS}
-SIG, HCA = 12.8, 2.6
+SIG, HCA = 12.8, 2.06   # session 40: 2.6 -> 2.06 (= 2.0 + B2B re-centring; used only with JIMBO_B2B=0)
 
 
 def fill_tbd(rem, played_n, rng):

@@ -17,7 +17,7 @@ Wp = json.load(open(f"{D}/weights_prod.json")); B = json.load(open(f"{D}/blend.j
 SIG = 12.8
 cfg = {"season": S, "slope": float(cal["slope"]), "unrated": float(cal["unrated"]),
        "Wo": {k: 0.5 * v for k, v in Wp["Wo"].items()}, "Wd": {k: 0.5 * v for k, v in Wp["Wd"].items()},
-       "lam": 6000.0, "dS": 1.0, "H0": 2000.0, "lam_t": 80.0, "min_games": 15, "hca": 2.6, "sig": SIG,
+       "lam": 6000.0, "dS": 1.0, "H0": 2000.0, "lam_t": 80.0, "min_games": 15, "hca": 2.06, "sig": SIG,
        "pace": float(json.load(open(f"{D}/pace_2025.json"))["pace"]),
        "tau_pre": B["tau_blend"], "tau_mid": 2.5, "tau_late": 1.8,   # tau_mid 2.0 -> 2.5 (session 21 replay)
        "gap_k": 20.0, "mpg_k": 10.0, "avail_k": 20.0, "out_default_games": 10,
