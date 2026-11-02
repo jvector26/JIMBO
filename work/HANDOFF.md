@@ -7,6 +7,11 @@ Design spec (Claude Doc): https://claude.ai/code/artifact/e5eebcf8-5649-4c33-b97
 To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs work/setup.sh, reads this file (repo CLAUDE.md says the same).
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
 
+## SESSION 42 (2026-11-02, user: "Clingan top 5? model is broken") -- TEST FAILS BAR, NOTHING APPLIED
+Clingan 6.25 breakdown and test in RESEARCH_LOG "DEFENSIVE ON/OFF-HEAVY RATINGS". Players whose rating leans on defensive on/off
+are NOT overstated in the game backtest (Clingan-like group +0.18 t +1.8; extreme tail res_d>1.5 -0.41 t -1.7, ~-0.23 for him).
+Running pipeline/nightly.py locally rewrites live/2026/pregame.csv: git checkout it afterwards, never commit it.
+
 ## SESSION 41 (2026-11-01, user request, display only) -- SHIPPED gh 18113da
 Standings in season (SEASON only; preseason artifact unchanged): columns Record, Forecast, Model, Off rtg, Def rtg, Age adj, Playoffs
 (Off/Def now shown on phones). Line, Forecast vs line, Over line, Title, Net rtg, Avg age hidden in season (only:()=>!SEASON); strip
@@ -260,7 +265,7 @@ high-lineup leverage in team forecasts (no forecast bias; they out-play projecte
 self-creation at lineup level, not added to team projections) | rim DFG% / defended FG% (noise) | separated-possessions
 shrink for stapled teammates (2026-10-15; beats total poss at every setting, both halves, but game -0.003, t ~2.0;
 direct test neff t 2.50, 2015-19 t 0.3 / 2020-25 t 4.1; preseason flat; 2026 effect max 0.18: retest neff after 2026-27) |
-contested-3 for centers (2026-10-18, Clingan +0.44; centers' coef -0.03 vs non-centers +0.27, difference t -0.7, fails halves;
+defensive on/off-heavy ratings (2026-11-02, Clingan; tail res_d>1.5 t -1.7, lean group +, retest tail after 2026-27) | contested-3 for centers (2026-10-18, Clingan +0.44; centers' coef -0.03 vs non-centers +0.27, difference t -0.7, fails halves;
 user: leave it; retest after 2026-27) | home court recency/level (2026-11-01; level set to 2.0 by user judgment; recency variants = constant; 2.1 vs 2.54 t -2.24, 2.0 t -1.94, all from
 2020-25; JIMBO home +0.94 vs DK line on 88 games; retest level after 2026-27).
 APPLIED over time: always-five-starters role rule (user call, 2026-10-09), thin-sample lineup shrink (judgment, 2026-10-07), playoff minutes (half weight, 2026-10-07), lineup 0.6/0.8 split, dreb 0.5x, box decay (.1,.4,1), age-curve refit, slope refit, 3PT talent prior,

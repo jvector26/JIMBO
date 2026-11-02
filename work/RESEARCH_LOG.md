@@ -1748,3 +1748,17 @@ Verdict: recency fails outright; the level points ~0.5 lower (t ~2, all from 202
 season of the recent era) and keep watching the home gap on the vs Vegas tab. Model unchanged.
 UPDATE same day: user 'Ship 2.0' (judgment: 2.54 never game-tested; every recent estimate 1.7-2.0). model/b2b.json hca 2.54 -> 2.0,
 base constants 2.6 -> 2.06. 1.6 (Vegas-like) rejected: worse than 2.0 in the backtest (2015-19 +0.32 MSE vs fitted const).
+
+## DEFENSIVE ON/OFF-HEAVY RATINGS (Clingan question #2)  [2026-11-02, session 42] -> FAILS BAR, NOTHING APPLIED
+User: Clingan (6.25, #5) "better than Giannis/Cade? the model is broken." Breakdown (dash.json + local nightly det): box 2.40,
+lineup res_o 1.145 (x.6), res_d 2.033 (x.8 = +1.63), hustle .23, x1.0501, age +.56 -> 5.76 pre; in season box -0.05, rapm +0.54
+(218 poss) -> 6.25. Giannis 4.58/2.38/.34/-.26, age -.53 -> 5.78. Value (r x mpg/48): Clingan #8, Giannis #5, Cade #9.
+Test (code/defonoff/defonoff_bt.py, lineup_port_bt harness, no shrink base LOSO 13.4577): extra game-diff regressor on top of
+box + .6 res_o + .8 res_d. rel = coef relative to the base composite.
+ tail0.5 max(res_d-.5,0): LOSO +0.0000, rel +0.24 t +1.5 | tail1: +0.0015, +0.07 t 0.4 | tail1.5: -0.0003, -0.41 t -1.7
+ (halves -1.2/-1.2) | lean (res_d>=1.25 & box_est<=3, 14.6% of minutes): -0.0007, +0.18 t +1.8 (halves +1.0/+1.2) |
+ offense comparison otail1 max(res_o-1,0): -0.0016, -0.45 t -1.9.
+Verdict: no evidence that big defensive on/off is overstated; Clingan-like players (modest box, big def on/off) if anything
+did slightly BETTER than projected. Only the extreme tail (res_d > 1.5 raw) leans negative, t -1.7; applied to Clingan it would
+be about -0.23 (6.25 -> ~6.0). Preseason step not run (game step failed). Retest tail1.5 after 2026-27.
+Note: the local nightly diagnostic run rewrites live/2026/pregame.csv rows for today: always `git checkout` it, never commit.
