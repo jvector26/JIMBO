@@ -7,6 +7,10 @@ Design spec (Claude Doc): https://claude.ai/code/artifact/e5eebcf8-5649-4c33-b97
 To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs work/setup.sh, reads this file (repo CLAUDE.md says the same).
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
 
+## SESSION 43 (2026-11-03, user: "closer only 41% of 107 games vs Vegas") -- DIAGNOSIS ONLY, NOTHING CHANGED
+RESEARCH_LOG "VS VEGAS AT 107 GAMES". Fair null for "closer" with JIMBO's gap sizes is ~47% (not 50%); 41% is p ~.1 vs that.
+No team or timing pattern; info slope -0.33 +- 0.51. Lead for a real answer: game backtest vs historical closing lines (needs a lines file).
+
 ## SESSION 42 (2026-11-02, user: "Clingan top 5? model is broken") -- TEST FAILS BAR, NOTHING APPLIED
 Clingan 6.25 breakdown and test in RESEARCH_LOG "DEFENSIVE ON/OFF-HEAVY RATINGS". Players whose rating leans on defensive on/off
 are NOT overstated in the game backtest (Clingan-like group +0.18 t +1.8; extreme tail res_d>1.5 -0.41 t -1.7, ~-0.23 for him).

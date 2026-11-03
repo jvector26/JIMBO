@@ -1762,3 +1762,14 @@ Verdict: no evidence that big defensive on/off is overstated; Clingan-like playe
 did slightly BETTER than projected. Only the extreme tail (res_d > 1.5 raw) leans negative, t -1.7; applied to Clingan it would
 be about -0.23 (6.25 -> ~6.0). Preseason step not run (game step failed). Retest tail1.5 after 2026-27.
 Note: the local nightly diagnostic run rewrites live/2026/pregame.csv rows for today: always `git checkout` it, never commit.
+
+## VS VEGAS AT 107 GAMES (closer 44 of 107)  [2026-11-03, session 43, user question] -> NO CHANGE, diagnosis only
+Script code/vegas_gap_check.py (reads gh/site/data/vegas.json). 107 games 10-20..11-02: closer 44, line 61, ties 2 (one-sided
+binomial vs 50%: .059 excl. ties). RMSE JIMBO 14.65 vs line 14.23, dMSE +12.0 t 1.79; top-5 blowouts carry most (without them +3.2).
+Coin-flip is the wrong null: P(closer) = Phi((w-0.5)|gap|/sd), 50% only for a model worth half weight. With the actual gaps
+(mean |gap| 2.2): w=0 -> 46.9% (50.2 games), w=.2 48.1%, w=.4 49.4%. 44 vs 50.2 is z ~ -1.2 (p ~.1).
+Info test: slope of (final-line) on (JIMBO-line) -0.33 se 0.51 (demeaned gap -0.28 se 0.54): no evidence of value, can't rule
+out ~0.5 either. Home lean +0.94 (10-20..10-31) -> -0.09 on 19 games since HCA 2.0. Team leans vs team results corr -0.05
+(wrong: OKC lean +4.5 / result -4.2, HOU -2.9/+8.8, OKC/LAL home mismatches; right: MIA, PHX, DEN, MIN, MEM). JIMBO slightly
+compressed (sd 6.74 vs 6.88, slope on line .91). Not run timing: 98 games with last run <=3h before tip show the same.
+Verdict: no fixable systematic error found beyond home court (done); sample too small to say whether JIMBO adds anything.
