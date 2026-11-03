@@ -1780,3 +1780,28 @@ Follow-up same day (user: "100% model, no Vegas blend?"). Game margins carry the
   model only     50-57-0  14.62  57-50      21-20      76       -0.04 +- 0.43   (line 14.23 RMSE, 73 winners)
 Preseason-Vegas term vs result-vs-line: slope -0.62 +- 0.78 (noise; GSW/MEM/POR leaned down by Vegas and beat the line).
 No change; model only is no better on margin error, a bit better on side/winners, all within noise.
+
+## ELO-STYLE MODELS  [2026-11-03, session 44, user idea "what about an Elo model?"] -> DIAGNOSIS, NOTHING APPLIED (awaiting user)
+Code: code/elo/elo_test.py (stage 1, preseason ratings), elo_m4_preds.py + elo_m4_test.py (stage 2, production in-season setup).
+Outputs (not in repo): data/elo_test_*.csv, elo_m4_preds_{S}.parquet (M4 ratings refit before every game day, every game of S
+predicted with actual minutes; ~3.5 min for 2014-25 after rebuild_git.sh 2013 2025), elo_m4_results.csv, elo_m4_by_stage.csv.
+Variants: plain 538 Elo (MOV mult, K, carry to 1505) and plain points Elo (r += k*(margin - pred), carry c) from 1996;
+residual Elo = team adjustment updated on (actual - JIMBO) game by game; production layer = ridge team offsets lam 80.
+k/c picked LOSO. All strictly pre-game.
+STAGE 1 (game backtest base 13.4633: preseason ratings, actual minutes, NO in-season updates; 2015-25):
+  plain 538 Elo 13.4495 (-0.014 t -0.3), plain points Elo (k .04, carry .6) 13.4245 (-0.039 t -0.8): results-only Elo ~ ties
+  JIMBO's PRESEASON ratings (worse first 10 games 13.39 vs 13.15, better late). Ridge 80 layer 13.2498; residual Elo 13.1876
+  (vs ridge -0.062 t -2.95); but ridge lam 20 gives 13.1993 -> most of that is "more aggressive", and the base lacks M4.
+STAGE 2 (base = production M4 in-season ratings, refit before every game day, LOSO-calibrated, 2014-25, 14,436 games):
+  M4 only 13.0383 | + ridge 80 (production) 13.0088 (-0.030 t -3.3; lam 80 still best of 20/40/80/160)
+  residual Elo INSTEAD of ridge (k .01, c .25; Elo on current-rating residuals): 13.0037, -0.0051 t -2.84, 9/12, halves -.002/-.008
+  -> passes the letter of the bar but the size is nothing. Elo on top of ridge +0.001; classic Elo on pregame residuals +0.001.
+  PLAIN points Elo as a third input (LOSO regression with M4 raw + ridge layer + Elo): 12.9856; vs the same free-coefficient
+  regression without Elo (13.0069): -0.0213 t -2.70, better 10/12 seasons, halves -0.037 / -0.007 (2022 and 2023 worse).
+  Joint coefs: M4 0.80, ridge layer 0.36, Elo 0.27 (Elo diff in points). Gain largest at 10-25 team games, present from game 1
+  (last season's results via carry .6).
+Read: JIMBO >> Elo alone (~0.4 RMSE better with in-season updates). A residual-Elo layer adds nothing over the existing ridge.
+Plain Elo as an independent results-based check DOES add a little (~0.02), mostly in 2014-19; the recent half is weak.
+Caveats: actual minutes (production uses projected); Elo params from an in-sample grid (flat); no historical closing lines,
+so nothing says whether it helps vs Vegas. Next if pursued: nightly replay harness (code/replay, projected minutes), then decide;
+separate test: last season's Elo in the preseason blend (age_eval / refit_blend).

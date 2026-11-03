@@ -7,6 +7,12 @@ Design spec (Claude Doc): https://claude.ai/code/artifact/e5eebcf8-5649-4c33-b97
 To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs work/setup.sh, reads this file (repo CLAUDE.md says the same).
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
 
+## SESSION 44 (2026-11-03, user idea: Elo model) -- TESTED, NOTHING APPLIED (awaiting user)
+RESEARCH_LOG "ELO-STYLE MODELS". Against the production in-season setup (M4 ratings refit nightly + ridge team offsets, 2014-25):
+Elo alone is far worse than JIMBO; residual Elo instead of the ridge layer -0.005 (t -2.84, trivial); plain points Elo as a third
+input -0.021 (t -2.70, 10/12 seasons, halves -.037/-.007; weights M4 .80, offsets .36, Elo .27). Next if wanted: nightly replay
+with projected minutes. Stints/player_games 2013-25 were rebuilt this session (sandbox only).
+
 ## SESSION 43 (2026-11-03, user: "closer only 41% of 107 games vs Vegas") -- DIAGNOSIS ONLY, NOTHING CHANGED
 RESEARCH_LOG "VS VEGAS AT 107 GAMES". Fair null for "closer" with JIMBO's gap sizes is ~47% (not 50%); 41% is p ~.1 vs that.
 No team or timing pattern; info slope -0.33 +- 0.51. Lead for a real answer: game backtest vs historical closing lines (needs a lines file).
