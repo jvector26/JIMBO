@@ -22,9 +22,9 @@ Denver Nuggets,DEN,Spencer Jones,Out,2026-11-01T23:56Z,out,Not Specified,Not Spe
 Denver Nuggets,DEN,Julian Strawther,Out,2026-10-17T00:52Z,out,Sprain,Left,2026-11-29,"Strawther (knee) was diagnosed with a left knee sprain Friday and will be re-evaluated in six weeks, Vinny Benedetto of The Denver Gazette reports."
 Detroit Pistons,DET,Isaiah Joe,Out,2026-11-02T17:35Z,out,Bruise,Right,2026-11-04,Joe (hip) is out for Monday against the Hornets.
 Detroit Pistons,DET,Jalen Duren,Out,2026-10-25T14:56Z,out,Strain,Right,2026-11-09,"Duren will be re-evaluated in two weeks due to a right hamstring strain, Eric Vincent of ClutchPoints.com reports."
-Golden State Warriors,GS,Brandon Williams,Out,2026-11-03T01:33Z,out,Bruise,Left,2026-11-05,Williams (quadriceps) has been ruled out for Monday's game against the Suns.
-Golden State Warriors,GS,Al Horford,Out,2026-11-02T21:07Z,out,,,2026-11-05,Horford will be rested Monday against the Suns.
-Golden State Warriors,GS,Gui Santos,Out,2026-11-02T14:20Z,out,,,2026-11-05,"Santos did not play in the second half of Sunday's 124-112 win over the Clippers due to a knee injury and will not play against the Suns on Monday, Danny Emerman of SFStandard.com reports."
+Golden State Warriors,GS,Brandon Williams,Day-To-Day,2026-11-03T06:12Z,day-to-day,Bruise,Left,2026-11-05,Williams (quadriceps) has been ruled out for Monday's game against the Suns.
+Golden State Warriors,GS,Gui Santos,Day-To-Day,2026-11-03T06:12Z,day-to-day,,,2026-11-05,"Santos did not play in the second half of Sunday's 124-112 win over the Clippers due to a knee injury and will not play against the Suns on Monday, Danny Emerman of SFStandard.com reports."
+Golden State Warriors,GS,Al Horford,Day-To-Day,2026-11-03T06:11Z,day-to-day,,,2026-11-05,Horford will be rested Monday against the Suns.
 Golden State Warriors,GS,Kristaps Porzingis,Out,2026-10-28T14:25Z,out,,,2026-12-01,"The Warriors are exploring potential trades involving Porzingis (personal), who remains away from the team indefinitely while dealing with ongoing health concerns, Anthony Slater of ESPN.com reports."
 Golden State Warriors,GS,Moses Moody,Out,2026-10-16T16:14Z,out,Surgery,Left,2026-12-01,"Moody (knee) is progressing toward a potential return between December and January after rupturing his left patellar tendon in March, Anthony Slater of ESPN reports."
 Golden State Warriors,GS,Jimmy Butler III,Out,2026-10-16T16:11Z,out,Surgery,Right,2027-01-02,"Butler (knee) could return sometime between January and February as he continues recovering from a torn right ACL, Anthony Slater of ESPN reports."
@@ -41,8 +41,8 @@ Indiana Pacers,IND,Ivica Zubac,Out,2026-11-02T18:19Z,out,Sprain,Left,2026-11-09,
 Indiana Pacers,IND,Johnny Furphy,Out,2026-10-30T19:06Z,out,Surgery,Right,2027-01-02,"Furphy (knee) is practicing with the G League's Noblesville Boom, per Alex Golden of SI.com."
 Indiana Pacers,IND,Ben Sheppard,Out,2026-10-28T21:41Z,out,,Left,2027-01-02,"Head coach Rick Carlise confirmed Sheppard will miss ""months"" after undergoing surgery to repair a torn meniscus in his left knee, Tony East of Forbes.com reports."
 Indiana Pacers,IND,Tyrese Haliburton,Out,2026-10-28T21:30Z,out,Strain,Left,2026-11-13,"Haliburton (hamstring) will miss at least the next two weeks of action, Shams Charania of ESPN reports."
-LA Clippers,LAC,Rui Hachimura,Out,2026-11-02T21:19Z,out,Bruise,Left,2026-11-04,Hachimura (quadriceps) has been ruled out for Monday's game against the Raptors.
-LA Clippers,LAC,Derrick Jones Jr.,Out,2026-11-02T21:12Z,out,Soreness,Right,2026-11-04,Jones (knee) has been ruled out for Monday's game against the Raptors.
+LA Clippers,LAC,Derrick Jones Jr.,Day-To-Day,2026-11-03T06:11Z,day-to-day,Soreness,Right,2026-11-04,Jones (knee) has been ruled out for Monday's game against the Raptors.
+LA Clippers,LAC,Rui Hachimura,Day-To-Day,2026-11-03T06:11Z,day-to-day,Bruise,Left,2026-11-04,Hachimura (quadriceps) has been ruled out for Monday's game against the Raptors.
 LA Clippers,LAC,Yanic Konan Niederhauser,Out,2026-11-02T16:12Z,out,Surgery,Right,2026-11-08,The Clippers recalled Niederhauser (foot) from the G League's San Diego Clippers on Sunday.
 LA Clippers,LAC,Brandon Ingram,Out,2026-11-02T16:01Z,out,Surgery,Right,2026-11-08,The Clippers recalled Ingram (Achilles) from the G League's San Diego Clippers on Sunday.
 LA Clippers,LAC,Bradley Beal,Out,2026-10-15T01:03Z,out,Inflammation,Right,2026-11-08,"Beal (knee) will not be ready for the start of the regular season, NBA writer Justin Russo reports."
@@ -80,7 +80,7 @@ Sacramento Kings,SAC,Keegan Murray,Out,2026-10-26T22:01Z,out,,,2026-11-10,"Murra
 Sacramento Kings,SAC,Ben Simmons,Out,2026-10-21T04:22Z,out,Surgery,Right,2027-10-01,"Simmons underwent successful surgery Tuesday to repair a torn right Achilles tendon, James Ham of ESPN 1320 Sacramento reports."
 San Antonio Spurs,SA,Tobias Harris,Out,2026-10-30T21:44Z,out,Strain,Left,2026-11-06,Harris (calf) is listed as out for Saturday's game against Minnesota.
 San Antonio Spurs,SA,Jayden Quaintance,Out,2026-10-05T21:43Z,out,Surgery,Right,2026-12-03,"Quaintance has been around the team but has not yet been cleared for basketball activities, Matt Guzman of SI.com reports."
-Toronto Raptors,TOR,Jakob Poeltl,Out,2026-11-03T02:27Z,out,Inflammation,Left,2026-11-04,"Poeltl (shoulder) has been ruled out for Monday's game against the Clippers, Zulfi Sheikh reports."
+Toronto Raptors,TOR,Jakob Poeltl,Day-To-Day,2026-11-03T06:10Z,day-to-day,Inflammation,Left,2026-11-04,"Poeltl (shoulder) has been ruled out for Monday's game against the Clippers, Zulfi Sheikh reports."
 Toronto Raptors,TOR,Nate Bittle,Out,2026-11-02T20:20Z,out,Fracture,Right,2026-11-09,Bittle (foot) is out for Monday's game against the Clippers and remains without a timetable to return.
 Toronto Raptors,TOR,Kawhi Leonard,Out,2026-10-29T15:39Z,out,Inflammation,Left,2026-11-23,"Leonard (knee) is expected to be sidelined for at least three to four weeks, Chris Haynes of NBA TV reports."
 Utah Jazz,UTAH,Jaren Jackson Jr.,Out,2026-10-27T19:25Z,out,Not Specified,Right,2026-12-14,"Jackson has been diagnosed with a torn MCL in his right knee and will be sidelined for 6-to-8 weeks, per Shams Charania of ESPN."
