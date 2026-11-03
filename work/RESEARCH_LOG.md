@@ -1773,3 +1773,10 @@ out ~0.5 either. Home lean +0.94 (10-20..10-31) -> -0.09 on 19 games since HCA 2
 (wrong: OKC lean +4.5 / result -4.2, HOU -2.9/+8.8, OKC/LAL home mismatches; right: MIA, PHX, DEN, MIN, MEM). JIMBO slightly
 compressed (sd 6.74 vs 6.88, slope on line .91). Not run timing: 98 games with last run <=3h before tip show the same.
 Verdict: no fixable systematic error found beyond home court (done); sample too small to say whether JIMBO adds anything.
+Follow-up same day (user: "100% model, no Vegas blend?"). Game margins carry the preseason win-total blend gap
+(teams_pre blend - model) x 20/(20+games played): mean |term| 1.44 pts/game, max 4.2. Stripped (code/vegas_model_only.py):
+                 closer   RMSE   ATS (all)  ATS gap3+  winners  info slope
+  blended (live) 44-61-2  14.65  49-57      17-19      70       -0.33 +- 0.51
+  model only     50-57-0  14.62  57-50      21-20      76       -0.04 +- 0.43   (line 14.23 RMSE, 73 winners)
+Preseason-Vegas term vs result-vs-line: slope -0.62 +- 0.78 (noise; GSW/MEM/POR leaned down by Vegas and beat the line).
+No change; model only is no better on margin error, a bit better on side/winners, all within noise.
