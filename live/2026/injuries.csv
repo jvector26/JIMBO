@@ -1,17 +1,16 @@
 team,abbr,name,status,date,type,detail,side,return_date,comment
+Atlanta Hawks,ATL,Jalen Johnson,Out,2026-11-04T23:02Z,out,,Left,2026-11-06,"Johnson (ankle) is listed as questionable for Wednesday's game in Washington, Kevin Chouinard of the Hawks' official site reports."
 Atlanta Hawks,ATL,Jock Landale,Out,2026-11-03T22:08Z,out,,Left,2026-11-06,"Landale is out for Wednesday's game against the Wizards with a left hip strain, Kevin Chouinard of the Hawks' official site reports."
-Atlanta Hawks,ATL,Jalen Johnson,Day-To-Day,2026-11-03T22:06Z,day-to-day,,Left,2026-11-04,"Johnson (ankle) is listed as questionable for Wednesday's game in Washington, Kevin Chouinard of the Hawks' official site reports."
 Atlanta Hawks,ATL,Mouhamed Gueye,Out,2026-10-19T19:38Z,out,Fracture,Left,2026-11-20,"Gueye underwent surgery Tuesday to repair a fractured left foot that he suffered during a workout last week, Brad Rowland of the Locked On Podcast Network reports."
 Atlanta Hawks,ATL,Henri Veesaar,Out,2026-09-21T19:50Z,out,,Right,2027-07-01,"Veesaar was diagnosed with a torn right ACL and is expected to miss the 2026-27 season, the Hawks announced Monday."
 Boston Celtics,BOS,Jayson Tatum,Out,2026-11-04T17:48Z,out,,,2026-11-06,"Tatum will be rested Wednesday against the Bucks, Jack Simone of BostonSportsJournal.com reports."
-Boston Celtics,BOS,Payton Pritchard,Day-To-Day,2026-11-03T21:12Z,day-to-day,,Right,2026-11-04,"Pritchard is listed as questionable for Wednesday's game against Milwaukee due to a right shoulder contusion, Taylor Snow of the Celtics' official site reports."
+Boston Celtics,BOS,Payton Pritchard,Day-To-Day,2026-11-03T21:12Z,day-to-day,,,,"Pritchard is listed as questionable for Wednesday's game against Milwaukee due to a right shoulder contusion, Taylor Snow of the Celtics' official site reports."
 Boston Celtics,BOS,Devin Carter,Out,2026-10-18T14:49Z,out,,,2026-11-08,"Carter has been diagnosed with mononucleosis and is without a timetable for a return, Gary Washburn of The Boston Globe reports."
 Brooklyn Nets,BKN,Egor Demin,Out,2026-10-29T17:09Z,out,Bruise,Right,2026-11-07,"The Nets exercised Demin's third-year team option for the 2027-28 season, Sharif Phillips-Keaton of USA Today reports Thursday."
 Brooklyn Nets,BKN,Tyler Bilodeau,Out,2026-10-25T17:19Z,out,Sprain,Right,2026-11-06,Bilodeau (shoulder) has been ruled out for Sunday's game against Indiana.
 Charlotte Hornets,CHA,Grant Williams,Out,2026-11-04T17:59Z,out,,Right,2026-11-09,Charlotte assigned Williams (hamstring) to the G League's Greensboro Swarm on Wednesday.
 Charlotte Hornets,CHA,Coby White,Day-To-Day,2026-11-03T22:06Z,day-to-day,,Left,2026-11-04,White (calf) is probable for Wednesday's game in Brooklyn.
-Chicago Bulls,CHI,Nic Claxton,Out,2026-11-03T21:04Z,out,,Not Specified,2026-11-04,Claxton (hamstring) is questionable for Wednesday against the Knicks.
-Chicago Bulls,CHI,Jalen Smith,Day-To-Day,2026-11-03T21:03Z,day-to-day,,,2026-11-04,Smith is probable for Wednesday's game against the Knicks with a left finger sprain.
+Chicago Bulls,CHI,Nic Claxton,Out,2026-11-04T22:34Z,out,Strain,Left,2026-11-08,Claxton (hamstring) is listed as out for Wednesday's game against New York.
 Cleveland Cavaliers,CLE,Jaylon Tyson,Out,2026-11-03T22:11Z,out,Sprain,Right,2026-11-06,Tyson is out for Wednesday's game against the Thunder due to a right ankle sprain.
 Cleveland Cavaliers,CLE,Peyton Watson,Out,2026-11-03T22:09Z,out,Soreness,Right,2026-11-06,Watson (hamstring) is out for Wednesday's game in Oklahoma City.
 Dallas Mavericks,DAL,Santi Aldama,Out,2026-11-04T18:56Z,out,Surgery,Right,2026-11-04,"Aldama (knee) is doubtful for Wednesday's game against the Spurs, per NBA reporter Marc Stein."
@@ -53,7 +52,7 @@ Milwaukee Bucks,MIL,Kam Jones,Day-To-Day,2026-11-04T17:43Z,day-to-day,,Right,202
 Minnesota Timberwolves,MIN,Terrence Shannon Jr.,Out,2026-11-04T18:16Z,out,Bruise,Left,2026-11-06,Shannon (hip) is out for Wednesday against the Rockets.
 Minnesota Timberwolves,MIN,Anthony Edwards,Out,2026-10-29T18:33Z,out,Surgery,Right,2026-12-21,"Edwards underwent a successful arthroscopic procedure on his right knee Thursday, the Timberwolves announced."
 Minnesota Timberwolves,MIN,Donte DiVincenzo,Out,2026-10-05T20:53Z,out,Surgery,Right,2027-04-02,"DiVincenzo (Achilles) remains confident that he'll return during the 2026-27 season, Jon Krawczynski of The Athletic reports."
-New Orleans Pelicans,NO,Trey Murphy III,Day-To-Day,2026-11-04T18:34Z,day-to-day,,,2026-11-04,Murphy (knees) is now questionable for Wednesday against the Jazz.
+New Orleans Pelicans,NO,Trey Murphy III,Out,2026-11-04T23:10Z,out,,,2026-11-06,Murphy (knees) is listed as out for Wednesday's game against Utah.
 New Orleans Pelicans,NO,Jordan Poole,Out,2026-11-03T22:56Z,out,Sprain,Left,2026-11-04,Poole (ankle) is listed as probable for Wednesday's game against Utah.
 New Orleans Pelicans,NO,Yves Missi,Out,2026-10-30T21:32Z,out,Bruise,Left,2026-11-08,Missi (knee) won't play in Saturday's game against Atlanta.
 New York Knicks,NY,Josh Hart,Out,2026-11-04T18:08Z,out,,,2026-11-07,Hart is out for Wednesday's game against the Bulls due to right ankle soreness.
@@ -68,7 +67,7 @@ Orlando Magic,ORL,Jalen Suggs,Out,2026-10-26T18:44Z,out,,Right,2026-11-10,"Suggs
 Orlando Magic,ORL,Paolo Banchero,Out,2026-10-24T16:47Z,out,Sprain,Right,2026-11-22,"Banchero is expected to be sidelined for the next four-to-six weeks due to a right high-ankle sprain, Shams Charania of ESPN reports."
 Orlando Magic,ORL,Noah Penda,Out,2026-10-17T22:19Z,out,Strain,Right,2026-11-18,"Penda was diagnosed with a partially torn right hamstring Saturday, Jason Beede of the Orlando Sentinel reports."
 Orlando Magic,ORL,Izaiyah Nelson,Out,2026-09-28T21:33Z,out,Surgery,Left,2026-11-18,"Team president Jeff Weltman said Monday that Nelson (ankle) remains about a month away from returning to the court after offseason surgery, per Philip Rossman-Reich of OrlandoMagicDaily.com."
-Philadelphia 76ers,PHI,Dominick Barlow,Out,2026-11-03T22:04Z,out,Fracture,Not Specified,2026-11-12,"Barlow (back) won't play in Wednesday's game against the Pistons, Austin Krell of OnPattison.com reports."
+Philadelphia 76ers,PHI,Dominick Barlow,Out,2026-11-04T22:41Z,out,Fracture,Not Specified,2026-11-18,"Head coach Nick Nurse said Wednesday that Barlow (back) likely needs another 10-12 days before he's cleared to return to the court, Derek Bodner of AllPHLY.com reports."
 Philadelphia 76ers,PHI,Ariel Hukporti,Out,2026-10-06T19:17Z,out,Surgery,Right,2027-10-01,"Hukporti has sustained a season-ending ruptured right Achilles tendon, per Shams Charania of ESPN."
 Phoenix Suns,PHX,Rasheer Fleming,Out,2026-11-04T20:17Z,out,Sprain,Left,2026-11-05,Fleming is out for Wednesday's game against the Trail Blazers due to a sprained left ankle.
 Phoenix Suns,PHX,Jordan Goodwin,Day-To-Day,2026-11-04T00:26Z,day-to-day,Not Specified,Left,2026-11-04,"Goodwin (calf) is questionable for Wednesday's game against Portland, Duane Rankin of The Arizona Republic reports."
@@ -88,8 +87,7 @@ Utah Jazz,UTAH,Mo Bamba,Day-To-Day,2026-11-04T18:41Z,day-to-day,,Right,2026-11-0
 Utah Jazz,UTAH,Jusuf Nurkic,Out,2026-11-03T23:07Z,out,Strain,Right,2026-11-13,Nurkic (foot) is out for Wednesday's game against the Pelicans.
 Utah Jazz,UTAH,Jaren Jackson Jr.,Out,2026-10-27T19:25Z,out,Not Specified,Right,2026-12-14,"Jackson has been diagnosed with a torn MCL in his right knee and will be sidelined for 6-to-8 weeks, per Shams Charania of ESPN."
 Utah Jazz,UTAH,Trey Alexander,Out,2026-10-24T23:18Z,out,Bruise,Left,2026-11-06,Alexander won't play Wednesday against the Grizzlies due to a left knee bone bruise.
-Washington Wizards,WSH,Bilal Coulibaly,Day-To-Day,2026-11-04T17:38Z,day-to-day,,,2026-11-04,Coulibaly (illness) is questionable for Wednesday against the Hawks.
-Washington Wizards,WSH,Alex Sarr,Day-To-Day,2026-11-03T21:47Z,day-to-day,Soreness,Left,2026-11-04,Sarr (knee) is listed as questionable for Wednesday's game against Atlanta.
+Washington Wizards,WSH,Bilal Coulibaly,Day-To-Day,2026-11-04T17:38Z,day-to-day,,,,Coulibaly (illness) is questionable for Wednesday against the Hawks.
 Washington Wizards,WSH,Reece Beekman,Out,2026-11-02T18:22Z,out,,,2026-12-03,The Wizards announced Monday that Beekman sustained a right acromioclavicular joint injury and will be re-evaluated in approximately three weeks.
 Washington Wizards,WSH,Tristan Vukcevic,Out,2026-11-01T21:51Z,out,Pinched Nerve,Left,2026-11-09,Vukcevic (hip) is listed as out for Monday's game against Orlando.
 Washington Wizards,WSH,Justin Champagnie,Out,2026-10-28T18:38Z,out,Not Specified,Right,2027-02-25,"Champagnie (foot) is expected to miss several months, per Josh Robbins of The Athletic."
