@@ -25,7 +25,8 @@ aging = pd.read_csv(os.environ.get("AGING_CSV", f"{D}/aging.csv")).set_index("bi
 RET = json.load(open(f"{D}/returner.json"))
 SLOPE, UNRATED = float(os.environ.get("SLOPE_OVR", cal["slope"])), cal["unrated"]
 W = json.load(open(f"{D}/weights_bt.json")); Wo, Wd = pd.Series(W["Wo"]) * .5, pd.Series(W["Wd"]) * .5
-Wd["d_dreb"] *= float(os.environ.get("DREB_MULT", 1.0))  # weights_bt.json already has dreb x0.5 baked in (2026-09-20)
+Wd["d_dreb"] *= float(os.environ.get("DREB_MULT", 1.0))
+Wo["o_ftvol"] *= float(os.environ.get("FTVOL_MULT", 1.0)); Wo["o_fteff"] *= float(os.environ.get("FTEFF_MULT", 1.0))  # foul-drawing test 2026-11-06  # weights_bt.json already has dreb x0.5 baked in (2026-09-20)
 ps = pd.read_parquet(f"{D}/player_seasons.parquet")
 gm = pd.read_parquet(f"{D}/games_all.parquet")
 draft = pd.read_parquet(f"{D}/draft_r1.parquet")

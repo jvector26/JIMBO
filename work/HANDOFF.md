@@ -7,6 +7,12 @@ Design spec (Claude Doc): https://claude.ai/code/artifact/e5eebcf8-5649-4c33-b97
 To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs work/setup.sh, reads this file (repo CLAUDE.md says the same).
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
 
+## SESSION 45 (2026-11-06, user: lowest-signal input -> foul-drawing test) -- PASSES BAR, NOT APPLIED (awaiting user OK)
+RESEARCH_LOG "INPUT SIGNAL AUDIT" + "FOUL-DRAWING REWEIGHT". Lowest-signal input = def_rebounding (already halved). FT volume x0.5 +
+FT accuracy x2.5 (proper refit): game LOSO 13.4633 -> 13.4503 (t -2.55, 10/11, both halves), preseason model 8.643 -> 8.596, blend
+8.139 -> 8.119. Hedge x0.75/x1.75 (t 3.2, 8.614/8.129). Giannis -1.56, Zion -.82, Luka -.66. Apply chain listed in the log section.
+Also answered: app sliders are synced to overrides.json but nightly.py ignores them (only player edits feed vs Vegas).
+
 ## SESSION 44 (2026-11-03, user idea: Elo model) -- TESTED, NOTHING APPLIED (awaiting user)
 RESEARCH_LOG "ELO-STYLE MODELS". Against the production in-season setup (M4 ratings refit nightly + ridge team offsets, 2014-25):
 Elo alone is far worse than JIMBO; residual Elo instead of the ridge layer -0.005 (t -2.84, trivial); plain points Elo as a third

@@ -1824,3 +1824,30 @@ features freed, everything else fixed. LOSO 13.4633 -> 13.4526 (paired t -1.37, 
 FT accuracy x2.47 (t 4.5; halves 3.1/3.7), FT volume x0.52 (t -2.7; halves -4.0/-1.5). Player corr of the two is only .25
 (the 'collinear' note above overstated it). Fails the bar (LOSO t, volume's late half). Proper test if wanted: refit with
 the volume weight scaled (res_o re-absorbs, like dreb in session 7) -> game LOSO -> preseason backtest.
+
+## FOUL-DRAWING REWEIGHT: proper refit test  [2026-11-06, session 45, user "lets do it"] -> PASSES BAR, NOT APPLIED (awaiting user OK)
+Code: code/inputs/ft_refit.py (lineup residuals refit per window with Wo o_ftvol x v, o_fteff x e; files data/ft_refit_{N}.parquet,
+cols res_o_{v}_{e}), ft_refit_score.py (-> data/ft_refit_score.csv), ft_preview.py (2026 ratings, data/ratings_2025_ft{v}_{e}.parquet,
+data/ft_preview_2026.csv). preseason_backtest.py gained env FTVOL_MULT / FTEFF_MULT (default 1 = unchanged).
+Stints/player_games 2011-2025 rebuilt (rebuild_git.sh; work/raw dir had to be created). (1,1) reproduces bt_split res_o/res_d exactly.
+GAME (LOSO, base 13.4633; t = season-paired; halves = dMSE 2015-19 / 2020-25):
+ vol x.5 eff x1   13.4541 (-.0092) t -1.86 8/11  halves -.27 (t -2.6) / -.22 (t -0.9)
+ vol x.5 eff x2   13.4511 (-.0122) t -2.45 10/11 -.36 / -.29
+ vol x.5 eff x2.5 13.4503 (-.0130) t -2.55 10/11 -.39 (t -2.1) / -.31 (t -1.5)   <- best
+ vol x.75 eff x1.75 13.4553 (-.0080) t -3.21 10/11 -.23 (t -2.4) / -.20 (t -2.0)
+ vol x1 eff x2.5  13.4601 (-.0032) t -1.62 9/11
+ res_o re-absorbs ~34% of the volume cut. Gain holds at other lineup weights (w_off .4: base 13.4544 -> 13.4403).
+ Side note: w_off 0.4 beats 0.6 by ~0.009 in both base and variant (session 6 grid had the optimum at 0.4-0.6); not pursued.
+PRESEASON (age_eval; base ftb_ reproduces 8.643 / 8.139): x.5/x2.5 model 8.596, blend LOSO 8.119 (w_model .39), 10/12 seasons better
+ (team-MSE t -2.27); x.75/x1.75 8.614 / 8.129; x.5/x1 8.617 / 8.128.
+Selection caveat: x.5/x2.5 came from the free fit on the same games (the LOSO refits intercept/slope only). x.75/x1.75 = hedge, t 3.2.
+2026 preview (x.5/x2.5, prod weights, rating = 1.05 x (box + shrink x (.6 res_o + .8 res_d)); 1000+ min): sd change .23, 8 players
+ move > .5. Giannis -1.56 (box -2.41, lineup +.86; rank 4 -> 6), Zion -.82, Luka -.66, Banchero -.64, Sengun/Avdija/Duren -.54,
+ Gobert -.52, Mobley -.49, Embiid -.47. Gains (+.3): shooters with few FTA but good FT% (AJ Green, Hauser, Batum, Merrill).
+ Top 3 unchanged. Team margin (current minutes): MIA -.54, NOP -.46, LAL -.32, CLE -.27 ... MIL +.42, LAC +.31, BOS +.30 (sd .23 pts,
+ ~0.6 wins model, ~0.2 wins forecast at 0.373 blend weight).
+TO APPLY (if OK): bake multipliers into weights_prod.json AND weights_bt.json (like dreb; note key; keep *_pre_ft.json copies),
+ update backtest_components.parquet f:o_ftvol/f:o_fteff + bt_split res from ft_refit (new baseline), production.py -> ratings_2025,
+ preseason_backtest (no env) -> score_preseason -> minutes_age_fix -> refit_blend -> blend_curve.json; project.py -> simulate.py ->
+ build_dashboard.py -> build_app.py; pipeline/build_state.py (cfg Wo comes from weights_prod) -> state; test_dashboard.js,
+ ui_edit_test_db.py; dispatch nightly; republish artifact.
