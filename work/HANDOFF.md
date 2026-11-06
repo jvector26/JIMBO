@@ -7,10 +7,18 @@ Design spec (Claude Doc): https://claude.ai/code/artifact/e5eebcf8-5649-4c33-b97
 To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs work/setup.sh, reads this file (repo CLAUDE.md says the same).
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
 
-## SESSION 45 (2026-11-06, user: lowest-signal input -> foul-drawing test) -- PASSES BAR, NOT APPLIED (awaiting user OK)
-RESEARCH_LOG "INPUT SIGNAL AUDIT" + "FOUL-DRAWING REWEIGHT". Lowest-signal input = def_rebounding (already halved). FT volume x0.5 +
-FT accuracy x2.5 (proper refit): game LOSO 13.4633 -> 13.4503 (t -2.55, 10/11, both halves), preseason model 8.643 -> 8.596, blend
-8.139 -> 8.119. Hedge x0.75/x1.75 (t 3.2, 8.614/8.129). Giannis -1.56, Zion -.82, Luka -.66. Apply chain listed in the log section.
+## SESSION 45 (2026-11-06) -- FOUL-DRAWING REWEIGHT SHIPPED (user "do the 0.75 / 1.75. Build it")
+RESEARCH_LOG "INPUT SIGNAL AUDIT", "FOUL-DRAWING REWEIGHT" (+ APPLIED note). FT volume x0.75, FT accuracy x1.75 baked into
+weights_prod.json AND weights_bt.json (originals *_pre_ft.json; note key; REFIT_W rerun must reapply, like dreb). Caches moved to the
+new baseline: backtest_components.parquet (f:o_ftvol/f:o_fteff scaled, lineup_impact) + bt_split.parquet (res from ft_refit 0.75_1.75;
+old copies *_pre_ft.parquet). bt_split_ratings.parquet NOT regenerated (research-only file; stale for ft). New game LOSO base 13.4553
+(was 13.4633). Preseason: model 8.614 (was 8.643), blend LOSO 8.129 (8.139); blend.json w_model .383 / w_vegas .617 / w_age -.578,
+tau_blend 2.745, tau_model 3.012 (2.65 x tau_cal); blend_curve.json regenerated. production.py -> ratings_2025; chain run with
+DEPTH_DATE=20261020; state/2026 rebuilt (cfg Wo); app rebuilt; artifact v44. overrides.json sliders.bm set to the new default .383
+(it held the old default .373). Also picked up: dash.json meta.hca now 2.06 (session 40 had not rebuilt the preseason payload).
+Effects: Giannis 5.78 -> 5.00 (#5 -> #8), Zion -.41, Cisse -.38, Luka -.33; preseason model wins MIA -.7 ... BOS +.4; in-season
+forecasts move <= 0.2 wins. Judgment-shrink baselines (13.4635, 8.631/8.144) are stale: rerun if needed.
+Side lead (not tested properly): w_off 0.4 beats 0.6 by ~.009-.014 LOSO in both weightings.
 Also answered: app sliders are synced to overrides.json but nightly.py ignores them (only player edits feed vs Vegas).
 
 ## SESSION 44 (2026-11-03, user idea: Elo model) -- TESTED, NOTHING APPLIED (awaiting user)
@@ -189,7 +197,7 @@ minutes, ESPN injuries and user edits. The pre-opener plan (decisions a-c) is do
 
 ## Where things live
 - Published dashboard (claude.ai artifact, preseason view, db capability for saved edits):
-  https://claude.ai/artifact/CfaYAX9qHUugsMpMjvLVLf  -> rebuild: build_dashboard.py -> dashboard.html -> publish same URL. Now v43.
+  https://claude.ai/artifact/CfaYAX9qHUugsMpMjvLVLf  -> rebuild: build_dashboard.py -> dashboard.html -> publish same URL. Now v44.
   Preseason view only: the in-season features (vs Vegas, This season tabs, tonight cards) live in the phone app.
 - Phone app (PWA): https://jvector26.github.io/JIMBO/ from repo site/ (pages.yml deploys after each nightly / site push).
 - Nightly pipeline (GitHub Actions, repo .github/workflows/nightly.yml, 10:17 + 20:43 UTC; moved off :00 on 2026-10-08
@@ -233,7 +241,7 @@ by ~0.03 wins between runs. The dashboard pins its schedule in data/dash_sched_2
 - Ratings = points per 100 possessions vs average. Box part: 18 features in 12 components (three_pt, rim_finishing,
   pullup_mid, foul_drawing, self_creation, playmaking, ball_security, off_rebounding, def_rebounding, rim_protection,
   perimeter_def) with weights W learned from stint outcomes (weights_prod.json; backtest W weights_bt.json = 1996-2013);
-  def_rebounding weight halved (baked into both files). Window = 3 seasons; box decay (.1,.4,1), lineup residual decay
+  def_rebounding weight halved; FT volume x0.75 / FT accuracy x1.75 (2026-11-06) (all baked into both weight files). Window = 3 seasons; box decay (.1,.4,1), lineup residual decay
   (.3,.6,1). Lineup residual (ridge RAPM toward the box prior, lam 2000) counts 0.6 on offense, 0.8 on defense.
   JUDGMENT SHRINK (user call 2026-10-07): residual x m, m = 1 - (1/3) x clip(1 - poss_window/10,000, 0, 1), symmetric,
   everyone (code/lineup_shrink.py, hooked right after ratings_2025 loads in project.py and build_dashboard.py; env
@@ -250,21 +258,21 @@ by ~0.03 wins between runs. The dashboard pins its schedule in data/dash_sched_2
 - Team: net = sum(rating x min)/3936 zero-summed; margin = net x pace/100; wins via sim (game p = Phi((dm + 2.6)/12.8)).
   Playoffs (2026-10-07): play-in + series use playoff strength = margin + 0.5 x playoff-minutes change (model/po.json,
   clipped to the 2014-25 range) and series home court 4.0 (play-in 2.6). Same code in nightly, simulate.py, app/dashboard JS.
-- Forecast blend (blend.json, constrained): 41 + 0.373(model-41) + 0.627(Vegas-41) - 0.595(roster age - avg);
-  tau 2.75 (model alone 3.03; = fitted x tau_cal 1.1365, replay-calibrated 2026-10-06). Vegas lines data/win_totals_2026.csv (BetMGM ~Sep 11). Dashboard has a model-vs-Vegas slider.
+- Forecast blend (blend.json, constrained): 41 + 0.383(model-41) + 0.617(Vegas-41) - 0.578(roster age - avg);
+  tau 2.745 (model alone 3.01; = fitted x tau_cal 1.1365, replay-calibrated 2026-10-06). Vegas lines data/win_totals_2026.csv (BetMGM ~Sep 11). Dashboard has a model-vs-Vegas slider.
   The age term is fitted on the blend (it corrects a bias Vegas and the model share), so it stays outside the model column;
   possible later test: a model-only roster-age term in the preseason backtest, then refit the blend (user: "fine as is" for now).
 
 ## Research bar (how every proposed change is tested)
 1. Game backtest: each season 2015-16..2025-26, ratings from the prior 3 seasons only, predict every game with ACTUAL
    minutes; leave-one-season-out fit; score = RMSE of margin. Files: data/backtest_components.parquet (per-feature game
-   diffs) + data/bt_split.parquet (res_o/res_d). Base = box + 0.6 res_o + 0.8 res_d = LOSO 13.4633
+   diffs) + data/bt_split.parquet (res_o/res_d). Base = box + 0.6 res_o + 0.8 res_d = LOSO 13.4553 (13.4633 before the 2026-11-06 FT reweight)
    (code/bt_split_score.py; helper patterns in code/wcal.py, code/mover_context.py). Player minutes per game for new
    diffs: data/game_minutes.parquet (2014-2025, slim) or rebuild player_games. With the judgment shrink the game
    baseline is 13.4635 (code/lineup_port_bt.py harness; no shrink 13.4577).
 2. Pass = lower LOSO, season-clustered t > 2.5, same sign in 2015-19 and 2020-25.
 3. Then the preseason team backtest: each October 2014-25 projected from prior data + opening rosters
-   (data/pre_P_{S}, pre_T_{S}); code/age_eval.py [TAG] scores it: model 8.643 wins RMSE, Vegas 8.440, blend LOSO 8.139
+   (data/pre_P_{S}, pre_T_{S}); code/age_eval.py [TAG] scores it: model 8.614 wins RMSE, Vegas 8.440, blend LOSO 8.129 (since 2026-11-06 FT reweight; was 8.643/8.139)
    (with judgment shrink: model 8.631, blend 8.144).
 
 ## Already tested and REJECTED or neutral (don't redo without a new angle; details in RESEARCH_LOG)

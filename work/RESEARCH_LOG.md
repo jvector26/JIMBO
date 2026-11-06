@@ -1851,3 +1851,10 @@ TO APPLY (if OK): bake multipliers into weights_prod.json AND weights_bt.json (l
  preseason_backtest (no env) -> score_preseason -> minutes_age_fix -> refit_blend -> blend_curve.json; project.py -> simulate.py ->
  build_dashboard.py -> build_app.py; pipeline/build_state.py (cfg Wo comes from weights_prod) -> state; test_dashboard.js,
  ui_edit_test_db.py; dispatch nightly; republish artifact.
+APPLIED 2026-11-06 (session 45, user picked the HEDGE x0.75 / x1.75): weights_prod.json + weights_bt.json Wo o_ftvol x0.75, o_fteff x1.75
+(originals *_pre_ft.json). backtest_components/bt_split moved to the new baseline (LOSO 13.4553; originals *_pre_ft.parquet).
+Preseason chain rerun: model 8.614, blend LOSO 8.129, w .383/.617/-.578, tau_blend 2.745, tau_model 3.012, blend_curve regenerated.
+Baseline reproduction before the change: DEPTH_DATE=20261020 chain = live dash.json, 0 player diffs (meta.hca 2.6 -> 2.06 only).
+After: test_dashboard.js 0.0010 / sim 0.36 wins, ui_edit_test_db.py ok, skill_drill_test phone+desktop no errors (artifact + app build),
+local nightly JSON ok (team forecasts move <= 0.2 wins). 2026 (players 800+ proj min, sd .11): Giannis -.78 (#5 -> #8), Zion -.41,
+Cisse -.38, Luka -.33, Banchero -.32, Sengun/Avdija/Duren -.27, Gobert -.26; gains <= +.19 (Prince, AJ Green, Carter).
