@@ -312,6 +312,9 @@ th .axis span{color:#fff;opacity:.85}
 .pvinj .l1{font-size:16px} .pvinj .l1 .inj{margin:0 8px 0 0} .pvinj .l2{color:var(--muted);font-size:13px;margin-top:3px}
 tr.benchhd td{text-align:left;background:var(--soft);color:var(--muted);font-size:13px;font-weight:600;padding:8px 8px 6px;border-top:2px solid var(--line)}
 td.muted{color:var(--muted)}
+.ptab.nosz .sznc{display:none} .ptab td.skc{white-space:nowrap} .ptab .skn{font-size:13px;color:var(--muted)} .ptab td.skc b{font-family:var(--cond);font-weight:600}
+.ptab .skline{display:none;font-size:12px;color:var(--muted);margin-top:1px}
+@media (max-width:640px){ .ptab .skline{display:block} .ptab:not(.nosz) .edc{display:none} }  /* phones in season: Edit lives on the player page */
 .rk2 small.p100{font-family:var(--text);font-weight:400;font-size:11px;color:var(--muted);margin-left:3px}
 @media (max-width:760px){ /* team detail stays on screen while the wide standings table scrolls sideways */
   tr.detail > td > .roster, tr.detail > td > .hist, tr.detail > td > .wh{position:sticky;left:0;width:calc(100vw - 58px);overflow-x:auto}
@@ -609,19 +612,19 @@ body.pvopen #gv{display:none}
           <option value="">All positions</option><option value="G">Guards</option><option value="W">Wings</option><option value="B">Bigs</option>
           <option value="PG">PG</option><option value="SG">SG</option><option value="SF">SF</option><option value="PF">PF</option><option value="C">C</option>
         </select>
-        <select id="defv" aria-label="Defense shown as" title="Bigs average about +1.6 on defense and guards about -0.5; 'vs position' compares each player with others at his position">
-          <option value="lg">Defense vs league</option><option value="pos">Defense vs position</option>
-        </select>
         <span class="count" id="count"></span>
       </div>
       <div class="tbl">
-        <table style="min-width:720px">
+        <table class="ptab" style="min-width:720px">
           <thead><tr>
-            <th class="l">#</th><th class="l">Player</th><th class="hide-s">Age</th>
+            <th class="l">#</th><th class="l">Player</th><th class="hide-s"><button data-sort="age" title="Age for 2026-27">Age</button></th>
             <th><button data-sort="min" id="minH">Proj min</button></th>
-            <th class="hide-s"><button data-sort="off">Off</button></th><th class="defcol"><button data-sort="def" id="defH">Def</button></th>
-            <th class="hide-m"><button data-sort="dreb" title="Defensive rebounding part of Def">D-reb</button></th><th class="hide-m"><button data-sort="dstop" title="Rim protection + perimeter defense + lineup defense: the shot-prevention and stops part of Def">Stops</button></th>
-            <th><button data-sort="tot" aria-sort="descending">Rating</button></th><th class="l barcell hide-m">What it's made of</th><th></th>
+            <th class="hide-s"><button data-sort="off" title="Offense, points per 100 vs an average player">Off</button></th><th class="hide-s"><button data-sort="def" title="Defense, points per 100 vs an average player">Def</button></th>
+            <th><button data-sort="tot" aria-sort="descending" title="2026-27 projected rating (offense + defense)">Rating</button></th>
+            <th class="sznc"><button data-sort="sr" title="This season's box score only, per 100 possessions, nothing pulled toward average. Grey = under 15 min/g or under half his team's games (sorted last)">Season</button></th>
+            <th class="l hide-s"><button data-sort="top" title="His biggest plus among the box-score skills and lineup impact">Top skill</button></th>
+            <th class="l hide-s"><button data-sort="worst" title="His biggest minus among the box-score skills and lineup impact (sorts worst first)">Worst skill</button></th>
+            <th class="l barcell hide-m">What it's made of</th><th class="edc"></th>
           </tr></thead>
           <tbody id="rows"></tbody>
         </table>
@@ -1223,7 +1226,15 @@ $('standings').addEventListener('keydown',e=>{ const tr=e.target.closest('tr.p')
 
 // ---------- players
 const tf=$('tf'); tf.innerHTML='<option value="">All teams</option>'+TEAMS.map(t=>`<option>${t}</option>`).join('')+'<option value="FA">Free agents</option>';
-let sortKey='tot', shown=50; const openP=new Set();
+let sortKey='tot', sortAsc=false, shown=50;
+// players table (session 46 rebuild): top / worst skill from the box-score skills + loose balls + lineup impact
+const SKPOOL=M.components.concat(['hustle','lineup_o','lineup_d']);
+const SKS={three_pt:'3PT shooting', rim_finishing:'Rim finishing', pullup_mid:'Pull-up / mid', foul_drawing:'Foul drawing', self_creation:'Self-creation',
+  playmaking:'Playmaking', ball_security:'Ball security', off_rebounding:'Off rebounding', def_rebounding:'Def rebounding', rim_protection:'Rim protection',
+  perimeter_def:'Perimeter D', hustle:'Loose balls', lineup_o:'Lineup O', lineup_d:'Lineup D'};
+function topWorst(r){ if(r.p.fx!=null) return [null,null]; let t=null,w=null;
+  SKPOOL.forEach(c=>{ const v=r.parts[c]; if(v==null) return; if(!t||v>t[1]) t=[c,v]; if(!w||v<w[1]) w=[c,v]; }); return [t,w]; }
+function srQual(r){ const z=r.z; if(!z||z.sr==null) return false; const tg=(ZT[r.t]||{}).gp||0; return (z.mpg||0)>=15&&(z.gp||0)>=Math.ceil(tg/2); }
 const POS5=x=>x<1.5?'PG':x<2.5?'SG':x<3.45?'SF':x<4.4?'PF':'C', POS3=x=>x<2.5?'G':x<3.9?'W':'B';
 function posBaseline(rows){ // minutes-weighted defense by position among rated rostered players (500+ min), interpolated on the 1-5 scale
   const B={}; rows.forEach(r=>{ if(r.t==='FA'||r.p.fx!=null||r.min<500) return; const k=POS5(r.p.ps); const b=B[k]||(B[k]={w:0,ps:0,def:0,dreb:0,dstop:0});
@@ -1262,61 +1273,51 @@ function renderPlayers(){
   if(!P) return;
   if(SEASON&&plView==='season'){ renderSeasonPlayers(); return; }
   const rostered=P.rows.filter(r=>r.t!=='FA'); const rank=new Map(); [...rostered].sort((a,b)=>b.tot-a.tot).forEach((r,i)=>rank.set(r.p.k,i+1));
-  const q=$('q').value.trim().toLowerCase(), team=tf.value, minf=+$('minf').value, pf=$('posf').value, vpos=$('defv').value==='pos';
-  const bl=posBaseline(P.rows);
-  P.rows.forEach(r=>{ const k=vpos&&r.p.fx==null; r.pdef=r.def-(k?bl(r.p.ps,'def'):0);
-    r.pdreb=r.dreb==null?null:r.dreb-(k?bl(r.p.ps,'dreb'):0); r.pdstop=r.dstop==null?null:r.dstop-(k?bl(r.p.ps,'dstop'):0); });
+  const q=$('q').value.trim().toLowerCase(), team=tf.value, minf=+$('minf').value, pf=$('posf').value;
   const posOk=r=>!pf||(pf.length===1?POS3(r.p.ps)===pf:POS5(r.p.ps)===pf);
   let list=P.rows.filter(r=>(team?r.t===team:r.t!=='FA') && r.min>=minf && posOk(r) && (!q||r.p.n.toLowerCase().includes(q)));
   if(q&&!team) list=P.rows.filter(r=>r.p.n.toLowerCase().includes(q));  // a name search also finds free agents
-  const sv=(r,k)=>{ const v=k==='def'?r.pdef:k==='dreb'?r.pdreb:k==='dstop'?r.pdstop:r[k]; return v==null?-1e9:v; };
-  list.sort((a,b)=>sv(b,sortKey)-sv(a,sortKey));
-  $('defH').textContent=vpos?'Def vs pos':'Def';
+  list.forEach(r=>{ const tw=topWorst(r); r.tw=tw; r.sq=srQual(r); });
+  // sort value; null = no value (always last). Season rating: unqualified players sort after qualified ones either way
+  const sv=r=>{ switch(sortKey){ case 'age': return r.p.a; case 'sr': return r.z&&r.z.sr!=null?r.z.sr:null;
+    case 'top': return r.tw[0]?r.tw[0][1]:null; case 'worst': return r.tw[1]?r.tw[1][1]:null; default: return r[sortKey]; } };
+  const asc=sortKey==='worst'?!sortAsc:sortAsc;  // worst skill: first click = most negative first
+  list.sort((a,b)=>{ if(sortKey==='sr'&&a.sq!==b.sq) return a.sq?-1:1;
+    const x=sv(a), y=sv(b); if(x==null||y==null) return (x==null)-(y==null); return asc?x-y:y-x; });
   $('count').textContent=`${list.length} players`;
   let scale=6; list.slice(0,shown).forEach(r=>{ let p=0,n=0; PARTS.forEach(c=>{ const v=r.parts[c]||0; if(v>0)p+=v; else n-=v; }); scale=Math.max(scale,p,n); });
+  const skc=t=>t?`<td class="l hide-s skc"><span class="skn">${SKS[t[0]]||LABEL[t[0]]}</span> <b class="${cls(t[1])}">${fmt(t[1])}</b></td>`:'<td class="l hide-s muted">–</td>';
   $('rows').innerHTML=list.slice(0,shown).map((r,i)=>{
-    const rk=rank.get(r.p.k), mv=rk&&baseRank.has(r.p.k)?baseRank.get(r.p.k)-rk:0, ch=Object.keys(r.o).length>0, key=r.p.k;
-    let s=`<tr class="p" tabindex="0" data-k="${esc(key)}" aria-expanded="${openP.has(key)}"><td class="l rk">${i+1}</td>
-      <td class="l"><span class="nm pvlink">${esc(r.p.n)}</span><span class="tm">${r.t==='FA'?'free agent':r.t} · ${POS5(r.p.ps)}</span>${injBadge(r)}${ch?'<span class="flag">edited</span>':''}</td>
+    const rk=rank.get(r.p.k), mv=rk&&baseRank.has(r.p.k)?baseRank.get(r.p.k)-rk:0, ch=Object.keys(r.o).length>0, key=r.p.k, z=r.z;
+    const sz=z&&z.sr!=null?`<td class="num sznc ${r.sq?cls(z.sr):'muted'}" title="${z.gp||0} games, ${(z.mpg||0).toFixed(1)} min/g${r.sq?'':' (small sample)'}">${fmt(z.sr)}</td>`:'<td class="num sznc muted">–</td>';
+    return `<tr class="p" tabindex="0" data-k="${esc(key)}"><td class="l rk">${i+1}</td>
+      <td class="l"><span class="nm pvlink">${esc(r.p.n)}</span><span class="tm">${r.t==='FA'?'free agent':r.t} · ${POS5(r.p.ps)}</span>${injBadge(r)}${ch?'<span class="flag">edited</span>':''}${r.tw[0]?`<span class="skline">Off ${fmt(r.off)} · Def ${fmt(r.def)} · best ${SKS[r.tw[0][0]]}, worst ${SKS[r.tw[1][0]]}</span>`:`<span class="skline">Off ${fmt(r.off)} · Def ${fmt(r.def)}</span>`}</td>
       <td class="hide-s num">${r.p.a!=null?Math.floor(r.p.a):'–'}</td><td class="num ${r.o.g!=null||r.o.mpg!=null?'ov':''}">${Math.round(r.min).toLocaleString()}</td>
-      <td class="num hide-s ${cls(r.off)}">${fmt(r.off)}</td><td class="num defcol ${cls(r.pdef)}">${fmt(r.pdef)}</td>
-      <td class="num hide-m ${r.pdreb==null?'':cls(r.pdreb)}">${r.pdreb==null?'–':fmt(r.pdreb)}</td><td class="num hide-m ${r.pdstop==null?'':cls(r.pdstop)}">${r.pdstop==null?'–':fmt(r.pdstop)}</td>
+      <td class="num hide-s ${cls(r.off)}">${fmt(r.off)}</td><td class="num hide-s ${cls(r.def)}">${fmt(r.def)}</td>
       <td><span class="val ${r.o.r!=null?'ov':cls(r.tot)}">${fmt(r.tot)}</span>${mv&&r.o.r==null?`<span class="mv" title="Change in rank vs default weights">${mv>0?'▲':'▼'}${Math.abs(mv)}</span>`:''}</td>
-      <td class="l barcell hide-m">${bar(r.parts,scale)}</td><td><button class="edit" data-edit="${esc(key)}">Edit</button></td></tr>`;
-    if(openP.has(key)){
-      const shown=PARTS.filter(c=>r.parts[c]!=null);
-      const pl=`${POS5(r.p.ps)} (${r.p.ps.toFixed(1)} on a 1 = PG to 5 = C scale; ${{G:'guard',W:'wing',B:'big'}[POS3(r.p.ps)]})`;
-      s+=`<tr class="detail"><td colspan="11"><div class="dgrid">`+shown.map(c=>`<div class="drow"><span class="sw" style="background:var(--c-${c})"></span><span>${LABEL[c]}</span><b class="${cls(r.parts[c])}">${fmt(r.parts[c],2)}</b></div>`).join('')+
-        `<div class="drow"><span></span><span>League re-centering</span><b>${fmt(r.shift,2)}</b></div>`+
-        (r.o.r!=null?`<div class="drow"><span></span><span>Model rating (you set ${fmt(r.o.r)})</span><b>${fmt(r.mtot,2)}</b></div>`:'')+
-        `<div class="drow"><span></span><span>Position: ${pl}</span><b></b></div>`+
-        (r.dreb!=null?`<div class="drow"><span></span><span>Defense split: rebounding ${fmt(r.dreb,2)}, stops and shot prevention ${fmt(r.dstop,2)}</span><b></b></div>`+
-          `<div class="drow"><span></span><span>Defense vs ${POS5(r.p.ps)}s: total ${fmt(r.def-bl(r.p.ps,'def'),2)} (rebounding ${fmt(r.dreb-bl(r.p.ps,'dreb'),2)}, stops ${fmt(r.dstop-bl(r.p.ps,'dstop'),2)})</span><b></b></div>`:'')+
-        (r.parts.season!=null?`<div class="drow"><span></span><span>This season so far: ${r.gp} games, ${r.mpgS.toFixed(1)} min/g; rating moved ${fmt(r.parts.season,2)} from preseason</span><b></b></div>`:'')+
-        (r.p.m25!=null?`<div class="drow"><span></span><span>Minutes played in 2025-26</span><b>${r.p.m25.toLocaleString()}</b></div>`:'')+
-        (roleNote(r)?`<div class="drow"><span></span><span>${r.role&&r.role!=='X'?'Role: ':''}${roleNote(r)}</span><b></b></div>`:'')+`</div></td></tr>`;
-    }
-    return s; }).join('');
+      ${sz}${skc(r.tw[0])}${skc(r.tw[1])}
+      <td class="l barcell hide-m">${bar(r.parts,scale)}</td><td class="edc"><button class="edit" data-edit="${esc(key)}">Edit</button></td></tr>`; }).join('');
   $('more').hidden=list.length<=shown;
 }
 $('q').addEventListener('input',()=>{ shown=50; renderPlayers(); });
 tf.addEventListener('change',()=>{ shown=50; renderPlayers(); });
 $('minf').addEventListener('change',()=>{ shown=50; renderPlayers(); });
 $('posf').addEventListener('change',()=>{ shown=50; renderPlayers(); });
-$('defv').addEventListener('change',()=>{ renderPlayers(); });
 $('more').addEventListener('click',()=>{ shown+=50; renderPlayers(); });
 if(SEASON&&SZ.players.some(z=>z.sr!=null)){ $('plv').hidden=false;
   $('plv').addEventListener('click',e=>{ const b=e.target.closest('[data-plv]'); if(!b) return; plView=b.dataset.plv; shown=50;
     $('plv').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));
     const s_=plView==='season'; $('sTbl').hidden=!s_; $('sNote').hidden=!s_; document.querySelector('#p-pl .tbl:not(#sTbl)').hidden=s_;
-    $('minf').hidden=s_; $('defv').hidden=s_; renderPlayers(); });
+    $('minf').hidden=s_; renderPlayers(); });
   document.querySelectorAll('th button[data-ssort]').forEach(b=>b.addEventListener('click',()=>{ sSort=b.dataset.ssort;
     document.querySelectorAll('th button[data-ssort]').forEach(x=>x.removeAttribute('aria-sort')); b.setAttribute('aria-sort','descending'); renderPlayers(); }));
   $('srows').addEventListener('click',e=>{ const tr=e.target.closest('tr.p'); if(tr) openPlayer(tr.dataset.k); });
   $('srows').addEventListener('keydown',e=>{ const tr=e.target.closest('tr.p'); if(tr&&e.target===tr&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); tr.click(); } });
 }
-document.querySelectorAll('th button[data-sort]').forEach(b=>b.addEventListener('click',()=>{ sortKey=b.dataset.sort;
-  document.querySelectorAll('th button[data-sort]').forEach(x=>x.removeAttribute('aria-sort')); b.setAttribute('aria-sort','descending'); renderPlayers(); }));
+document.querySelectorAll('th button[data-sort]').forEach(b=>b.addEventListener('click',()=>{ const k=b.dataset.sort;
+  sortAsc=k===sortKey?!sortAsc:false; sortKey=k;   // click again = reverse
+  const worstFirst=k==='worst'?!sortAsc:sortAsc;
+  document.querySelectorAll('th button[data-sort]').forEach(x=>x.removeAttribute('aria-sort')); b.setAttribute('aria-sort',worstFirst?'ascending':'descending'); renderPlayers(); }));
 $('rows').addEventListener('click',e=>{ const b=e.target.closest('[data-edit]'); if(b){ openEditor(b.dataset.edit); return; }
   const tr=e.target.closest('tr.p'); if(tr) openPlayer(tr.dataset.k); });
 $('rows').addEventListener('keydown',e=>{ const tr=e.target.closest('tr.p'); if(tr&&e.target===tr&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); tr.click(); } });
@@ -1540,7 +1541,7 @@ function vgCalib(rows){
   return `<div class="vgtiles"><div class="vgt"><span class="vgk">Brier score</span><span class="vgv">${BJ.toFixed(3)} <small>vs ${BV.toFixed(3)}</small></span><span class="note">JIMBO vs the line; lower is better (a coin flip scores .250)</span></div></div>
     <div class="cleg"><span><i style="background:var(--magenta)"></i>JIMBO</span><span><i style="background:var(--surface);border:2px solid var(--ink);box-sizing:border-box"></i>Vegas line</span><span>dashed: perfect calibration</span></div>
     <div class="cchart" style="max-width:420px"><svg id="${id}" viewBox="0 0 ${W} ${Hh}" width="100%" style="touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:pointer" role="img" aria-label="Calibration: predicted home win chance vs how often the home team won, JIMBO and the Vegas line">${g}</svg></div><p class="note vgread" style="user-select:none;-webkit-user-select:none">${esc(base)}</p>
-    <p class="note">Games are grouped by the home team's predicted chance in 10% steps; each dot sits at the average chance in its group, sized by games, with a 95% range. A well calibrated forecast stays on the diagonal. The line's chance comes from its spread the same way JIMBO's comes from its margin (σ ${M.sig} points). Expect wide ranges until a few hundred games. <span style="opacity:.6">Build 11-01.</span></p>`;
+    <p class="note">Games are grouped by the home team's predicted chance in 10% steps; each dot sits at the average chance in its group, sized by games, with a 95% range. A well calibrated forecast stays on the diagonal. The line's chance comes from its spread the same way JIMBO's comes from its margin (σ ${M.sig} points). Expect wide ranges until a few hundred games. <span style="opacity:.6">Build 11-06.</span></p>`;
 }
 function renderVegas(){
   const el=$('vegas'); if(!el) return;
@@ -2032,6 +2033,7 @@ function persist(){ clearTimeout(saveTimer); saveTimer=setTimeout(async()=>{
 let loc=null; try{ loc=JSON.parse(localStorage.getItem(LS)||'null'); load(loc); }catch(e){}
 if(APP&&APP.remote&&(!loc||(APP.remote.updated||'')>(loc.updated||''))){ load(APP.remote); try{ localStorage.setItem(LS,JSON.stringify(snapshot())); }catch(e){} }
 if(SEASON&&ANYPLAYED) $('minH').textContent='Min left';
+if(!SEASON) document.querySelector('#p-pl .ptab').classList.add('nosz');  // season rating column: app in season only
 recompute(); renderAll(); runSim();
 if(APP&&APP.afterBoot) APP.afterBoot({$, changed, getState:snapshot});
 window.__jimbo={get P(){ return P; }, get SIM(){ return SIMB; }, get S(){ return S; }, get OV(){ return OV; }};  // for tests
