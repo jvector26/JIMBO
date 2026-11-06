@@ -1805,3 +1805,17 @@ Plain Elo as an independent results-based check DOES add a little (~0.02), mostl
 Caveats: actual minutes (production uses projected); Elo params from an in-sample grid (flat); no historical closing lines,
 so nothing says whether it helps vs Vegas. Next if pursued: nightly replay harness (code/replay, projected minutes), then decide;
 separate test: last season's Elo in the preseason blend (age_eval / refit_blend).
+
+## INPUT SIGNAL AUDIT (user: "which input carries the lowest signal? list all inputs + relative weights")  [2026-11-06, session 45] -> DIAGNOSIS ONLY, NOTHING CHANGED
+Code: code/inputs/input_signal.py (per feature), component_signal.py (per component), input_spread.py -> data/input_signal.csv,
+component_signal.csv, input_spread.csv. Weight = minutes-weighted SD of each contribution in 2026 ratings (ratings_2025, 500+ min,
+lineup shrink applied) and its share of rating variance (cov/var, can be negative). Signal = drop-one LOSO on the game backtest
+(base 13.4633), season-clustered t, halves.
+Components (player SD | var share | dLOSO if dropped | t): lineup_def .94|.28|+.114|3.7; playmaking .79|.10|+.070|4.1;
+ball_security .69|-.06|+.068|4.1; three_pt .69|-.03|+.067|4.4; perimeter_def .37|.06|+.051|3.4; rim_protection .48|.10|+.048|2.6;
+foul_drawing .61|.13|+.016|1.0; rim_finishing .40|.09|+.012|1.2; lineup_off .61|.16|+.012|0.7; pullup_mid .20|.02|+.010|2.0;
+self_creation .28|.05|+.006|0.5; off_rebounding .30|.05|+.005|0.9; def_rebounding .30|.07|-.004|-0.7 (better without, 8/11 seasons, both halves).
+LOWEST SIGNAL: def_rebounding (already halved in session 7; still 6.6% of rating variance; session-13 review also had remove -0.0003).
+Features with ~zero signal: d_pf (sd .07), o_midvol, o_rimeff (halves flip). Joint free coef suggests o_ftvol over-weighted
+(0.36, t vs 1 not run) and o_fteff under-weighted (3.6) - collinear pair, foul_drawing as a whole is weak (t 1.0) yet 13% of variance.
+Hustle not in this backtest file (2018+ only): Clingan test had lbr+c3 joint 13.8524 -> 13.8408, c3 t 1.8 joint.
