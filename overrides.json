@@ -9,7 +9,7 @@
   "self_creation": 1,
   "playmaking": 1,
   "ball_security": 1,
-  "off_rebounding": 1,
+  "off_rebounding": 0.2,
   "def_rebounding": 0.2,
   "rim_protection": 1,
   "perimeter_def": 1,
@@ -18,5 +18,5 @@
   "age": 1,
   "bm": 0.37290551766215724
  },
- "updated": "2026-11-06T19:57:08.451Z"
+ "updated": "2026-11-06T19:57:11.390Z"
 }
