@@ -10,13 +10,13 @@
   "playmaking": 1,
   "ball_security": 1,
   "off_rebounding": 1,
-  "def_rebounding": 1,
+  "def_rebounding": 0.2,
   "rim_protection": 1,
   "perimeter_def": 1,
   "lineup_o": 0.6,
   "lineup_d": 0.8,
   "age": 1,
-  "bm": 0.3833802388094998
+  "bm": 0.37290551766215724
  },
- "updated": "2026-11-05T14:46:02.317Z"
+ "updated": "2026-11-06T19:57:08.451Z"
 }
