@@ -1819,3 +1819,8 @@ LOWEST SIGNAL: def_rebounding (already halved in session 7; still 6.6% of rating
 Features with ~zero signal: d_pf (sd .07), o_midvol, o_rimeff (halves flip). Joint free coef suggests o_ftvol over-weighted
 (0.36, t vs 1 not run) and o_fteff under-weighted (3.6) - collinear pair, foul_drawing as a whole is weak (t 1.0) yet 13% of variance.
 Hustle not in this backtest file (2018+ only): Clingan test had lbr+c3 joint 13.8524 -> 13.8408, c3 t 1.8 joint.
+FOLLOW-UP same day (user asked to explain the foul-drawing lead): code/inputs/ft_split.py, post-hoc, the two foul-drawing
+features freed, everything else fixed. LOSO 13.4633 -> 13.4526 (paired t -1.37, 7/11 seasons). Best weights vs current:
+FT accuracy x2.47 (t 4.5; halves 3.1/3.7), FT volume x0.52 (t -2.7; halves -4.0/-1.5). Player corr of the two is only .25
+(the 'collinear' note above overstated it). Fails the bar (LOSO t, volume's late half). Proper test if wanted: refit with
+the volume weight scaled (res_o re-absorbs, like dreb in session 7) -> game LOSO -> preseason backtest.
