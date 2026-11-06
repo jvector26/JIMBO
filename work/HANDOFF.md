@@ -7,6 +7,19 @@ Design spec (Claude Doc): https://claude.ai/code/artifact/e5eebcf8-5649-4c33-b97
 To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs work/setup.sh, reads this file (repo CLAUDE.md says the same).
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
 
+## SESSION 46 (2026-11-06, user request, display only) -- PLAYERS TAB REBUILT, SHIPPED gh eda9410, artifact v45
+Projection table columns now: # · Player · Age · Min left (Proj min preseason) · Off · Def · Rating · Season (pure 2026-27 sr; app in
+season only, hidden via .ptab.nosz otherwise) · Top skill · Worst skill · What it's made of · Edit. D-reb / Stops columns, the
+'Defense vs position' dropdown and the dead expand-row code (openP never set) removed. Every column with a value sorts; click again
+reverses. Top/worst skill pool (user pick): box-score components + loose balls (hustle) + lineup_o / lineup_d, from r.parts
+(perimeter_def includes the 3PT-contest part, as on the skill bars); rookies/newcomers (fx) show '–'. Worst skill: first click = most
+negative first. Season column: small samples (under 15 min/g or under half the team's games, same rule as the leaderboard) greyed and
+always sorted after qualified players. Phones: Age/Off/Def/skill columns hidden but shown as a line under the name; in season the
+Edit column is hidden on phones (player page has Edit; the artifact keeps it, so ui_edit_test_db still taps it). Kept (user): Edit
+buttons, rank arrows; 'Projection | This season' switch unchanged. Note: in season the rank arrows compare with the preseason
+ranking even at default sliders (pre-existing). Payload unchanged (6cdbe22146); sw.js hand-bumped jimbo-6cdbe22146b; footnote
+'Build 11-06'. test_dashboard.js + ui_edit_test_db.py pass; iPhone 13 + desktop no page errors, no overflow.
+
 ## SESSION 45 (2026-11-06) -- FOUL-DRAWING REWEIGHT SHIPPED (user "do the 0.75 / 1.75. Build it")
 RESEARCH_LOG "INPUT SIGNAL AUDIT", "FOUL-DRAWING REWEIGHT" (+ APPLIED note). FT volume x0.75, FT accuracy x1.75 baked into
 weights_prod.json AND weights_bt.json (originals *_pre_ft.json; note key; REFIT_W rerun must reapply, like dreb). Caches moved to the
