@@ -1,5 +1,8 @@
 date,home,away,provider,details,spread,over_under,home_ml,away_ml
-2026-11-07T00:30Z,CLE,PHI,Draft Kings,PHI -1.5,1.5,230.5,,
-2026-11-07T01:00Z,MIL,TOR,Draft Kings,TOR -7.5,7.5,231.5,,
-2026-11-07T01:00Z,NOP,MIN,Draft Kings,MIN -5.5,5.5,229.5,,
-2026-11-07T03:00Z,SAC,SAS,Draft Kings,SAS -15.5,15.5,228.5,,
+2026-11-07T00:30Z,CLE,PHI,DraftKings,PHI -1.5,1.5,229.5,,
+2026-11-07T01:00Z,DAL,UTA,DraftKings,DAL -7.5,-7.5,226.5,,
+2026-11-07T01:00Z,MEM,OKC,DraftKings,OKC -3.5,3.5,225.5,,
+2026-11-07T01:00Z,MIL,TOR,DraftKings,TOR -7.5,7.5,231.5,,
+2026-11-07T01:00Z,NOP,MIN,DraftKings,MIN -4.5,4.5,229.5,,
+2026-11-07T03:00Z,LAL,POR,DraftKings,LAL -2.5,-2.5,233.5,,
+2026-11-07T03:00Z,SAC,SAS,DraftKings,SAS -15.5,15.5,228.5,,
