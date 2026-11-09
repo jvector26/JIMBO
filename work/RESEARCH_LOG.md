@@ -1917,3 +1917,33 @@ not against the line. (3) Lead: tune the M4 layer (lam 6000, box-update weight, 
 preseason-Vegas gap term the same way. (4) Product idea: show a line-blended margin (about 0.77 line + 0.23 JIMBO) on tonight cards.
 CAVEATS: LOSO refits the blend coefficients only; variants are approximated by prior shifts, not full refits; tr minutes ignore injury
 reports; 2022+ line timing unknown; power: a change must move the blend by ~0.005+ to be seen in 11 seasons.
+
+## GAP MAP: WHERE STANDALONE JIMBO LOSES TO THE LINE  [2026-11-09, session 47, user "Gap map"] -> RESEARCH ONLY, NOTHING CHANGED
+USER DIRECTION (2026-11-09): not betting; the line is a YARDSTICK (gold standard), not an ingredient. Goal = ground-up first-principles
+forecast. Headline forecast should be PURE JIMBO with Vegas shown beside it (decision made; NOT implemented yet, see HANDOFF).
+Code: code/lines/gap_features.py (team-game situations), gap_map.py (run after lines_bar inputs exist). Same 11,987 games 2015-25;
+J = standalone in-season JIMBO (M4 + offsets, LOSO-calibrated), pregame (trailing 5-game) minutes unless noted. No line in any fit.
+STAIRCASE (error | gap to line 12.877): backtest JIMBO 13.116 | +0.239 -> + back-to-back term 13.068 | +0.191 (coef -2.2, t -10.4;
+LOSO -0.048 t -5.6, 11/11; already in production, the backtest harness lacks it) -> + knowing who plays tonight (actual minutes)
+12.970 | +0.093 (t -2.9). So of the 0.24: back-to-back ~20%, who plays ~40%, rest ~40% (0.09).
+WHERE THE REMAINING 0.09 SITS (actual minutes + B2B): games where a team gives 25%+ of recent minutes to rookies/unrated newcomers
+or 10%+ to players who joined in its last 10 games ("thin history", 33.5% of games): gap +0.20 (se .05) = 71% of the remainder;
+all other games +0.04 (se .03) = parity with the line. Late season (70+ games) gap +0.24 is the same thing: thin-history teams
+late +0.51 (se .14), well-known rosters late +0.04. Late bad team vs other +0.36.
+BY STAGE (pregame minutes): games 3-10 gap -0.00 (JIMBO = line), 10-25 +0.29, 25-50 +0.18, 50-70 +0.19, 70+ +0.59; final 8 games +0.75.
+Regulars missing (max team, share of recent minutes): 30%+ = 8.7% of games, gap +0.91, a third of the whole gap (+0.26 with actual minutes).
+NOT THE GAP: team-season persistent misses (sd of team-season mean error: line 1.63, JIMBO 1.62, noise 1.51); compression (by JIMBO's own
+favourite size, favourite-signed JIMBO/line/actual: 4.8/5.3/4.9, 9.0/9.0/9.2, 14.6/13.1/14.1; gap flat ~0.24); first 10 games.
+WEAK LEADS (clustered t ok, LOSO gain not): older team beats JIMBO by 0.13/yr of age gap (t 3.8; LOSO -0.004 t -0.6; JIMBO likes the
+younger home team 0.8 more than the line) -> opposite sign to the win-total roster-age term, so that term is about availability, not
+per-minute quality; altitude home DEN/UTA +1.6 (t 3.1; LOSO -0.005 t -1.0, 5/11); late bad teams -0.8 (t -1.9). 3-in-4, long rest,
+last season's home edge, rookie share as a signed factor: nothing. All situational factors together: -0.009 (t -1.0).
+Home bias by season vs line (J - line): 2016 -0.9, 2020 +1.1, 2024-25 +0.4 (constant HCA in the harness).
+READ: with known rosters and known minutes JIMBO is level with Vegas. The gap is (1) who plays tonight, (2) players with little or no
+NBA history (rookies, newcomers, call-ups, fresh acquisitions), concentrated on late-season bad teams. Rating-formula detail for
+established players is not where the gap is.
+NEXT (leads, not done): thin-history players: priors (newcomer flat -4.31, 2nd-round/UDFA flat, G League / international stats) and the
+in-season learning speed for no-history players (M4 prior = 2000 poss); availability / tonight's minutes; add back-to-back to the
+research harness; faster learning in games 10-25.
+CAVEATS: segments overlap; segment gaps have se 0.03-0.14; "thin history" cut-offs chosen once, not tuned, but picked after seeing the
+single-factor tables; trailing minutes ignore injury reports, so production's pregame gap is somewhere between 0.19 and 0.09.

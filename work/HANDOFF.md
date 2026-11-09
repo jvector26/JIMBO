@@ -18,8 +18,17 @@ LINES BAR built (code/lines/lines_bar.py; RESEARCH_LOG "LINES BAR"): blend score
 Line alone 12.878; with JIMBO 12.849 (trailing minutes) = all JIMBO adds beyond the line. It comes from the in-season player updates
 (-0.016, t -2.9) and preseason ratings (-0.012, t -1.7); team offsets and knowing who played add ~0 once the line is in.
 Re-scored near-misses: Elo input, w_off 0.4, neff shrink, and the production judgment shrink all < 0.004, |t| < 2: none registers.
-Next options (user to pick): tune the M4 in-season layer on the blend score; Vegas-gap term vs lines; line-blended margin on tonight cards;
-replay with projected minutes + injuries.
+USER DIRECTION 2026-11-09: he does not bet and does not want a model that adds signal on top of Vegas. The line is a YARDSTICK only.
+Goal = ground-up first-principles forecast. DECISION: headline forecast = PURE JIMBO, Vegas shown beside it as the yardstick.
+NOT IMPLEMENTED YET (needs its own session + his OK on details): win-total forecast is still 0.383 model / 0.617 Vegas / roster-age term
+(blend.json; app + artifact slider default bm), nightly margins still carry the preseason gap (teams_pre blend - model) x 20/(20+g).
+Open details to settle with him: what replaces the roster-age term (it was fitted on the blend), tau (model alone 3.01), whether the
+blend stays as a labelled column, vs Vegas tab history (tag rows by model version).
+GAP MAP done (RESEARCH_LOG "GAP MAP", code/lines/gap_map.py): standalone gap to the line 0.24 = back-to-back ~20% (already in production)
++ who plays tonight ~40% + ~40% remainder, of which 71% sits in games with thin-history players (rookies/newcomers 25%+ of minutes or
+fresh acquisitions 10%+), mostly late-season bad teams. With known rosters and minutes JIMBO is level with the line (+0.04, se .03).
+Not the gap: team-level persistent misses, compression, first 10 games. The blend score (lines_bar.py) is now a side diagnostic only.
+Next research leads: thin-history player priors + in-season learning speed for them; availability / tonight's minutes; B2B in the harness.
 
 ## SESSION 46 (2026-11-06, user request, display only) -- PLAYERS TAB REBUILT, SHIPPED gh eda9410, artifact v45
 Projection table columns now: # · Player · Age · Min left (Proj min preseason) · Off · Def · Rating · Season (pure 2026-27 sr; app in
