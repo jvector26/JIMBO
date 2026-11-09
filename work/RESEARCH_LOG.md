@@ -2008,3 +2008,31 @@ players (unrated value -4.31, rookie values, depth) should be re-checked with fi
 OPTIONS (user): (a) nothing now, retest after 2026-27; (b) judgment call: lower the flat value for players not on an opening roster
 (call-ups, 10-days, late signings) by ~3 (the one piece with t > 5 in every version; small total effect); (c) re-derive the unrated /
 rookie calibration with first-half shares (separate test).
+
+## RE-CALIBRATION WITH CLEAN MINUTES (slope, unrated value, rookie mapping)  [2026-11-09, session 47, user "Option 3"] -> VALUES MOVE AT GAME LEVEL, PRESEASON BACKTEST DOES NOT WANT THEM; NOTHING APPLIED
+Code: code/lines/recal_build.py (design; per-player window ratings rebuilt as bc_boxdecay + shooting.talent_feature + 0.6 res_o + 0.8 res_d
+from bt_split_ratings; game-level base reproduces backtest_components at corr .9984, sd 4.61 vs 4.81 so slopes here run ~4% above
+production's scale), recal_fit.py, recal_split.py, recal_pre.py, recal_pre2.py (+ age_eval_dump.py). Design = slope_refit.py / rookie_refit.py
+(margin - age offset ~ base + rookie terms + unrated share), 2015-25, season-block bootstrap se.
+Estimators: all minutes (how the production values were fit) | non-garbage stints | first-half shares | 2SLS (full-game shares
+instrumented with first-half shares: removes score-driven minutes without half-game attenuation; the preferred clean estimate).
+                               all minutes   non-garbage   first half   2SLS          2SLS - all (paired)
+ slope                          1.115         1.149         1.160        1.195         +0.080 (t +12)
+ unrated value                 -4.17         -3.58         -3.39        -3.39          +0.79 (t +4.6)
+ college rookie level col_a    -2.80         -2.48         -2.30        -2.30          +0.50 (t +3.8)
+ college score slope col_b     +3.38         +3.07         +2.87        +2.87          -0.51 (t -3.7)
+ (production: slope 1.050, unrated -4.31, col_a -3.02, col_b 3.70.)  Unrated by half: 2015-19 -2.9 -> -2.0, 2020-25 -5.3 -> -4.5.
+SPLIT of the unrated group (2SLS | all minutes): on an opening roster -2.21 (se .49) | -2.87; joined later (call-ups, 10-days, late
+signings) -6.49 (se .70) | -7.92. Extra terms: rated but thin (< 2000 window poss) on an opening roster -1.46 (se .27; halves -0.7/-2.0);
+rated players who joined later -3.07 (se .74). So the flat -4.31 averages two different populations.
+Game-level age residuals on top of the production curve: <=21 -1.10 (se .46) all minutes -> -0.71 (se .42) 2SLS; other bins within 1.5 se.
+ARBITER: preseason team backtest (projected minutes; current model 8.614 wins, calibration slope 1.01, 330 team-seasons):
+ slope x1.075 8.630 (slope .94: over-stretched) | newcomers -2.21 8.651 | rookies x0.83 8.628 | thin vets -1.46 8.598 | all four 8.636 |
+ thin vets dose/threshold (paired by season): -0.75 -> -0.020 (t -1.5, 6/11, halves +.014/-.044); -1.46 -> -0.016 (t -0.6); -2.2 +0.011;
+ cut 3000-4000 worse; smooth -2 x (1 - poss/6000) -0.048 (t -0.8, 7/11). Nothing near the bar; halves flip.
+READ: score-driven minutes did bias the game-level calibration (slope too low, unrated/rookies too negative), but for projecting SEASONS
+from projected minutes the production values are as good or better: slope 1.01 is already right at team-season level and less-negative
+newcomer/rookie values score worse. Keep slope, unrated, rookie mapping. The one consistent finding across the clean game-level tests
+is the split: players who join after opening night are ~2-3 pts/100 worse than the flat value (2SLS -6.5 vs -4.3; in-season harness,
+first-half shares: -3.1, t -5.5); it cannot be checked on the preseason backtest (they are not on opening rosters) and its measured
+game gain is small (-0.018, t -1.8) -> judgment call only. Thin-sample veterans: three weak same-sign signals, fails every bar.

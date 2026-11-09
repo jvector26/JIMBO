@@ -34,7 +34,12 @@ by the score (low-minute players play more when a game goes badly). Clean versio
 in 2015-19 -> fails the bar. Robust in every version: players NOT on an opening roster (call-ups, late signings) are rated ~3 pts/100 too
 high (t > 5), other low-minute players ~1; no rust effect for established players back from 5+ games out. Options put to the user:
 (a) leave, retest after 2026-27; (b) judgment call: lower the off-roster flat value by ~3; (c) redo the unrated/rookie calibration with
-first-half shares. LESSON: the research bar's actual full-game minutes are endogenous for bench/fringe players; re-check any
+first-half shares. OPTION (c) DONE (RESEARCH_LOG "RE-CALIBRATION WITH CLEAN MINUTES", code/lines/recal_*.py): refit slope / unrated / rookie mapping with
+clean minutes (2SLS, first-half instrument). Game-level values move (slope +7.5%, unrated -4.2 -> -3.4, rookies ~17% less negative;
+unrated splits into opening-roster -2.2 vs joined-later -6.5; thin vets extra -1.5) but the preseason team backtest does not want any
+of it (current 8.614; slope stretch 8.630, newcomers 8.651, rookies 8.628, thin vets 8.598 = noise). KEEP the production values.
+Only standing judgment option: value for players who join after opening night ~2 lower (in-season only).
+LESSON: the research bar's actual full-game minutes are endogenous for bench/fringe players; re-check any
 low-minute-player test with first-half or pregame shares (thin_clean.py shows how).
 Other leads: availability / tonight's minutes; B2B in the research harness; pure-JIMBO headline build.
 
