@@ -28,12 +28,14 @@ GAP MAP done (RESEARCH_LOG "GAP MAP", code/lines/gap_map.py): standalone gap to 
 + who plays tonight ~40% + ~40% remainder, of which 71% sits in games with thin-history players (rookies/newcomers 25%+ of minutes or
 fresh acquisitions 10%+), mostly late-season bad teams. With known rosters and minutes JIMBO is level with the line (+0.04, se .03).
 Not the gap: team-level persistent misses, compression, first 10 games. The blend score (lines_bar.py) is now a side diagnostic only.
-THIN-HISTORY DIAGNOSIS (RESEARCH_LOG "THIN-HISTORY PLAYERS", code/lines/thin_diag.py, thin_forms.py): STRONG LEAD, nothing applied.
-Players with few season minutes once the team is 15+ games in (back from injury, call-ups, late signings, deep bench pressed into duty)
-play well below JIMBO's rating: first 200 min -1.3 pts/100 overall (t -4.8), call-ups/late adds -3.5 to -4; gone by 600 min; no effect in
-the first 15 team games (so preseason ratings are fine). Simple 3-term correction: LOSO -0.045 (t -3.5, 9/11, both halves) on the
-in-season harness = half the remaining gap to the line; the plain 1- and 2-term versions also pass. Next: build it properly inside the
-in-season layer (penalty decaying with season minutes), split injury returns from healthy non-players, score, then his decision.
+THIN-HISTORY / LOW-SEASON-MINUTES PENALTY (RESEARCH_LOG "THIN-HISTORY PLAYERS" + "LOW-SEASON-MINUTES PENALTY"; code/lines/thin_*.py):
+NOTHING APPLIED. First pass looked very strong (-0.045 LOSO, t -3.5) but about HALF was an artifact: tonight's minutes are partly caused
+by the score (low-minute players play more when a game goes badly). Clean version (first-half minute shares): -0.023, t -2.0, wrong sign
+in 2015-19 -> fails the bar. Robust in every version: players NOT on an opening roster (call-ups, late signings) are rated ~3 pts/100 too
+high (t > 5), other low-minute players ~1; no rust effect for established players back from 5+ games out. Options put to the user:
+(a) leave, retest after 2026-27; (b) judgment call: lower the off-roster flat value by ~3; (c) redo the unrated/rookie calibration with
+first-half shares. LESSON: the research bar's actual full-game minutes are endogenous for bench/fringe players; re-check any
+low-minute-player test with first-half or pregame shares (thin_clean.py shows how).
 Other leads: availability / tonight's minutes; B2B in the research harness; pure-JIMBO headline build.
 
 ## SESSION 46 (2026-11-06, user request, display only) -- PLAYERS TAB REBUILT, SHIPPED gh eda9410, artifact v45

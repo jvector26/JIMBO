@@ -1978,3 +1978,33 @@ injury vs coach's information (a healthy player who has not played is worse than
 NEXT (not done): build it properly = rating penalty that decays with season minutes, applied after team game 15, larger for players not on
 an opening roster; separate injury returns from healthy non-players (absence patterns; 2026-27 has injuries_hist); run inside M4; score
 on the research bar harness with back-to-back added + preseason backtest (should not move) + line yardstick; then user decision.
+
+## LOW-SEASON-MINUTES PENALTY: PROPER BUILD + ARTIFACT CHECK  [2026-11-09, session 47, user "Go"] -> ABOUT HALF WAS A TEST ARTIFACT; FAILS BAR; NOTHING APPLIED
+Code: code/lines/thin_table.py (player-game table), thin_fit.py (fit), thin_pregame*.py, thin_clean.py, thin_clean2.py (artifact checks).
+BUILD: penalty_p = -rate_grp x clip(1 - season_min/M, 0, 1) (fades to 0 at M season minutes), rates LOSO, M nested (picked on training
+seasons). No start-game gate needed: at season start everyone has 0 minutes and the term cancels (gate 0 / 10 / 15 / 20 all similar).
+FIRST RESULTS (actual box minutes):
+ in-season harness (M4 + offsets + B2B, base 13.0620, 12,680 games): 1 rate -0.034 (t -3.3, 9/11; rate -3.2); 2 rates (not on opening
+ roster / everyone else) -0.040 (t -3.2; -4.0 / -1.4 at M 600); 4 rates -0.046 (t -3.7; outsider -4.0, last-year regular -1.4, bench -0.3,
+ fringe -2.4); flat in M 300-900. Research-bar harness (preseason ratings + B2B, base 13.4286): -0.09 / -0.11 / -0.14 (t -3.4 to -4.5, 10/11).
+ Back-from-layoff term (5+ team games missed, 600+ season minutes): +0.37 (t 0.7), LOSO +0.0005 -> NO rust effect for established players.
+ARTIFACT CHECK (the important part). Tonight's minutes are partly CAUSED by the score: when a game goes badly, low-minute players
+play more. Same 2-rate penalty, fade 600, in-season harness, with the minute shares rebuilt (target = final margin throughout):
+   all minutes                     -0.0505 (t -3.8, 10/11; halves -.022/-.072)   rates -4.07 / -2.02
+   non-garbage stints (RAPM rule)  -0.0427 (t -3.4, 10/11; halves -.012/-.066)   rates -3.69 / -1.97
+   FIRST-HALF minutes only         -0.0232 (t -2.0,  8/11; halves +.005/-.045)   rates -3.14 (t -5.5) / -1.16 (t -3.7)
+   pregame shares (previous 5 games; harness with trailing minutes, base 13.1627): -0.004 (t -0.9); rates -2.8 / -0.2
+   split by started tonight (all minutes): starters -1.27, non-starters -3.51
+   first-half shares, outsiders only: -0.018 (t -1.8, 9/11; halves +.001/-.032), rate -3.06 (t -5.5)
+   first-half, everyone else on fill-in nights (20%+ regulars out) vs other nights: -1.09 (t -3.3) vs -1.43 (t -4.3): no difference
+READ: the direction is real in every version (players not on an opening roster are rated ~3 pts/100 too high, t > 5; other low-minute
+players ~1 too high), but about half of the headline gain came from score-driven minutes, and the clean (first-half) version is
+-0.023, t -2.0, wrong sign in 2015-19 -> FAILS the bar (t and halves). Pregame-knowable version: almost nothing, because these players
+mostly matter on nights their role jumps. Session's earlier claim "closes half the gap to the line" is withdrawn; clean estimate is
+about a fifth (gap +0.092 -> +0.073).
+WIDER LESSON FOR THE RESEARCH BAR: actual full-game minutes are endogenous for bench/fringe players. Any test that touches low-minute
+players (unrated value -4.31, rookie values, depth) should be re-checked with first-half or pregame shares. The standard garbage rule
+(Q4 20+, last 6 min 15+) removes only ~15% of the effect.
+OPTIONS (user): (a) nothing now, retest after 2026-27; (b) judgment call: lower the flat value for players not on an opening roster
+(call-ups, 10-days, late signings) by ~3 (the one piece with t > 5 in every version; small total effect); (c) re-derive the unrated /
+rookie calibration with first-half shares (separate test).
