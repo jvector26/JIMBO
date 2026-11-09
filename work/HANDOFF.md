@@ -14,7 +14,12 @@ Item 1 done, first pass: historical game lines 2011-25 from two public GitHub so
 RESEARCH_LOG "HISTORICAL GAME LINES". Weight on JIMBO vs the line (0 = nothing, 0.5 = equal): research-bar predictions (preseason
 ratings) +0.10 (t 1.8); in-season M4 + offsets with actual minutes +0.32 (t 7.8); with trailing minutes (blind to tonight's
 absences) +0.24 (t 7.4, both halves, 12/12 seasons; true close 2014-21 +0.225). Line still has lower raw error in every cut.
-Next options: "weight vs the line" as a second research-bar score; replay with projected minutes; Vegas-gap term vs lines.
+LINES BAR built (code/lines/lines_bar.py; RESEARCH_LOG "LINES BAR"): blend score = LOSO RMSE of line + JIMBO, candidate vs base.
+Line alone 12.878; with JIMBO 12.849 (trailing minutes) = all JIMBO adds beyond the line. It comes from the in-season player updates
+(-0.016, t -2.9) and preseason ratings (-0.012, t -1.7); team offsets and knowing who played add ~0 once the line is in.
+Re-scored near-misses: Elo input, w_off 0.4, neff shrink, and the production judgment shrink all < 0.004, |t| < 2: none registers.
+Next options (user to pick): tune the M4 in-season layer on the blend score; Vegas-gap term vs lines; line-blended margin on tonight cards;
+replay with projected minutes + injuries.
 
 ## SESSION 46 (2026-11-06, user request, display only) -- PLAYERS TAB REBUILT, SHIPPED gh eda9410, artifact v45
 Projection table columns now: # · Player · Age · Min left (Proj min preseason) · Off · Def · Rating · Season (pure 2026-27 sr; app in

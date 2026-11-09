@@ -7,6 +7,8 @@
 #  python3 info_test.py        preseason-ratings game backtest vs lines
 #  (rebuild_git.sh 2013 2025; code/elo/elo_m4_preds.py) python3 info_m4.py      in-season M4 + ridge 80, actual minutes
 #  python3 m4_trailing_preds.py; python3 info_trailing.py                        same with trailing 5-game minutes
+#  LINES BAR: python3 make_variants.py; PRE_TAG=woff4_ python3 m4_var_preds.py 2015 .. 2025 (also shr_, neff_; ~4 min each; base = m4tr_{S} from
+#  m4_trailing_preds.py); python3 lines_bar.py woff4_ shr_ neff_; python3 lines_decomp.py  (needs sep_poss.parquet: code/sepposs/sep_poss.py, stints 2011+)
 set -e
 mkdir -p /tmp/odds /home/claude/lines && cd /tmp/odds
 git clone -q --depth 1 --filter=blob:none --no-checkout https://github.com/FinnedAI/sportsbookreview-scraper finned

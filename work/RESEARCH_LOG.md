@@ -1890,3 +1890,30 @@ leaks (aging/calibration fit on the full sample). SBR "close" is one book's arch
 (checked with the |close-open| and |gap| filters). 2025-26 half missing.
 NEXT (not done): add "weight vs the line" as a second score in the research bar (re-score past near-misses: Elo input, w_off 0.4, neff
 shrink); nightly replay with projected minutes + injuries vs lines; test the preseason-Vegas gap term against lines; get 2025-26 Jan-Apr lines.
+
+## LINES BAR: SECOND SCORE + RE-SCORE OF NEAR-MISSES  [2026-11-09, session 47, user "yes let's go"] -> RESEARCH ONLY, NOTHING CHANGED
+Code: code/lines/lines_bar.py (the score), make_variants.py + m4_var_preds.py (variant preseason ratings -> in-season predictions),
+lines_decomp.py. Setup: production-style in-season predictions (M4 + ridge offsets lam 80), 2015-25, games with a line and 3+ prior
+team games = 11,987 (2025-26 to Jan 7). Two minutes modes: tr = trailing 5-game minutes (pregame-knowable), act = actual.
+SCORE: blend = LOSO RMSE of margin ~ 1 + [pred, offsets(, extra)] + line; candidate vs base on the same games, season-paired t, halves.
+raw = the same without the line. Variants enter as shifts of pre_P ratings (SLOPE x change in the lineup part, bt_split_ratings window
+N = S-1, as sep_pre.py; bt_split_ratings is pre-FT-reweight, small inconsistency), then M4 runs on top.
+BASELINES: line alone 12.8779. JIMBO raw: tr 13.1162, act 12.9965. Blend: tr 12.8493 (-0.0286 vs line), act 12.8435 (-0.0344).
+So everything JIMBO adds on top of the line is ~0.03 RMSE (weight .23 tr / .31 act).
+DECOMPOSITION (blend, tr | act): + preseason ratings -0.0120 (t -1.7, 9/11) | -0.0160; + in-season player updates (M4) a further -0.0156
+(t -2.9, 9/11, halves -.014/-.017) | -0.0192 (t -3.3, 10/11); + team offsets -0.0010 (t -0.4) | +0.0007. Team offsets alone next to
+the line -0.005 (t -1.2). Knowing who played: -0.120 without the line (t -3.5), only -0.006 with it (t -0.7): the line already has it.
+CANDIDATES (blend dRMSE, tr | act):
+  plain points Elo as third input (k .04, carry .6): -0.0036 (t -0.9, 7/11, halves +.008/-.014) | +0.0012 (t +1.8). Raw -0.006 / -0.016
+    (t -1.4, halves -.033/-.002; session 44 had -0.021 t -2.7 on 2014-25). Nothing left once the line is in.
+  offensive lineup weight 0.4 (vs 0.6): -0.0009 (t -0.5, 8/11) | -0.0016 (t -1.0, 8/11). Raw -0.002 / -0.004 (t -0.4 / -0.8).
+  judgment shrink (IN PRODUCTION; 1/3, 10k poss, vs none): +0.0002 (t +0.5, 3/11) | +0.0016 (t +1.7, 4/11). Raw -0.002 / +0.001.
+  neff (stapled-teammates) shrink vs none: -0.0001 (t 0.0) | +0.0010 (t +1.4). Raw -0.002 / +0.000.
+READ: none of the near-misses registers against the line; all are < 0.004 of a 0.03 total. The part of JIMBO the market does not
+already have is the in-season player-rating update; preseason ratings are a weaker second; team offsets and tonight's minutes add
+nothing beyond the line. So: (1) rating-formula tweaks of this size cannot matter for "beyond the line"; they matter only for the
+standalone forecast. (2) Corrects the critique's "minutes matter 50x": true standalone (0.12 here, 0.5 vs preseason-projected minutes),
+not against the line. (3) Lead: tune the M4 layer (lam 6000, box-update weight, within-season decay) on the blend score; test the
+preseason-Vegas gap term the same way. (4) Product idea: show a line-blended margin (about 0.77 line + 0.23 JIMBO) on tonight cards.
+CAVEATS: LOSO refits the blend coefficients only; variants are approximated by prior shifts, not full refits; tr minutes ignore injury
+reports; 2022+ line timing unknown; power: a change must move the blend by ~0.005+ to be seen in 11 seasons.
