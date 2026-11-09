@@ -1858,3 +1858,35 @@ Baseline reproduction before the change: DEPTH_DATE=20261020 chain = live dash.j
 After: test_dashboard.js 0.0010 / sim 0.36 wins, ui_edit_test_db.py ok, skill_drill_test phone+desktop no errors (artifact + app build),
 local nightly JSON ok (team forecasts move <= 0.2 wins). 2026 (players 800+ proj min, sd .11): Giannis -.78 (#5 -> #8), Zion -.41,
 Cisse -.38, Luka -.33, Banchero -.32, Sengun/Avdija/Duren -.27, Gobert -.26; gains <= +.19 (Prince, AJ Green, Carter).
+
+## HISTORICAL GAME LINES: DOES JIMBO ADD INFORMATION BEYOND THE LINE?  [2026-11-09, session 47, user "go" after the approach critique] -> RESEARCH ONLY, NOTHING CHANGED
+Code: code/lines/ (fetch_lines.sh has the sources and run order; outputs in /home/claude/lines, not in the repo; line data not redistributed).
+SOURCES (public GitHub): FinnedAI/sportsbookreview-scraper nba_archive_10Y.json (2011-12..2021-22, open + close spread, 7-15% of games
+missing or with the total in the spread field: |x|>30 dropped); kyleskom/NBA-Machine-Learning-Sports-Betting OddsData.sqlite
+(2007-08..2024-25 complete, 2025-26 only to Jan 7 = 553 games). Findings on the data: kyleskom <=2021-22 "Spread" is UNSIGNED and equals the
+OPENING spread (100% match with FinnedAI open); sign taken from the closing moneylines. 2022-23+ it is signed (+ = home favoured), one SBR
+line per game, timing unknown (treated as close). Dec 2019 kyleskom-only rows had totals in the spread field (dropped by |x|>30).
+Joined on date + teams to games_all; scores agree 99.94%. hist_game_lines.csv: open, close, line (= close, else open), all "home favoured by".
+Line RMSE by season: 11.6-11.8 (2011-15), 12.2-12.8 (2016-19), 13.5-13.6 (2020-21, 2023-25), 12.5 (2022).
+TEST: weight on JIMBO = through-origin slope of (final - line) on (JIMBO - line), season-clustered se. 0 = adds nothing, 0.5 = equal partner.
+A. Preseason ratings + actual minutes (the research-bar backtest, LOSO 13.4553), 2015-25, 12,510 games: JIMBO 13.330 vs line 12.901;
+   weight +0.10 (se .055, t 1.8); halves +0.19 (t 3.5) / +0.03 (t 0.4). vs open 2015-21 +0.25 (t 5.8); vs true close 2015-21 +0.09 (t 1.5).
+   -> the research-bar predictions (no in-season information) add next to nothing against the close.
+B. Production-style in-season (M4 refit per league game number + ridge team offsets lam 80; reproduces 13.03 / 13.00), ACTUAL minutes,
+   2014-25, 13,740 games: JIMBO 12.921 vs line 12.804; weight +0.32 (t 7.8); halves +0.33 / +0.32; true close 2014-21 +0.24 (t 5.4);
+   open 2014-21 +0.47; SBR line 2022-25 +0.35 (t 3.5). ATS when |gap| >= 3: 52.9%.
+C. Same with TRAILING minutes (each player's mean over his team's previous 5 games; blind to tonight's absences = lower bound; games with
+   3+ prior team games, 13,169): JIMBO 13.018 vs line 12.785; weight +0.24 (se .032, t 7.4); halves +0.27 (t 5.2) / +0.21 (t 5.8);
+   true close 2014-21 +0.225 (t 4.6); open +0.34; SBR 2022-25 +0.24 (t 5.0); positive in 12 of 12 seasons (per-season mean .247, t 6.5).
+   ATS |gap| >= 3: 2281-2082 (52.3%; break-even at -110 is 52.4%). Robust to |close-open| <= 3 (+0.29), |gap| <= 8 (+0.22), team games 10+ (+0.21).
+   Joint: (trailing JIMBO - line) 0.35, (actual-minus-trailing minutes part) 0.24 -> knowing who played is worth extra even against the line.
+   Line movement 2014-21: close - open moves 0.065 per point of (trailing JIMBO - open) (t 4.3), 0.23 per point of (actual-minutes JIMBO - open).
+READ: the line beats JIMBO on raw error in every cut (by 0.1-0.25 RMSE), but JIMBO carries information the line lacks: roughly a
+quarter weight, stable across both halves and two independent line sources. It comes from the IN-SEASON layer (A vs B). Not a betting
+edge after the vig. Live 2026-27 (146 games): slope -0.40 +- 0.45, about 1.4 se below the historical 0.24 (live also carries the
+preseason Vegas gap term and projected minutes).
+CAVEATS: actual minutes (B) leak who played; C ignores injury reports entirely, production sits between. pre_P ratings have the known small
+leaks (aging/calibration fit on the full sample). SBR "close" is one book's archive value; noise in the line inflates JIMBO's weight
+(checked with the |close-open| and |gap| filters). 2025-26 half missing.
+NEXT (not done): add "weight vs the line" as a second score in the research bar (re-score past near-misses: Elo input, w_off 0.4, neff
+shrink); nightly replay with projected minutes + injuries vs lines; test the preseason-Vegas gap term against lines; get 2025-26 Jan-Apr lines.

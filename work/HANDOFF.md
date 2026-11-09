@@ -1,11 +1,20 @@
 # JIMBO handoff: current state (read this first)
 JIMBO = judgment-induced model for basketball outcomes. NBA 2026-27 player ratings, minutes, team win totals, playoff odds,
-game odds, nightly in-season updates. Updated 2026-10-29 (session 38: consistent availability; session 35: matchups tab removed, injury box; session 34: NO MORE ZIP; everything lives in the repo, sandbox tree in work/). 
+game odds, nightly in-season updates. Updated 2026-11-09 (session 47: historical lines test; session 38: consistent availability; session 35: matchups tab removed, injury box; session 34: NO MORE ZIP; everything lives in the repo, sandbox tree in work/). 
 Full history of every test and decision: RESEARCH_LOG.md (1,650 lines; don't read it whole:
 `grep -n "^## " RESEARCH_LOG.md`, then read the section you need).
 Design spec (Claude Doc): https://claude.ai/code/artifact/e5eebcf8-5649-4c33-b974-23aa18e5c675
 To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs work/setup.sh, reads this file (repo CLAUDE.md says the same).
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
+
+## SESSION 47 (2026-11-09, user asked for a critique of the approach, then "go" on item 1) -- RESEARCH ONLY, NOTHING CHANGED
+Critique (project doc claude/approach_critique_and_lines_test_2026-11-09.md): effort is on rating tweaks worth 0.003-0.03 while minutes
+(0.5) and the line are barely tested; backtest reused for many tests; binary bar; incumbents never tested; roster-age patch; moving live target.
+Item 1 done, first pass: historical game lines 2011-25 from two public GitHub sources (code/lines/fetch_lines.sh; data not in the repo).
+RESEARCH_LOG "HISTORICAL GAME LINES". Weight on JIMBO vs the line (0 = nothing, 0.5 = equal): research-bar predictions (preseason
+ratings) +0.10 (t 1.8); in-season M4 + offsets with actual minutes +0.32 (t 7.8); with trailing minutes (blind to tonight's
+absences) +0.24 (t 7.4, both halves, 12/12 seasons; true close 2014-21 +0.225). Line still has lower raw error in every cut.
+Next options: "weight vs the line" as a second research-bar score; replay with projected minutes; Vegas-gap term vs lines.
 
 ## SESSION 46 (2026-11-06, user request, display only) -- PLAYERS TAB REBUILT, SHIPPED gh eda9410, artifact v45
 Projection table columns now: # · Player · Age · Min left (Proj min preseason) · Off · Def · Rating · Season (pure 2026-27 sr; app in
