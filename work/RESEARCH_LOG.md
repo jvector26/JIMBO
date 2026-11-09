@@ -1947,3 +1947,34 @@ in-season learning speed for no-history players (M4 prior = 2000 poss); availabi
 research harness; faster learning in games 10-25.
 CAVEATS: segments overlap; segment gaps have se 0.03-0.14; "thin history" cut-offs chosen once, not tuned, but picked after seeing the
 single-factor tables; trailing minutes ignore injury reports, so production's pregame gap is somewhere between 0.19 and 0.09.
+
+## THIN-HISTORY PLAYERS: DIAGNOSIS  [2026-11-09, session 47, user "yeah for sure thin history"] -> STRONG LEAD, NOTHING APPLIED (needs proper build + user OK)
+Code: code/lines/thin_diag.py, thin_forms.py (after lines_bar inputs + gap_features). Harness: in-season JIMBO (M4 + offsets) with ACTUAL
+minutes + back-to-back term, LOSO error 12.9685 (line 12.877, gap +0.091), 11,987 games 2015-25. No line in any fit.
+Groups (by what JIMBO knew before the season): rook_r1 (pre_P rookie, 5.5% of minutes), newcomer (pre_P newcomer, 3.4%), callup_nohist
+(not on an opening roster, no NBA history, 0.8%), late_add_hist (not on an opening roster, < 2000 window poss, 0.5%), vet_thin (< 2000 window
+poss, 7.8%), vet_mid (2000-6000, 18.9%); reference = established vets (63%). Exposure = player's season minutes before the game.
+Regression of (final - JIMBO) on signed minute shares; coef = JIMBO bias in pts/100 for a full-time player (- = JIMBO too high):
+  by exposure: < 200 min -1.33 (t -4.8; halves -0.75/-1.73) | 200-600 -0.59 (t -2.9) | 600+ -0.11 (t -0.7)
+  by group: callup_nohist -2.19 (t -3.2) | late_add_hist -3.98 (t -4.0) | vet_thin -0.74 (t -3.6) | vet_mid -0.27 (t -2.5) |
+            rook_r1 -0.39 (t -2.2) | newcomer +0.29 (t 0.7)
+  It is a MID-SEASON effect: first 200 min when the team has played 15+ games: vet_thin -2.36 (t -4.3), vet_mid -1.94 (t -2.7),
+  call-ups/late adds -4.09 (t -5.2); in the team's first 15 games: vet_thin -0.79 (t -1.1), vet_mid +0.05. So preseason ratings are
+  not the problem; players with few minutes deep into a season (back from injury, or not trusted by the coach until now, or just
+  signed) play well below their rating, and the in-season layer takes ~600 minutes to catch up.
+LOSO size (game-level corrections added to the harness; dRMSE vs 12.9685):
+  A  all thin groups < 200 min (1 term, coef -1.46):            -0.0218 t -2.5 9/11 halves -.006/-.036
+  B  < 200 and 200-600 (2 terms, -1.61/-0.82):                  -0.0333 t -2.9 9/11 halves -.008/-.055
+  C  call-ups/late adds < 600; others < 200; others 200-600
+     (3 terms, -3.49/-1.21/-0.90):                              -0.0448 t -3.5 9/11 halves -.023/-.063   <- closes 49% of the gap to the line
+  E  call-ups/late adds only (-3.28):                           -0.0264 t -2.6 10/11 halves -.007/-.043
+  18 free group x exposure terms:                               -0.0387 t -1.9 7/11 (overfit)
+  After C, gap to line: all +0.091 -> +0.047; thin-history games +0.194 -> +0.121; other games +0.039 -> +0.009; games 70+ +0.235 -> +0.136.
+  For scale: the FT reweight shipped 2026-11-06 was -0.008 on the research bar.
+CAVEATS: form C was chosen after seeing the 18-cell table (A and B are the plain versions and also pass); stronger in 2020-25 than 2015-19
+(two-way contracts, load management); shares use tonight's actual box (the rating question, like the research bar); corrections are
+post-hoc at game level, not yet inside M4 (the RAPM step would then learn from a better prior); two mechanisms not separated: rust after
+injury vs coach's information (a healthy player who has not played is worse than his rating).
+NEXT (not done): build it properly = rating penalty that decays with season minutes, applied after team game 15, larger for players not on
+an opening roster; separate injury returns from healthy non-players (absence patterns; 2026-27 has injuries_hist); run inside M4; score
+on the research bar harness with back-to-back added + preseason backtest (should not move) + line yardstick; then user decision.
