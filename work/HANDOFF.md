@@ -257,6 +257,11 @@ minutes, ESPN injuries and user edits. The pre-opener plan (decisions a-c) is do
 - Phone app (PWA): https://jvector26.github.io/JIMBO/ from repo site/ (pages.yml deploys after each nightly / site push).
 - Nightly pipeline (GitHub Actions, repo .github/workflows/nightly.yml, 10:17 + 20:43 UTC; moved off :00 on 2026-10-08
   because GitHub delayed top-of-hour crons 3-7 h; scheduled runs are best-effort, so if latest.json asof is stale, just dispatch):
+  ON-TIME RUNS COME FROM A CLAUDE SCHEDULED TASK, not GitHub's cron: "JIMBO nightly refresh" (created 2026-10-27) dispatches nightly.yml
+  via REST and checks the deploy. Slots since 2026-11-10 (Central): 12:15 am, 6:15 am, 10:15 am, 1:15 pm, 5:15 pm, 8:15 pm
+  (10:15/1:15 added for weekend + holiday day games: 45 of the 140 remaining game days tip before 5:15 pm CT, 38 of them Sat/Sun;
+  8:15 pm added for late tips: 207 remaining games tip after 8:15 pm CT). GitHub's four cron slots stay as a late backup.
+  Not covered: 2027-01-17 9:30 am CT tip (only the 6:15 am run precedes it).
   nba_fetch (schedule, pbp, box, injuries ESPN, odds ESPN, RealGM depth chart until the --until date) -> pipeline/nightly.py
   (M4 in-season ratings, minutes rule, team offsets, rest-of-season sim) -> site/data/latest.json + history.json. Repo state/2026/ =
   preseason model packaged by pipeline/build_state.py (SANDBOX ONLY; rebuild + push whenever projections change).
