@@ -582,8 +582,8 @@ body.pvopen #gv{display:none}
 
     <div class="panel" id="p-st" role="tabpanel" aria-labelledby="t-st">
       <div class="legend">
-        <span><i class="lg-dot"></i>Forecast</span><span><i class="lg-ring"></i>Model alone</span>
-        <span class="lgline"><i class="lg-line"></i>Betting line</span><span><i class="lg-band"></i>80% of simulated seasons</span>
+        <span><i class="lg-dot"></i>JIMBO forecast</span>
+        <span class="lgline"><i class="lg-line"></i>Vegas line (yardstick)</span><span><i class="lg-band"></i>80% of simulated seasons</span>
         <span class="simnote" id="simnote"></span>
       </div>
       <div class="legend" id="wflegend"></div>
@@ -681,7 +681,7 @@ body.pvopen #gv{display:none}
   <button data-go="set"><span class="ic" aria-hidden="true">⚙️</span>Settings</button>
 </nav>
 <footer>
-  <p>How it works. Each player's rating is points per 100 possessions over an average player: box-score evidence for twelve skills plus hustle stats (loose balls, 3-point contests), weighted by how much each has historically moved scoring margin, plus what lineup results show beyond the box score (raw lineup results count 60% on offense and 80% on defense, where past seasons predicted best; the lineup sliders scale from there), then adjusted for age (the age curve has its own slider). Minutes come from each player's history and age; team minutes always total 82 games of 240. The forecast blends the model with the betting market and roster age, the mix that best predicted 330 past preseasons, with the model and market shares adding to 100% (average miss 8.2 wins, against 8.4 for the betting line alone and 8.7 for the model alone). Weight sliders change the model; at the default mix the forecast moves about 0.35 wins for every model win (the model-vs-Vegas slider changes that). Playoff games use playoff minutes (stars play more, the rotation shortens; half weight) and a bigger home-court edge, 4 points, as in past playoffs. In season, a team playing the second night of a back-to-back loses 2 points in that game's odds and the season simulation (2015-25 games: about 1.7 from fatigue, the rest from regulars sitting). The accuracy box replays 2014-15 through 2025-26 with each season's ratings predicting the next using who actually played. Rosters and lines as of <span id="asof"></span>.</p>
+  <p>How it works. Each player's rating is points per 100 possessions over an average player: box-score evidence for twelve skills plus hustle stats (loose balls, 3-point contests), weighted by how much each has historically moved scoring margin, plus what lineup results show beyond the box score (raw lineup results count 60% on offense and 80% on defense, where past seasons predicted best; the lineup sliders scale from there), then adjusted for age (the age curve has its own slider). Minutes come from each player's history and age; team minutes always total 82 games of 240. The forecast is JIMBO alone: player ratings times projected minutes, simulated season by season. The Vegas win totals and game lines are shown beside it as a yardstick and never enter the forecast (until 2026-11-09 the forecast blended in the market and roster age; in 330 past preseasons JIMBO alone missed by 8.6 wins on average, the betting line by 8.4). Playoff games use playoff minutes (stars play more, the rotation shortens; half weight) and a bigger home-court edge, 4 points, as in past playoffs. In season, a team playing the second night of a back-to-back loses 2 points in that game's odds and the season simulation (2015-25 games: about 1.7 from fatigue, the rest from regulars sitting). The accuracy box replays 2014-15 through 2025-26 with each season's ratings predicting the next using who actually played. Rosters and lines as of <span id="asof"></span>.</p>
 </footer>
 
 <dialog id="ed" aria-labelledby="edName">
@@ -796,7 +796,7 @@ function makeEngine(D){
       return {t, i, conf:D.teams[i].conf, line:D.teams[i].line, mkt:D.teams[i].mkt, net, off, def, age:mm?am/mm:0, roster:byTeam[t], over:teamOver[t]}; });
     const mean=k=>team.reduce((a,x)=>a+x[k],0)/NT;
     const mn=mean('net'), mo=mean('off'), md=mean('def'), ma=mean('age');
-    const B=M.blend, wm=S.bm==null?B.wm:S.bm, wv=1-wm;
+    const B=M.blend, wm=(B.wm>=0.999&&!B.wa)?1:(S.bm==null?B.wm:S.bm), wv=1-wm;
     team.forEach(x=>{ x.net-=mn; x.off-=mo; x.def-=md; x.agec=x.age-ma; x.margin=x.net*M.pace/100; x.mw=82*Phi(x.margin/SIG);
       x.bw0=41+wm*(x.mw-41)+wv*(x.mkt-41)+B.wa*x.agec; });
     const mb=mean('bw0');
@@ -887,6 +887,8 @@ function jimboBoot(D, SZ, APP){  // SZ = nightly in-season state (app only), APP
 if(SZ) seasonPrep(D, SZ);
 if(SZ&&SZ.cfg&&SZ.cfg.hca!=null) D.meta.hca=SZ.cfg.hca;   // in season: nightly home court (re-centred for back-to-backs, session 37)
 const E=makeEngine(D), M=D.meta, TEAMS=E.TEAMS, NSIM=APP&&APP.nsim||10000;
+// PURE (2026-11-09, user decision): the forecast is JIMBO alone; Vegas is shown beside it as a yardstick only (blend.json w_model 1, w_vegas 0, w_age 0)
+const PURE=M.blend.wm>=0.999&&!M.blend.wa;
 const COMPS=M.components.concat(['lineup_o','lineup_d']);
 const LABEL={three_pt:'Three-point shooting', rim_finishing:'Rim finishing', pullup_mid:'Pull-ups and midrange', foul_drawing:'Foul drawing',
   self_creation:'Self-creation', playmaking:'Playmaking', ball_security:'Ball security', off_rebounding:'Offensive rebounding',
@@ -925,9 +927,9 @@ GROUPS.forEach(([g,cs])=>{ const h=document.createElement('h3'); h.textContent=g
   const h2=document.createElement('h3'); h2.textContent='Age curve'; box.appendChild(h2);
   slider('age','Age adjustment','aging',0,2);
   const q2=document.createElement('p'); q2.className='note'; q2.textContent='Scales every age-group adjustment (0 turns the age curve off). The curve was refit on 2026-09-20 from how players\u2019 own ratings actually changed the following season: young players gain (under 21 +0.88), players over 30 lose (36+ −0.83).'; box.appendChild(q2);
-  const h3=document.createElement('h3'); h3.textContent='Forecast: model vs Vegas'; box.appendChild(h3);
+  if(!PURE){ const h3=document.createElement('h3'); h3.textContent='Forecast: model vs Vegas'; box.appendChild(h3);
   slider('bm','Model share of forecast',null,0,1,0.01);
-  const q3=document.createElement('p'); q3.className='note'; q3.id='bmnote'; box.appendChild(q3); }
+  const q3=document.createElement('p'); q3.className='note'; q3.id='bmnote'; box.appendChild(q3); } }
 function bmNote(){ const el=$('bmnote'); if(!el) return; const v=S.bm==null?M.blend.wm:S.bm, C=M.blend.curve;
   el.textContent=`Vegas share ${Math.round((1-v)*100)}%. 0% = Vegas line, 100% = model; the roster-age term stays at every mix. Past 330 preseasons at this mix: average miss ${curveAt('rmse').toFixed(2)} wins (best ${Math.min(...C.rmse).toFixed(2)} near 35-40%; at 0% ${C.rmse[0].toFixed(2)}, at 100% ${C.rmse[C.rmse.length-1].toFixed(2)}). Default ${Math.round(M.blend.wm*100)}% was fit on those seasons. Odds uncertainty widens a little away from the best mix. Only affects the forecast columns and odds, not player ratings or the accuracy box.`; }
 bmNote();
@@ -936,7 +938,7 @@ $('resetW').addEventListener('click',()=>{ S={...DEF}; syncSliders(); changed(tr
 
 // ---------- state
 function curveAt(k){ const C=M.blend.curve, v=S.bm==null?M.blend.wm:S.bm, u=Math.max(0,Math.min(1,v))/0.05, i=Math.min(Math.floor(u),C.wm.length-2), f=u-i; return C[k][i]+(C[k][i+1]-C[k][i])*f; }
-function blendTau(){ return Math.abs((S.bm==null?M.blend.wm:S.bm)-M.blend.wm)<1e-9?M.blend.tau:curveAt('tau'); }
+function blendTau(){ if(PURE) return M.blend.tau; return Math.abs((S.bm==null?M.blend.wm:S.bm)-M.blend.wm)<1e-9?M.blend.tau:curveAt('tau'); }
 let P=null, SIMR=null, SIMB=null, SIMM=null, simTimer=0, baseRank=null;
 const base=E.backtest(DEF);
 $('base').textContent=`Default weights: ${base.rmse.toFixed(2)} points, ${(base.win*100).toFixed(1)}% of winners.`;
@@ -1080,7 +1082,7 @@ function runSim(){
     SIMB=SEASON?E.simulate(P.team.map(x=>x.bmargin), seasonTau(), NSIM, {sched:REMF, adj:REMA, w0:W0, pd:PD}):E.simulate(P.team.map(x=>x.bmargin), blendTau(), NSIM, {pd:PD});
     $('simnote').textContent=`${NSIM.toLocaleString()} simulated seasons`; renderStandings(); renderTonight();
     // model alone (regular season only), for the win-distribution outline in the team view
-    simTimer=setTimeout(()=>{ const tm=M.blend.tau_model||blendTau();
+    if(!PURE) simTimer=setTimeout(()=>{ const tm=M.blend.tau_model||blendTau();
       SIMM=SEASON?E.simulate(P.team.map(x=>x.margin), SZ.tau*tm/M.blend.tau, NSIM, {sched:REMF, adj:REMA, w0:W0, noPost:true}):E.simulate(P.team.map(x=>x.margin), tm, NSIM, {noPost:true});
       if(openTeams.size) renderStandings(); },30); },250);
 }
@@ -1093,9 +1095,10 @@ const openTeams=new Set();
 function strip(x,s){
   let g=''; for(let v=20;v<=65;v+=5) g+=`<span class="grid" style="left:${ax(v)}%"></span>`;
   const band=s?`<span class="band" style="left:${ax(s.p10)}%;width:${ax(s.p90)-ax(s.p10)}%"></span>`:'';
-  return `<div class="strip" role="img" aria-label="Forecast ${x.bw.toFixed(1)} wins, model ${x.mw.toFixed(1)}${SEASON?'':`, line ${x.line}`}">${g}${band}${SEASON||x.line==null?'':`<span class="mk" style="left:${ax(x.line)}%"></span>`}<span class="md" style="left:${ax(x.mw)}%"></span><span class="fc" style="left:${ax(x.bw)}%"></span></div>`;
+  return `<div class="strip" role="img" aria-label="JIMBO ${x.bw.toFixed(1)} wins${SEASON?'':`, line ${x.line}`}">${g}${band}${SEASON||x.line==null?'':`<span class="mk" style="left:${ax(x.line)}%"></span>`}${PURE?'':`<span class="md" style="left:${ax(x.mw)}%"></span>`}<span class="fc" style="left:${ax(x.bw)}%"></span></div>`;
 }
 function wfLegend(){ const B=M.blend, adj=P?P.team[0].padj:0;
+  if(PURE){ $('wflegend').innerHTML=`<span><b>How the forecast is built:</b> JIMBO alone: player ratings × projected minutes, simulated ${NSIM.toLocaleString()} times. The Vegas line is shown beside it as a yardstick and does not enter the forecast.${Math.abs(adj)>=0.05?` Every team shifts ${fmt(adj)} so the league totals 1,230 wins.`:''}</span>`; return; }
   $('wflegend').innerHTML=`<span><b>How the forecast is built:</b> 41 + ${Math.round((S.bm==null?B.wm:S.bm)*100)}% of the model's distance from 41 + ${Math.round((1-(S.bm==null?B.wm:S.bm))*100)}% of the market's + a roster-age term (${(-B.wa).toFixed(2)} wins per year younger than the league). ${Math.abs(adj)>=0.05?`Age adj includes ${fmt(adj)} for every team so the league totals 1,230 wins.`:''}</span>
 `; }
 function axisHead(){ let s=''; for(let v=20;v<=60;v+=10) s+=`<span style="left:${ax(v)}%">${v}</span>`; return `<div class="axis">${s}</div>`; }
@@ -1129,7 +1132,7 @@ function poPath(x){
 // win distribution: final wins across the simulated seasons (forecast = bars, model alone = outline)
 function winsHist(x){
   const s=SIMB&&SIMB[x.i]; if(!s||!s.hist) return '';
-  const m=SIMM&&SIMM[x.i]&&SIMM[x.i].hist?SIMM[x.i]:null, n=s.n, line=x.line;
+  const m=!PURE&&SIMM&&SIMM[x.i]&&SIMM[x.i].hist?SIMM[x.i]:null, n=s.n, line=x.line;
   const f=s.hist.map(c=>c/n), g=m?m.hist.map(c=>c/m.n):null;
   // range: where either distribution has mass (>=0.05% of seasons), padded; at least 24 wins wide
   const has=w=>f[w]>=0.0005||(g&&g[w]>=0.0005);
@@ -1153,9 +1156,9 @@ function winsHist(x){
     <div class="whplot">${lineLab}<svg viewBox="0 0 ${N} 100" preserveAspectRatio="none" role="img" aria-label="${x.t} win distribution: forecast ${s.mean.toFixed(1)} wins, middle 80% ${s.p10} to ${s.p90}">
       <line x1="0" x2="${N}" y1="100" y2="100" class="ax" vector-effect="non-scaling-stroke"/>${bars}${g?`<path d="${step}" class="mdl" vector-effect="non-scaling-stroke"/>`:''}</svg></div>
     <div class="whaxis"><span class="mfc" style="left:${xp(x.bw)}%" title="Forecast ${x.bw.toFixed(1)} wins"></span>${m?`<span class="mmd" style="left:${xp(x.mw)}%" title="Model alone ${x.mw.toFixed(1)} wins"></span>`:''}${tk.map(v=>`<span class="t" style="left:${xp(v)}%">${v}</span>`).join('')}</div>
-    <div class="cleg"><span><i class="lo"></i>Forecast, over the line</span><span><i class="lu"></i>Forecast, under</span><span><i class="lf"></i>Forecast ${x.bw.toFixed(1)}</span>${m?`<span><i class="lm"></i>Model alone ${x.mw.toFixed(1)} (outline, ring)</span>`:''}</div></div>`;
+    <div class="cleg"><span><i class="lo"></i>${PURE?'JIMBO':'Forecast'}, over the line</span><span><i class="lu"></i>${PURE?'JIMBO':'Forecast'}, under</span><span><i class="lf"></i>${PURE?'JIMBO':'Forecast'} ${x.bw.toFixed(1)}</span>${m?`<span><i class="lm"></i>Model alone ${x.mw.toFixed(1)} (outline, ring)</span>`:''}</div></div>`;
 }
-function whRead(el){ const wh=el.closest('.wh'); if(!wh) return; const w=+el.dataset.wh, s=SIMB&&SIMB[E.TI[wh.dataset.whteam]], m=SIMM&&SIMM[E.TI[wh.dataset.whteam]]; if(!s) return;
+function whRead(el){ const wh=el.closest('.wh'); if(!wh) return; const w=+el.dataset.wh, s=SIMB&&SIMB[E.TI[wh.dataset.whteam]], m=!PURE&&SIMM&&SIMM[E.TI[wh.dataset.whteam]]; if(!s) return;
   const f=s.hist[w]/s.n, cum=s.hist.slice(0,w+1).reduce((a,b)=>a+b,0)/s.n;
   wh.querySelector('.whread').textContent=`${w} wins in ${(f*100).toFixed(1)}% of seasons${m?` (model alone ${(m.hist[w]/m.n*100).toFixed(1)}%)`:''}. ${w} or fewer: ${pct(cum)}.`;
   wh.querySelectorAll('rect.hit.on').forEach(r=>r.classList.remove('on')); el.classList.add('on'); }
@@ -1165,12 +1168,12 @@ $('standings').addEventListener('mouseout',e=>{ const wh=e.target.closest&&e.tar
 // The sorted column is always shown, even where it is normally hidden on small screens.
 const ST_COLS=[
   {k:'rec', lab:'Record', l:1, only:()=>ANYPLAYED, v:(x)=>x.w+x.l?x.w/(x.w+x.l):0.5, td:x=>`${x.w}-${x.l}`},
-  {k:'bw', lab:'Forecast', v:x=>x.bw, td:x=>`<span class="val">${x.bw.toFixed(1)}</span>`, raw:1},
-  {k:'mw', lab:'Model', tip:'The model alone', v:x=>x.mw, td:x=>x.mw.toFixed(1)},
-  {k:'line', lab:'Line', tip:'Vegas win-total line', only:()=>!SEASON, v:x=>x.line, td:x=>x.line},
-  {k:'agea', lab:'Age adj', tip:'Roster-age adjustment in the forecast (younger rosters have beaten the market), including the league re-centering', v:x=>x.pa+x.padj, td:x=>fmt(x.pa+x.padj), c:x=>cls(x.pa+x.padj)},
-  {k:'edge', lab:'Forecast vs line', only:()=>!SEASON, tip:'Forecast minus the line (includes the roster-age adjustment)', v:x=>x.bw-x.line, td:x=>fmt(x.bw-x.line), c:x=>Math.abs(x.bw-x.line)>=2?cls(x.bw-x.line):''},
-  {k:'pover', lab:'Over line', only:()=>!SEASON, tip:'Chance the forecast finishes over the betting line', hide:'hide-m', v:(x,s)=>s?s.pover:-1, td:(x,s)=>s?pct(s.pover):'–'},
+  {k:'bw', lab:PURE?'JIMBO':'Forecast', tip:PURE?'JIMBO forecast wins (no Vegas input)':undefined, v:x=>x.bw, td:x=>`<span class="val">${x.bw.toFixed(1)}</span>`, raw:1},
+  {k:'mw', lab:'Model', tip:'The model alone', only:()=>!PURE, v:x=>x.mw, td:x=>x.mw.toFixed(1)},
+  {k:'line', lab:PURE?'Vegas':'Line', tip:'Vegas win-total line (yardstick only)', only:()=>!SEASON, v:x=>x.line, td:x=>x.line},
+  {k:'agea', lab:'Age adj', only:()=>!PURE, tip:'Roster-age adjustment in the forecast (younger rosters have beaten the market), including the league re-centering', v:x=>x.pa+x.padj, td:x=>fmt(x.pa+x.padj), c:x=>cls(x.pa+x.padj)},
+  {k:'edge', lab:PURE?'JIMBO vs Vegas':'Forecast vs line', only:()=>!SEASON, tip:PURE?'JIMBO forecast minus the Vegas line':'Forecast minus the line (includes the roster-age adjustment)', v:x=>x.bw-x.line, td:x=>fmt(x.bw-x.line), c:x=>Math.abs(x.bw-x.line)>=2?cls(x.bw-x.line):''},
+  {k:'pover', lab:'Over line', only:()=>!SEASON, tip:PURE?'Chance JIMBO\'s simulated seasons finish over the Vegas line':'Chance the forecast finishes over the betting line', hide:'hide-m', v:(x,s)=>s?s.pover:-1, td:(x,s)=>s?pct(s.pover):'–'},
   {k:'po', lab:'Playoffs', v:(x,s)=>s?s.po:-1, td:(x,s)=>s?pct(s.po):'–'},
   {k:'title', lab:'Title', only:()=>!SEASON, hide:'hide-s', v:(x,s)=>s?s.title:-1, td:(x,s)=>s?pct(s.title):'–'},
   {k:'net', lab:'Net rtg', only:()=>!SEASON, tip:'Team rating, points per 100 possessions vs average', hide:'hide-m', v:x=>x.net, td:x=>fmt(x.net), c:x=>cls(x.net)},
@@ -1185,7 +1188,7 @@ function stCtl(){
   const cols=ST_COLS.filter(c=>!c.only||c.only());
   if(!cols.some(c=>c.k===ST.k)) ST.k='bw';
   $('stview').value=ST.view;
-  $('stsort').innerHTML=cols.map(c=>`<option value="${c.k}">Sort by ${c.lab.toLowerCase()}</option>`).join('');
+  $('stsort').innerHTML=cols.map(c=>`<option value="${c.k}">Sort by ${/^(JIMBO|Vegas)/.test(c.lab)?c.lab:c.lab.toLowerCase()}</option>`).join('');
   $('stsort').value=ST.k; const nw=window.matchMedia('(max-width:640px)').matches;
   $('stdir').textContent=ST.dir<0?(nw?'↓':'↓ High to low'):(nw?'↑':'↑ Low to high'); }
 window.matchMedia('(max-width:640px)').addEventListener('change',()=>renderStandings());
@@ -1428,7 +1431,7 @@ function renderGV(){
     <span class="at">at</span><div class="gside"><span class="gpct">${Math.round(g.ph*100)}%</span><span class="gvteam">${g.home}</span><span class="note">home${rec(H.x)}</span></div></div>
   <div class="pbar" aria-hidden="true"><span style="width:${(1-g.ph)*100}%"></span></div>
   <div class="cards gvcards">
-    <div class="card"><div class="k">JIMBO spread</div><div class="v">${esc(mTxt(g.sp,g))}</div><div class="s">model alone: ${esc(mTxt(g.spm,g))}</div></div>
+    <div class="card"><div class="k">JIMBO spread</div><div class="v">${esc(mTxt(g.sp,g))}</div>${PURE?'<div class="s">no Vegas input</div>':`<div class="s">model alone: ${esc(mTxt(g.spm,g))}</div>`}</div>
     <div class="card"><div class="k">Market</div><div class="v">${ms!=null?esc(g.line):'–'}</div><div class="s">${ms!=null?`${esc(mTxt(ms,g))}${g.total?` · total ${g.total}`:''}`:'line not posted yet'}</div></div>
     ${ms!=null?`<div class="card"><div class="k">JIMBO vs market</div><div class="v ${Math.abs(g.sp-ms)>=3?cls(g.sp-ms):''}">${fmt(g.sp-ms)}</div><div class="s">points, for ${g.home}</div></div>`:''}
   </div>`;
@@ -1446,12 +1449,12 @@ function renderGV(){
     ${r3('Lineup strength tonight','Net rating per 100 possessions vs the league, from the expected rotations below',A.lin,H.lin,H.lin-A.lin,'sub')}
     ${r3('Lineup strength in points',`× league pace ${pace.toFixed(1)} possessions ÷ 100`,A.pts,H.pts,H.pts-A.pts)}
     ${r3('In-season team adjustment',offD,A.off,H.off,H.off-A.off)}
-    ${r3('Forecast blend',`Pull toward the market's season view and roster age, weight ${decTxt} now (fades as games are played)`,A.bl,H.bl,H.bl-A.bl)}
+    ${PURE?'':r3('Forecast blend',`Pull toward the market's season view and roster age, weight ${decTxt} now (fades as games are played)`,A.bl,H.bl,H.bl-A.bl)}
     ${(g.rs||(g.b2b&&(g.b2b[0]||g.b2b[1])))?r3('Back-to-back',(g.b2b&&g.b2b[0]&&g.b2b[1])?`Both teams on the second night of a back-to-back: ${SZ.cfg&&SZ.cfg.b2b||2} points off each side, cancels out`:`Second night of a back-to-back: ${SZ.cfg&&SZ.cfg.b2b||2} points off (fatigue plus rest days for regulars; 2015-25 games)`,g.b2b&&g.b2b[1]?-(SZ.cfg.b2b||2):0,g.b2b&&g.b2b[0]?-(SZ.cfg.b2b||2):0,g.rs||0):''}
     ${r3('Home court','',null,M.hca,M.hca)}
     ${r3(`Expected margin: ${esc(mTxt(g.sp,g))}`,'',null,null,g.sp,'tot')}
     </tbody></table></div>
-    <p class="note" style="margin-top:8px">Win chance = Φ(margin ÷ ${M.sig}) = <b>${pct(g.ph)}</b> for ${g.home}. The model alone (no forecast blend) gives ${g.home} ${pct(g.phm)}.</p></div>`;
+    <p class="note" style="margin-top:8px">Win chance = Φ(margin ÷ ${M.sig}) = <b>${pct(g.ph)}</b> for ${g.home}.${PURE?'':` The model alone (no forecast blend) gives ${g.home} ${pct(g.phm)}.`}</p></div>`;
   // rotations
   h+=`<div class="pvsec"><h3>Expected rotations</h3><p class="note">Expected minutes tonight: each player's minutes in the games he plays (this season blended with his preseason projected role; injury absences don't count, healthy scratches count as 0), trimmed to 240 per team starting with the players least likely to play. Out = 0; a day-to-day player plays or sits with equal odds, so his number is the average and his full minutes if he plays are noted. Your edits included. This is the expected rotation, not a starting lineup; starters are announced about 30 minutes before tip. Tap a player for his page; Edit changes tonight's odds right away.</p>
     <div class="gvrot">${rotHTML(A,g)}${rotHTML(H,g)}</div></div>`;
@@ -2014,7 +2017,7 @@ function renderAcc(){
   if(Math.abs(d)<0.0005){ el.textContent='Same as default weights.'; el.className='delta'; }
   else { el.textContent=`${d<0?'Better':'Worse'} than default by ${Math.abs(d).toFixed(3)} points per game.`; el.className='delta '+(d<0?'better':'worse'); }
 }
-function renderSetSum(){ const nw=Object.keys(DEF).filter(k=>Math.abs((S[k]==null?DEF[k]:S[k])-DEF[k])>(k==='bm'?0.004:1e-9)).length, np=Object.keys(OV).length;
+function renderSetSum(){ const nw=Object.keys(DEF).filter(k=>!(PURE&&k==='bm')&&Math.abs((S[k]==null?DEF[k]:S[k])-DEF[k])>(k==='bm'?0.004:1e-9)).length, np=Object.keys(OV).length;
   $('setSum').innerHTML=(nw||np)?[nw?`<b>${nw} slider${nw>1?'s':''} changed</b>`:'Default weights',np?`<b>${np} player change${np>1?'s':''}</b>`:'no player changes'].join(' · '):'Default weights · no player changes · tap to adjust sliders'; }
 function renderAll(){ renderStandings(); renderPlayers(); renderChanges(); renderAcc(); renderPV(); renderSetSum(); renderTonight(); renderGV(); }
 
@@ -2059,7 +2062,7 @@ if(window.claude&&window.claude.use){
   const hdr=t=>({Authorization:`Bearer ${t}`, Accept:'application/vnd.github+json'});
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
   let D, SZ, hist=null, remote=null;
-  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=6cdbe22146',{}), getJSON('data/latest.json')]); }
+  try{ say('Loading the model…'); [D,SZ]=await Promise.all([getJSON('data/dash.json?v=0091c87613',{}), getJSON('data/latest.json')]); }
   catch(e){ say('Could not load data. Check your connection and reopen.'); return; }
   try{ hist=await getJSON('data/history.json'); }catch(e){}
   let vg=null; try{ vg=await getJSON('data/vegas.json'); }catch(e){}

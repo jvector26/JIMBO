@@ -1,8 +1,8 @@
 {
- "w_model": 0.3833802388094998,
- "w_vegas": 0.6166197611905002,
- "w_age": -0.577977635732652,
- "tau_blend": 2.744883986468334,
+ "w_model": 1.0,
+ "w_vegas": 0.0,
+ "w_age": 0.0,
+ "tau_blend": 3.0117,
  "tau_model": 3.0117,
  "min_age_mult": {
   "<=22": 1.105,
@@ -14,5 +14,12 @@
  },
  "constrained": true,
  "tau_cal": 1.1365,
- "tau_note": "2026-10-06 session 21: tau_blend and tau_model scaled by tau_cal so preseason p10-p90 win ranges cover ~80% (12-season nightly replay: fitted 2.42 covered ~73%). refit_blend.py applies tau_cal; regenerate blend_curve tau from tau_blend."
+ "tau_note": "2026-10-06 session 21: tau_blend and tau_model scaled by tau_cal so preseason p10-p90 win ranges cover ~80% (12-season nightly replay: fitted 2.42 covered ~73%). refit_blend.py applies tau_cal; regenerate blend_curve tau from tau_blend.",
+ "prev_vegas_blend": {
+  "w_model": 0.3833802388094998,
+  "w_vegas": 0.6166197611905002,
+  "w_age": -0.577977635732652,
+  "tau_blend": 2.744883986468334
+ },
+ "pure_note": "2026-11-09 session 47, user decision: headline forecast = PURE JIMBO, Vegas shown beside it as a yardstick only. w_model 1, w_vegas 0, w_age 0 (model-only roster-age term tested: coef +0.08 wins/yr, LOSO 8.640 -> 8.662, worse), tau_blend = tau_model. Old values in prev_vegas_blend and data/blend_vegas_until_2026-11-09.json. refit_blend.py would overwrite this file: do not run it into production without re-applying."
 }

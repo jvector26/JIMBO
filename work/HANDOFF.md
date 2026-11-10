@@ -20,10 +20,16 @@ Line alone 12.878; with JIMBO 12.849 (trailing minutes) = all JIMBO adds beyond 
 Re-scored near-misses: Elo input, w_off 0.4, neff shrink, and the production judgment shrink all < 0.004, |t| < 2: none registers.
 USER DIRECTION 2026-11-09: he does not bet and does not want a model that adds signal on top of Vegas. The line is a YARDSTICK only.
 Goal = ground-up first-principles forecast. DECISION: headline forecast = PURE JIMBO, Vegas shown beside it as the yardstick.
-NOT IMPLEMENTED YET (needs its own session + his OK on details): win-total forecast is still 0.383 model / 0.617 Vegas / roster-age term
-(blend.json; app + artifact slider default bm), nightly margins still carry the preseason gap (teams_pre blend - model) x 20/(20+g).
-Open details to settle with him: what replaces the roster-age term (it was fitted on the blend), tau (model alone 3.01), whether the
-blend stays as a labelled column, vs Vegas tab history (tag rows by model version).
+SHIPPED 2026-11-09 evening (user "ship the design changes to make JIMBO the headline"): blend.json w_model 1, w_vegas 0, w_age 0,
+tau_blend = tau_model 3.0117 (old values kept in blend.json prev_vegas_blend). Roster-age term dropped: tested on the model alone
+first (coef +0.08 wins/yr, LOSO 8.640 -> 8.662, worse), so nothing replaces it. Template dash_v2.html: PURE flag (= blend.json wm 1 and
+wa 0; restoring the old blend.json restores the old page): forecast column "JIMBO", Model and Age adj columns hidden, "Line" -> "Vegas",
+"JIMBO vs Vegas", model-vs-Vegas slider and model-alone outline/ring removed, tonight game page drops the "Forecast blend" row,
+legend + "How it works" rewritten. overrides.json sliders.bm -> 1.0. Chain rebuilt pinned DEPTH_DATE=20261020 (state/2026 changed only
+config.json tau_pre and teams_pre.csv; gap0 now <= 0.02 = league re-centering only). Nightly forecasts moved up to 4 wins
+(WAS -3.9, IND -3.7, PHI -3.6 ... GSW +2.9). The team wins-over-time chart shows the step on 11-10; the vs Vegas log's JIMBO margins
+before 11-10 include the old preseason Vegas term (gap0 x 20/(20+g), now ~0). In-season standings still show no Vegas column (as
+before; game-level yardstick = vs Vegas tab + tonight cards). DO NOT run refit_blend.py into production without re-applying the pure values.
 GAP MAP done (RESEARCH_LOG "GAP MAP", code/lines/gap_map.py): standalone gap to the line 0.24 = back-to-back ~20% (already in production)
 + who plays tonight ~40% + ~40% remainder, of which 71% sits in games with thin-history players (rookies/newcomers 25%+ of minutes or
 fresh acquisitions 10%+), mostly late-season bad teams. With known rosters and minutes JIMBO is level with the line (+0.04, se .03).
@@ -307,7 +313,8 @@ by ~0.03 wins between runs. The dashboard pins its schedule in data/dash_sched_2
 - Team: net = sum(rating x min)/3936 zero-summed; margin = net x pace/100; wins via sim (game p = Phi((dm + 2.6)/12.8)).
   Playoffs (2026-10-07): play-in + series use playoff strength = margin + 0.5 x playoff-minutes change (model/po.json,
   clipped to the 2014-25 range) and series home court 4.0 (play-in 2.6). Same code in nightly, simulate.py, app/dashboard JS.
-- Forecast blend (blend.json, constrained): 41 + 0.383(model-41) + 0.617(Vegas-41) - 0.578(roster age - avg);
+- Forecast = JIMBO ALONE since 2026-11-09 (blend.json w_model 1, w_vegas 0, w_age 0; Vegas = yardstick only). Old blend, kept for reference:
+  41 + 0.383(model-41) + 0.617(Vegas-41) - 0.578(roster age - avg);
   tau 2.745 (model alone 3.01; = fitted x tau_cal 1.1365, replay-calibrated 2026-10-06). Vegas lines data/win_totals_2026.csv (BetMGM ~Sep 11). Dashboard has a model-vs-Vegas slider.
   The age term is fitted on the blend (it corrects a bias Vegas and the model share), so it stays outside the model column;
   possible later test: a model-only roster-age term in the preseason backtest, then refit the blend (user: "fine as is" for now).
