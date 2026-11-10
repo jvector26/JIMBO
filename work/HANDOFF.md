@@ -1,11 +1,20 @@
 # JIMBO handoff: current state (read this first)
 JIMBO = judgment-induced model for basketball outcomes. NBA 2026-27 player ratings, minutes, team win totals, playoff odds,
-game odds, nightly in-season updates. Updated 2026-11-09 (session 47: historical lines test; session 38: consistent availability; session 35: matchups tab removed, injury box; session 34: NO MORE ZIP; everything lives in the repo, sandbox tree in work/). 
+game odds, nightly in-season updates. Updated 2026-11-10 (session 48: learning-speed check; session 47: historical lines test; session 38: consistent availability; session 35: matchups tab removed, injury box; session 34: NO MORE ZIP; everything lives in the repo, sandbox tree in work/). 
 Full history of every test and decision: RESEARCH_LOG.md (1,650 lines; don't read it whole:
 `grep -n "^## " RESEARCH_LOG.md`, then read the section you need).
 Design spec (Claude Doc): https://claude.ai/code/artifact/e5eebcf8-5649-4c33-b974-23aa18e5c675
 To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs work/setup.sh, reads this file (repo CLAUDE.md says the same).
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
+
+## SESSION 48 (2026-11-10, user: "speed of learning from this season's games may be uncalibrated, let's investigate") -- RESEARCH ONLY, NOTHING CHANGED
+RESEARCH_LOG "IN-SEASON LEARNING SPEED"; code/learnspeed/ (ls_preds.py grid, ls_score1-3.py). Answer: it IS calibrated. 2014-25, next-game
+predictions from daily checkpoints, actual and pregame (trailing) minutes. Slope on the in-season update ~1 overall and in every stage
+(0.92-1.27, se ~.1); RAPM lam 6000 and box weight 1 are the optimum of a 4 x 6 grid (lam 3000 +0.007, 12000 +0.024); recency decay,
+stage-varying lam, other no-history prior weights, team-offset lam 20-320: all worse or flat. Same for rest-of-season from checkpoints
+10-55. The games 10-25 gap to the line (+0.21) is not learning speed (faster is worse there). One lead, FAILS the bar: rated players
+with a thin record (< 3,000 decayed poss) have update slope 1.5-1.8 (t 3.8-5.0), but halving their RAPM penalty gives -0.013 (t -2.5)
+with actual minutes and only -0.0055 (t -1.5) with pregame minutes, ~0 in 2014-19. "Learning speed" is off the lead list.
 
 ## SESSION 47 (2026-11-09, user asked for a critique of the approach, then "go" on item 1) -- RESEARCH ONLY, NOTHING CHANGED
 Critique (project doc claude/approach_critique_and_lines_test_2026-11-09.md): effort is on rating tweaks worth 0.003-0.03 while minutes

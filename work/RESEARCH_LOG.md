@@ -2036,3 +2036,41 @@ newcomer/rookie values score worse. Keep slope, unrated, rookie mapping. The one
 is the split: players who join after opening night are ~2-3 pts/100 worse than the flat value (2SLS -6.5 vs -4.3; in-season harness,
 first-half shares: -3.1, t -5.5); it cannot be checked on the preseason backtest (they are not on opening rosters) and its measured
 game gain is small (-0.018, t -1.8) -> judgment call only. Thin-sample veterans: three weak same-sign signals, fails every bar.
+
+## IN-SEASON LEARNING SPEED: IS IT CALIBRATED?  [2026-11-10, session 48, user "let's investigate"] -> YES, CALIBRATED; NOTHING CHANGED
+Code: code/learnspeed/ (ls_preds.py = grid of in-season updates per checkpoint, ~35 s/season after rebuild_git.sh 2013 2025; ls_lib.py;
+ls_score1/2/3.py). Outputs /home/claude/ls (not in repo). Why: M4 settings (box dS 1, H0 2000, RAPM lam 6000, team offsets lam 80) were
+picked 2026-09-19 from a coarse grid at 9 checkpoints on all-later-games; never checked on next-game predictions, by stage or by player type.
+Setup: 2014-25, every game predicted from the latest daily checkpoint (as production), 13,862 games with 3+ prior team games;
+minutes a = actual, t = trailing 5-game (pregame-knowable). LOSO calibration, season-paired t, halves 2014-19 / 2020-25.
+Baselines (a | t): preseason ratings only 13.272 | 13.394; M4 13.021 | 13.132; + offsets 12.993 | 13.106; + B2B 12.969 | 13.065.
+1. CALIBRATION SLOPES (margin ~ pre + box delta + RAPM delta; 1 = right speed, > 1 too slow, < 1 too fast):
+   all games: pre 1.00 | 1.02, box 0.83 (se .18) | 0.96 (.19), RAPM 1.13 (.10) | 1.13 (.11). Total update by stage (a | t):
+   games 5-10 0.92 | 1.04, 10-25 0.93 | 1.01, 25-50 0.95 | 1.03, 50-70 1.09 | 1.15, 70+ 1.27 | 1.15 (se .09-.15; .3-.4 before game 10).
+   Nothing differs from 1 by 2 se. Mild drift from slightly-fast early to slightly-slow late.
+2. GRID (dRMSE vs production; a | t): lam 750 +0.140 | +0.100; 1500 +0.053 | +0.042; 3000 +0.007 | +0.006; 12000 +0.024 | +0.023;
+   24000 +0.065 | +0.063. Box weight dS 0.5 -0.003 | +0.000; 2 +0.011 | +0.005; 4 +0.033 | +0.017. Production is the grid optimum, and
+   in every stage except 70+ with actual minutes (lam 3000: -0.018 a, +0.001 t). Full 4 x 6 grid: no better cell.
+3. VARIANTS (a | t): lam 3000 after game 50: -0.006 (t -1.3) | -0.002 (t -0.4). Within-season recency decay of stints (tau 45/90 days):
+   +0.010 to +0.033, worse 9-12 of 12 seasons. No-history box prior H0 500 +0.024 | +0.010; 1000 +0.007 | +0.001; 4000 +0.002 | +0.005.
+   Dropping the box update +0.038 | +0.046 (it matters late: +0.09-0.11 at 70+). Free slopes on pre/box/RAPM: +0.003 | +0.004.
+4. BY PLAYER GROUP (slope on that group's update; a | t): no NBA history 1.19 (se .19) | 1.30 (.21); rated but thin history (< 3,000
+   decayed poss) 1.77 (.15, t +5.0) | 1.49 (.13, t +3.8); under 24: 0.97 | 1.02; 24-29: 0.82 (t -2.0) | 0.89; 30+: 0.84 | 1.06.
+   So thin-history veterans look learned too slowly. Direct fix (their RAPM penalty x0.5, rising to full at 5,000 poss):
+   -0.013 (t -2.5, 9/12, halves -.003/-.022) | -0.0055 (t -1.5, 7/12, halves +.002/-.012). x0.25: -0.017 (t -1.6) | -0.003 (t -0.5).
+   Free group slopes LOSO: -0.009 (t -1.7) | +0.001. FAILS the bar, and the pregame-minutes version is half the actual-minutes one
+   (same endogenous-minutes pattern as the session 47 thin-history tests).
+5. REST OF SEASON (what the win forecast needs; checkpoints 10/20/30/41/55, all later games, actual minutes): lam 3000 +0.030/+0.024/
+   +0.009/+0.009/-0.006; lam 12000 +0.005/+0.010/+0.019/+0.018/+0.030; team rest-of-season margin error moves the same way. 6000 stays.
+6. TEAM OFFSETS: slope on the offset 0.86 (se .12) | 0.83 (.13), flat by stage (0.8-0.9): if anything slightly too fast, within 1.4 se.
+   lam 20/40/160/320: +0.003/+0.001/-0.0005/-0.0008 (|t| < 1.6). Daily decay .99/.98: nothing. Player lam 3000 / 12000 re-run with
+   offsets + B2B in place: +0.014 (t +2.4) / +0.003 | +0.015 (t +2.7) / +0.001.
+7. GAMES 10-25 (gap-map lead): gap to the line with offsets + B2B, pregame minutes: 3-10 +0.03, 10-25 +0.21, 25-50 +0.12, 50-70 +0.13,
+   70+ +0.58. In games 10-25 faster learning is WORSE (lam 3000 +0.03) and slower is flat (12000 -0.006 to -0.010). So the 10-25 gap is
+   not learning speed.
+READ: the speed of learning from the current season is calibrated: slopes ~1, production settings at the optimum of every grid, for
+tomorrow's game and for the rest of the season. The September coarse pick holds. One lead that fails the bar: rated players with a thin
+record. Not testable here: 2026-27 live (about 160 games; a slope would carry se ~0.5).
+CAVEATS: grid tested on the same seasons that chose 6000 (but a different target and 9x more checkpoints); t minutes ignore injury
+reports; box and RAPM speeds varied one at a time plus the 4 x 6 grid, no joint refit with the box feature shrinkage constants (250/100/
+150/75/400 attempts, 300 poss); pre_P ratings carry the known small leaks.
