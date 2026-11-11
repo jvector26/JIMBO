@@ -7,6 +7,11 @@ Design spec (Claude Doc): https://claude.ai/code/artifact/e5eebcf8-5649-4c33-b97
 To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs work/setup.sh, reads this file (repo CLAUDE.md says the same).
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
 
+## SESSION 49 (2026-11-11, user: OKC-POR showed final 0-0) -- BUG FIX, gh fc3dfc2
+pipeline/nightly.py: done = date < asof AND status == 3. A late tip still live after midnight ET (status 2, 0-0 in the schedule
+feed) had been logged as a 0-0 result (vegas.json/Tonight results) and credited a phantom away W / home L. Dispatched nightly;
+POR 123-103 OKC now correct.
+
 ## SESSION 48 (2026-11-10, user: "speed of learning from this season's games may be uncalibrated, let's investigate") -- RESEARCH ONLY, NOTHING CHANGED
 RESEARCH_LOG "IN-SEASON LEARNING SPEED"; code/learnspeed/ (ls_preds.py grid, ls_score1-3.py). Answer: it IS calibrated. 2014-25, next-game
 predictions from daily checkpoints, actual and pregame (trailing) minutes. Slope on the in-season update ~1 overall and in every stage
