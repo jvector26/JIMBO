@@ -1,11 +1,22 @@
 # JIMBO handoff: current state (read this first)
 JIMBO = judgment-induced model for basketball outcomes. NBA 2026-27 player ratings, minutes, team win totals, playoff odds,
-game odds, nightly in-season updates. Updated 2026-11-10 (session 48: learning-speed check; session 47: historical lines test; session 38: consistent availability; session 35: matchups tab removed, injury box; session 34: NO MORE ZIP; everything lives in the repo, sandbox tree in work/). 
+game odds, nightly in-season updates. Updated 2026-11-11 (session 50: four fundamentals tests, all fail; session 48: learning-speed check; session 47: historical lines test; session 38: consistent availability; session 35: matchups tab removed, injury box; session 34: NO MORE ZIP; everything lives in the repo, sandbox tree in work/). 
 Full history of every test and decision: RESEARCH_LOG.md (1,650 lines; don't read it whole:
 `grep -n "^## " RESEARCH_LOG.md`, then read the section you need).
 Design spec (Claude Doc): https://claude.ai/code/artifact/e5eebcf8-5649-4c33-b974-23aa18e5c675
 To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs work/setup.sh, reads this file (repo CLAUDE.md says the same).
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
+
+## SESSION 50 (2026-11-11, user picked 4 ideas from a brainstorm: young-player drift, hole in the lineup, transition, garbage time) -- RESEARCH ONLY, NOTHING CHANGED
+RESEARCH_LOG "FOUR FUNDAMENTALS TESTS"; code/fund/ (PREREG.md with expected signs was committed before any result). ALL FOUR FAIL THE BAR.
+Garbage time out of the box stats: +0.0035 (worse, t +1.4). Transition (own volume, on-court offense, on-court defense): offense has the WRONG sign
+(t -2.6 / -2.5), defense right sign but LOSO -0.003 (paired t -0.5); opponent transition frequency allowed is the best variant (coef t -3.4 both halves,
+LOSO -0.009, paired t -1.5). Hole in the lineup: lead-handler coverage +1.7 pts (t 2.9) but halves +0.2/+4.9 and paired t -1.0; rim protector nothing;
+most of the raw effect is the known depleted-team / over-rated-replacement finding. Within-season drift for rookies / second-years: none (pregame +0.0009;
+rookie drift -1.2, wrong sign). LEAD (post hoc, needs a pre-defined test): shot-creation / usage burden (handler coverage at the 70th pct survives the
+depleted-team control, +2.8 t 5.7 both halves; ball-security coverage NEGATIVE t -6.8) -> test "usage sum of tonight's active players vs 100%".
+The brainstorm list also had, untested: G League / overseas prior for call-ups, opponent-adjusted in-season box, live-ball vs dead-ball turnovers,
+assists by shot type, B2B x age and minutes-load fatigue, game-specific spread for win probability, coaching (B3).
 
 ## SESSION 49 (2026-11-11, user: OKC-POR showed final 0-0) -- BUG FIX, gh fc3dfc2
 pipeline/nightly.py: done = date < asof AND status == 3. A late tip still live after midnight ET (status 2, 0-0 in the schedule
@@ -367,6 +378,9 @@ direct test neff t 2.50, 2015-19 t 0.3 / 2020-25 t 4.1; preseason flat; 2026 eff
 defensive on/off-heavy ratings (2026-11-02, Clingan; tail res_d>1.5 t -1.7, lean group +, retest tail after 2026-27) | contested-3 for centers (2026-10-18, Clingan +0.44; centers' coef -0.03 vs non-centers +0.27, difference t -0.7, fails halves;
 user: leave it; retest after 2026-27) | home court recency/level (2026-11-01; level set to 2.0 by user judgment; recency variants = constant; 2.1 vs 2.54 t -2.24, 2.0 t -1.94, all from
 2020-25; JIMBO home +0.94 vs DK line on 88 games; retest level after 2026-27).
+Session 50 (2026-11-11): garbage time out of box stats (wrong sign) | transition own volume / on-court offense / on-court defense (offense wrong sign; opp transition
+frequency allowed t -3.4 but paired LOSO t -1.5) | hole-in-lineup coverage of lead handlers / rim protectors (handler fails halves; rim nothing) |
+within-season drift for rookies / second-years (none).
 APPLIED over time: always-five-starters role rule (user call, 2026-10-09), thin-sample lineup shrink (judgment, 2026-10-07), playoff minutes (half weight, 2026-10-07), lineup 0.6/0.8 split, dreb 0.5x, box decay (.1,.4,1), age-curve refit, slope refit, 3PT talent prior,
 college rookie prior, returner -0.35, hustle term, minutes recal, depth-chart tiers, game-level tonight minutes.
 
@@ -383,9 +397,8 @@ notifications | coaching effect (B3) | split 3PT bar into volume vs accuracy (UI
 2nd/3rd-year players | talent 3P% in stint luck adjustment | team-margin concavity | position-specific spacing/rim/OREB
 weights | NCAA stage A+B refit together (never A alone: rerunning ncaa_model.py alone shifts cscores up to 0.66) |
 app edge case: role edit + team move in one edit | rest/travel/altitude for game odds | teammate-fit interactions in the
-lineup residual (untested beyond DREB / self-creation diminishing returns) | garbage time in box features (user, 2026-10-15): RAPM/stint fits already drop
-garbage stints (impact.load_rows: Q4 start with |margin| >= 20, or last 6 min with >= 15), but features.py box rates and
-on-court possessions include them; test dropping them from the box part (game backtest + preseason as usual) | model-only
+lineup residual (untested beyond DREB / self-creation diminishing returns) | usage / shot-creation burden of tonight's active players (session 50 lead; define before testing) | G League / overseas prior for call-ups | opponent-adjusted
+in-season box | live-ball vs dead-ball turnovers | assists by shot type | B2B x age, minutes-load fatigue | game-specific spread for win probability | model-only
 roster-age term (see blend note; after the opener) | retest after 2026-27:
 sepposs neff shrink, team halo, new-team penalty, young x rating bump, judgment shrink (does it help on 2026-27 preseason ratings?), contested-3 for centers.
 Restored 2026-10-18 from MASTER BACKLOG (RESEARCH_LOG) details that the short list had dropped: alloc_test.py minutes floor 0.25

@@ -2074,3 +2074,50 @@ record. Not testable here: 2026-27 live (about 160 games; a slope would carry se
 CAVEATS: grid tested on the same seasons that chose 6000 (but a different target and 9x more checkpoints); t minutes ignore injury
 reports; box and RAPM speeds varied one at a time plus the 4 x 6 grid, no joint refit with the box feature shrinkage constants (250/100/
 150/75/400 attempts, 300 poss); pre_P ratings carry the known small leaks.
+
+## FOUR FUNDAMENTALS TESTS: young-player drift, hole in the lineup, transition, garbage time  [2026-11-11, session 50, user picked 1/3/6/8 from a brainstorm list] -> ALL FOUR FAIL THE BAR; NOTHING CHANGED
+Code: code/fund/ (PREREG.md = definitions + expected signs, committed de53742 BEFORE any result; parse_x.py + fund_rebuild.sh = extra pbp pass;
+gt_features.py / gt_refit.py / gt_score.py = T8; tr_bt.py / tr_score.py = T6; hole_bt.py / hole_score.py / hole_placebo.py = T3;
+drift_preds.py / drift_score.py = T1). Outputs /home/claude/fund (not in repo; rebuild: rebuild_git.sh 2012 2025, fund_rebuild.sh 2012 2025 ~2.5 min).
+Extra pass: same lineup engine as parse_pbp, box keyed by (player, garbage flag), transition tallies. Box totals reproduce player_games exactly
+(0 differences, 14 seasons). Rebuilt features = data/features.parquet except 5 single player-season cells (same-clock event order).
+T8 GARBAGE TIME OUT OF THE BOX STATS (expected: LOSO lower). Garbage stints = 4.9-7.3% of seconds, 5.7% of possessions. Features barely move
+(r 0.988-1.000 with the current ones for 2,000+ poss players; change sd 3-13% of feature sd). Rebuilt base reproduces 13.4553.
+   No garbage, box + residual refit: 13.4589, +0.0035 (t +1.4, better 4/11, halves +.0039/+.0033). Box part only +0.0033; residual refit only +0.0023.
+   Feature by feature: 12 of 17 worse; d_blk +0.0033 (t +3.1); best d_oppxq -0.0038 (t -1.7), o_ftvol -0.0023 (t -1.5). WRONG SIGN. Rejected.
+   (Test-game margins include garbage time, so what a player does there still counts toward the target.)
+T6 TRANSITION (expected o_trvol +, o_tron +, d_tron -). Transition play = FGA / TOV / FT trip within 7 s of a player defensive rebound or steal:
+   14.5-15.2% of possessions 2012-16, 18.9-19.6% 2017-25 (feed timing changed in 2017-18; rates are centered per season), 1.07-1.12 pts per play.
+   Year-to-year r: own volume .87, on-court offense .47, on-court defense .42. Face validity fine (own volume: Giannis +4.0, LeBron +3.3 ... Lopez -2.1;
+   opp transition pts allowed on court: SGA / Wallace -3.8, Caruso -3.5 ... Claxton +4.1, Kessler +3.8).
+   Primary k 1000, added one at a time to base 13.4553 (coef t season-clustered | LOSO season-paired):
+   o_trvol coef -0.21 t -2.6 (halves -3.3/-1.2), dLOSO -0.0052 paired t -0.9, 8/11  <- WRONG SIGN (transition-heavy scorers slightly over-rated)
+   o_tron  coef -0.06 t -2.5 (-1.2/-4.0), -0.0044, t -0.6, 8/11  <- WRONG SIGN
+   d_tron  coef -0.09 t -2.2 (-3.7/-0.6), -0.0029, t -0.5, 8/11  <- expected sign, fails
+   Joint: -0.0026 (t -0.3, 5/11). k 300 / 3000: same picture. Robustness, opponent transition FREQUENCY allowed on court (plays, not points):
+   coef -0.20 t -3.4 (halves -3.0/-2.4), dLOSO -0.0092, paired t -1.5, 6/11: best of the set, still fails the paired t. Nothing applied.
+T3 HOLE IN THE LINEUP (expected: coverage coefficients > 0). 12,338 games with both teams at game 6+, base 13.4596. Coverage = min(group minutes, 48)/48,
+   minutes = season-to-date mpg of players who appeared tonight. Lead-handler coverage is below 1 in 54% of team-games, below .5 in 18%.
+   Primary (80th pct): handler +1.74 pts (t +2.9; halves +0.2 / +4.9), dLOSO -0.0136, paired t -1.0, 7/11. Rim protector +0.18 (t 0.4), dLOSO +0.0041.
+   Jointly -0.0103 (t -0.8). FAILS (halves, paired t). Actual minutes: same. 90th pct: nothing. 70th pct: handler +4.16 (t 7.4, both halves), -0.048, paired t -3.1.
+   POST HOC (hole_placebo.py) because of the 70th result: the same coverage built on any component is positive (total 70 +2.6 t 4.0; self-creation 70 +3.4;
+   dreb 70 +1.9), and a plain "depleted team" control (trailing minutes of active established players / 240) alone gives -0.0815 (coef +8.0, t 5.6) =
+   the known thin-history finding (replacements over-rated, session 47), not a hole. ON TOP of that control: handler 70 -0.0194 (paired t -2.2, coef +2.8,
+   t 5.7, halves +3.8/+6.2) but handler 80 +0.0014 (nothing); rim protector, 3PT, dreb, perimeter D: nothing; total 80 -0.021 (t -1.4);
+   ball-security 80 coef -1.11 (t -6.8, halves -10.8/-3.3), dLOSO -0.0119, paired t -3.0, 9/11 (teams staffed with low-turnover = low-usage players do
+   worse than their rating sum). 16 post hoc cuts, threshold-dependent: a LEAD, not a result. Read: if there is non-additivity it is about shot creation /
+   usage burden, not rim protection. Clean follow-up (not run): usage sum of tonight's active players vs 100%, defined before looking.
+T1 WITHIN-SEASON DRIFT OF YOUNG PLAYERS (expected: drift > 0). In-season harness as session 48 (13,862 games; stack 12.9687 actual | 13.0647 pregame minutes,
+   matches session 48). Level + drift terms for rookies (R1) and second-year players (R2), prog = team game number / 82.
+   Pregame minutes (decides): drift terms +0.0009 (t +0.5, 6/12, halves +.0062/-.0038); R1 drift -1.20 pts/100 per season (t -2.1; halves +0.7 / -2.6),
+   R2 drift +0.68 (t 0.7). Actual minutes: +0.0027 (worse 12/12); R1 drift -0.13, R2 +0.05; halves flip (+1.9 / -1.7).
+   Other groups (under 23 with 2+ seasons, 32 and over): drift within +-0.4, |t| < 1. No stage where it helps except 70+ pregame (-0.008, driven by the
+   negative rookie term in 2020-25 = late-season tanking minutes, the known thin-history pattern, not development).
+   Level terms with actual minutes: rookies -1.2 (t -2.4), -0.022 LOSO (t -2.2); with pregame minutes 0.0 = the endogenous-minutes artifact again.
+   REJECTED: the in-season learner already keeps up with young players; there is no unmodelled upward drift. The "thin record learned too slowly"
+   slope of session 48 is not a development drift.
+READ: none of the four passes. Three had the wrong sign against the written prediction (T8, T1, T6 offense). Consistent with the gap map: with known
+rosters and minutes the rating formula is not where points are left. One lead worth a properly defined test: shot-creation / usage burden (T3 post hoc).
+Second, weaker: opponent transition frequency allowed (T6 robustness).
+CAVEATS: same 11 seasons as every other test; T3 post hoc cuts are many; T6 timing differs by era; T8 kept the component weights W fixed (fit with garbage
+time in) and left the 3PT shooting prior untouched; research-bar tests use actual minutes for the base prediction.
