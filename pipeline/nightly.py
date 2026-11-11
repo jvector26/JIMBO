@@ -37,13 +37,14 @@ def norm_name(s):
 if a.schedule_from_parsed:
     g = pd.read_parquet(os.path.join(a.parsed, f"games_{S}.parquet"))
     sched = pd.DataFrame({"game": g.game, "date": g.date.astype(int), "home": g.htm, "away": g.vtm,
-                          "home_pts": g.home_pts, "away_pts": g.away_pts})
+                          "home_pts": g.home_pts, "away_pts": g.away_pts, "status": 3})   # parsed games are all final
 else:
     s0 = pd.read_csv(os.path.join(live, "schedule.csv"), dtype={"gameId": str})
     s0 = s0[s0.kind == "reg"]
     sched = pd.DataFrame({"game": s0.game, "date": s0.date_et.str.replace("-", "").astype(int), "home": s0.home,
-                          "away": s0.away, "home_pts": s0.home_pts, "away_pts": s0.away_pts, "time_utc": s0.time_utc})
-done = sched.date < asof_i
+                          "away": s0.away, "home_pts": s0.home_pts, "away_pts": s0.away_pts, "time_utc": s0.time_utc,
+                          "status": s0.status})
+done = (sched.date < asof_i) & (sched.status == 3)   # final only: a late game still live after midnight ET (status 2, 0-0) is not a result
 B2B_H, B2B_A = SIM.b2b_flags(sched)          # session 37: 1 = team also played the day before
 def b2b_adj(g_):  # home-side margin change for one game id
     return -SIM.B2B["beta"] * (B2B_H.get(g_, 0) - B2B_A.get(g_, 0))
