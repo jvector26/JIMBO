@@ -2140,5 +2140,9 @@ READ: real, but not a JIMBO-specific flaw and not a 30-40% feature. 2026-27 so f
 (underdogs at home have been crushed). JIMBO's 30-40% band is calibrated over 12 seasons. Partly luck on a tail (season slopes ranged to 1.23 before),
 partly the spread of team quality this year being wider than the priors. In-season updates should absorb a real spread over the next weeks.
 Options not taken: stretch win probabilities (logistic slope) -> would be fitting 3 weeks of one season; history says slope ~1.
+FOLLOW-UP (same day, user: the line's own 30-40% bucket is 8/26, fine): the two buckets share only 13 games. Shared 13: home won 2 (JIMBO .36,
+line .34, both miss). JIMBO-only 16 (line had them at .31, many .23-.28): won 1. Line-only 13 (JIMBO had them at .41): won 6, so the line's bucket
+looks fine partly because its other half ran hot. Where they differ by 3+ points (59 games) the line was closer (actual - JIMBO -5.0 / +4.5,
+actual - line -0.9 / +0.8), the usual ~3/4 weight on the line seen in the 2015-25 history. Brier .183 JIMBO vs .180 line.
 RECHECK: rerun live_slope.py around game 400 (early Dec). If the slope is still ~1.2+ for JIMBO AND the line, look at whether the preseason
 ratings are too compressed for 2026-27 (team spread vs Vegas win-total spread) rather than at win-probability conversion.
