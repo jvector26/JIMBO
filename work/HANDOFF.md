@@ -7,6 +7,11 @@ Design spec (Claude Doc): https://claude.ai/code/artifact/e5eebcf8-5649-4c33-b97
 To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs work/setup.sh, reads this file (repo CLAUDE.md says the same).
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
 
+## SESSION 51 (2026-11-13, user: calibration chart 30-40% bucket, 3 of 29 home wins: important or noise?) -- RESEARCH ONLY, NOTHING CHANGED
+RESEARCH_LOG "CALIBRATION CHART: THE 30-40% BUCKET"; code/calib/. Real (p ~.002, ~.02 after 10 buckets) but NOT a JIMBO flaw: spread over 17 home
+teams, and the line said 33% on the same 29 games. Both JIMBO and the line are too timid this season (margin slope 1.23 / 1.24; favourites crushing).
+History (preseason ratings, first 175 games 2014-25): 30-40% bucket 84/226 = 37% vs 36% said; no season near 3/29. RECHECK live_slope.py ~game 400.
+
 ## SESSION 50 (2026-11-11, user picked 4 ideas from a brainstorm: young-player drift, hole in the lineup, transition, garbage time) -- RESEARCH ONLY, NOTHING CHANGED
 RESEARCH_LOG "FOUR FUNDAMENTALS TESTS"; code/fund/ (PREREG.md with expected signs was committed before any result). ALL FOUR FAIL THE BAR.
 Garbage time out of the box stats: +0.0035 (worse, t +1.4). Transition (own volume, on-court offense, on-court defense): offense has the WRONG sign

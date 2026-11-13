@@ -2121,3 +2121,24 @@ rosters and minutes the rating formula is not where points are left. One lead wo
 Second, weaker: opponent transition frequency allowed (T6 robustness).
 CAVEATS: same 11 seasons as every other test; T3 post hoc cuts are many; T6 timing differs by era; T8 kept the component weights W fixed (fit with garbage
 time in) and left the 3PT shooting prior untouched; research-bar tests use actual minutes for the base prediction.
+
+## CALIBRATION CHART: THE 30-40% BUCKET  [2026-11-13, session 51, user: "JIMBO has done terrible at 30-40%... important or noise?"] -> RESEARCH ONLY, NOTHING CHANGED
+Code: code/calib/bucket30.py (bucket + team list), live_slope.py (live recalibration fits), hist_early.py (12-season history).
+LIVE (vegas.json asof 11-13, 174 finals): JIMBO 30-40% bucket 29 games, home won 3 (10%) vs said 35.5%. P(<=3 | calibrated) 0.002; with 10 buckets ~0.02.
+- Spread out: 17 different home teams (max 3 games each: BKN, MIL, NOP). Not a few teams JIMBO misrates.
+- The LINE missed the same games: it said 32.6% on those 29 (mean margin JIMBO -4.8, line -5.9, actual -11.4). P(<=3 | line's chances) 0.006.
+  (The line's OWN 30-40% bucket is a different set of 26 games: 8 won, fine.)
+- Whole chart, both models are too timid: final margin = 1.23 x JIMBO (se .16), 1.24 x line (se .15); logistic slope JIMBO 1.85 (se .30),
+  line 1.67 (se .27). Home teams JIMBO <40%: 4/44 won (said 30%); >60%: 77.5% won (said 74%). Favourites have beaten both forecasts.
+  First 87 games slope 1.08 (line 1.17); last 87 1.45 (line 1.31): not fading yet (se ~.23).
+HISTORY (preseason team ratings pre_T_{S}, hca 2.0, sig 12.8; first 175 games of each season 2014-25, 2,100 games; approximation of live JIMBO,
+which also has in-season updates + the preseason Vegas gap term; calib.csv leak as in preseason_backtest):
+- Early-season 30-40% bucket: 84/226 = 37.2% won vs said 35.9%. Calibrated. Margin slope 0.99 (se .06), logistic slope 1.04 (se .08).
+- No season's early 30-40% bucket came close to 3/29 (worst 2/9 in 2016-17, 4/17 in 2014-15). Early home dogs <40%: 17-35% won each season; 2026-27 9%.
+- Early-season margin slope by season 0.72-1.23 (2024-25 1.23, 2025-26 1.15). Whole season 0.84-1.16, no trend.
+READ: real, but not a JIMBO-specific flaw and not a 30-40% feature. 2026-27 so far: favourites are winning by more than JIMBO or Vegas expects
+(underdogs at home have been crushed). JIMBO's 30-40% band is calibrated over 12 seasons. Partly luck on a tail (season slopes ranged to 1.23 before),
+partly the spread of team quality this year being wider than the priors. In-season updates should absorb a real spread over the next weeks.
+Options not taken: stretch win probabilities (logistic slope) -> would be fitting 3 weeks of one season; history says slope ~1.
+RECHECK: rerun live_slope.py around game 400 (early Dec). If the slope is still ~1.2+ for JIMBO AND the line, look at whether the preseason
+ratings are too compressed for 2026-27 (team spread vs Vegas win-total spread) rather than at win-probability conversion.
