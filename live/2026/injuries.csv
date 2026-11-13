@@ -7,7 +7,7 @@ Atlanta Hawks,ATL,Henri Veesaar,Out,2026-09-21T19:50Z,out,,Right,2027-07-01,"Vee
 Boston Celtics,BOS,Paul George,Day-To-Day,2026-11-12T03:01Z,day-to-day,,,2026-11-15,"George (illness) has been ruled out for Wednesday's game against Toronto, Taylor Snow of the Celtics' official site reports."
 Brooklyn Nets,BKN,Nolan Traore,Day-To-Day,2026-11-12T15:02Z,day-to-day,Soreness,Right,2026-11-14,"Traore (calf) has been ruled out for Wednesday's game against the Pelicans, Ian Begley of SportsNet New York reports."
 Brooklyn Nets,BKN,Mikel Brown Jr.,Day-To-Day,2026-11-12T15:02Z,day-to-day,Not Specified,Not Specified,2026-11-14,"Brown has been ruled out for Wednesday's game against the Pelicans due to an illness, Sharif Phillips-Keaton of USA Today reports."
-Charlotte Hornets,CHA,Brandon Miller,Out,2026-11-12T00:06Z,out,Soreness,Right,2026-11-15,Miller (groin) is listed as out for Thursday's game against Phoenix.
+Charlotte Hornets,CHA,Brandon Miller,Day-To-Day,2026-11-13T04:46Z,day-to-day,Soreness,Right,2026-11-15,Miller (groin) is listed as out for Thursday's game against Phoenix.
 Charlotte Hornets,CHA,Kon Knueppel,Out,2026-11-08T22:31Z,out,Strain,Left,2026-12-12,Knueppel (hamstring) was diagnosed with a left hamstring strain Sunday and will be re-evaluated in four weeks.
 Charlotte Hornets,CHA,Dennis Schroder,Out,2026-11-08T22:26Z,out,Strain,Left,2026-11-25,"Schroder has been diagnosed with a left hamstring strain and will be reevaluated in two weeks, Michael Scotto of HoopsHype.com reports."
 Chicago Bulls,CHI,Tobe Awaka,Out,2026-11-12T21:40Z,out,,,2026-11-14,Awaka (back) has been ruled out for Friday's game against the Hawks.
@@ -72,7 +72,7 @@ Orlando Magic,ORL,Jonathan Isaac,Out,2026-11-09T23:10Z,out,Not Specified,Left,20
 Orlando Magic,ORL,Paolo Banchero,Out,2026-10-24T16:47Z,out,Sprain,Right,2026-11-22,"Banchero is expected to be sidelined for the next four-to-six weeks due to a right high-ankle sprain, Shams Charania of ESPN reports."
 Orlando Magic,ORL,Noah Penda,Out,2026-10-17T22:19Z,out,Strain,Right,2026-11-18,"Penda was diagnosed with a partially torn right hamstring Saturday, Jason Beede of the Orlando Sentinel reports."
 Orlando Magic,ORL,Izaiyah Nelson,Out,2026-09-28T21:33Z,out,Surgery,Left,2026-11-18,"Team president Jeff Weltman said Monday that Nelson (ankle) remains about a month away from returning to the court after offseason surgery, per Philip Rossman-Reich of OrlandoMagicDaily.com."
-Philadelphia 76ers,PHI,LeBron James,Out,2026-11-12T18:07Z,out,,,2026-11-15,James (back) is out for Thursday's game against Toronto.
+Philadelphia 76ers,PHI,LeBron James,Day-To-Day,2026-11-13T03:28Z,day-to-day,,,2026-11-15,James (back) is out for Thursday's game against Toronto.
 Philadelphia 76ers,PHI,Dominick Barlow,Out,2026-11-12T16:37Z,out,Fracture,Not Specified,2026-11-18,"Barlow (back) participated in Thursday's shootaround but doesn't have a timeline to return to game action, Ky Carlin of USA Today reports."
 Philadelphia 76ers,PHI,Adem Bona,Out,2026-11-12T16:36Z,out,Sprain,,2026-11-18,"Bona (back) will be re-evaluated in approximately one week after seeing a specialist, Ky Carlin of USA Today reports."
 Philadelphia 76ers,PHI,Ariel Hukporti,Out,2026-10-06T19:17Z,out,Surgery,Right,2027-10-01,"Hukporti has sustained a season-ending ruptured right Achilles tendon, per Shams Charania of ESPN."
@@ -88,7 +88,7 @@ San Antonio Spurs,SA,Devin Vassell,Day-To-Day,2026-11-12T23:07Z,day-to-day,,Left
 San Antonio Spurs,SA,De'Aaron Fox,Day-To-Day,2026-11-12T23:05Z,day-to-day,Soreness,Left,2026-11-13,Fox is questionable for Friday's game against the Warriors due to left hip soreness.
 San Antonio Spurs,SA,Tobias Harris,Out,2026-11-10T22:46Z,out,Strain,Left,2026-11-19,"Harris (calf) is out for Wednesday's game against Chicago, Jared Weiss of The Athletic reports."
 San Antonio Spurs,SA,Jayden Quaintance,Out,2026-10-05T21:43Z,out,Surgery,Right,2026-12-03,"Quaintance has been around the team but has not yet been cleared for basketball activities, Matt Guzman of SI.com reports."
-Toronto Raptors,TOR,Trayce Jackson-Davis,Out,2026-11-12T18:09Z,out,,,2026-11-15,Jackson-Davis is out for Thursday's game against the 76ers due to an illness.
+Toronto Raptors,TOR,Trayce Jackson-Davis,Day-To-Day,2026-11-13T03:27Z,day-to-day,,,2026-11-15,Jackson-Davis is out for Thursday's game against the 76ers due to an illness.
 Toronto Raptors,TOR,Scottie Barnes,Out,2026-11-12T18:05Z,out,Soreness,Left,2026-11-15,Barnes (groin) is out for Thursday's game against Philadelphia.
 Toronto Raptors,TOR,Kawhi Leonard,Out,2026-11-11T22:33Z,out,Inflammation,Left,2026-11-23,"Head coach Darko Rajakovic said Wednesday that Leonard (knee) is doing individual on-court work and is progressing well, Michael Grange of Sportsnet.ca reports."
 Toronto Raptors,TOR,Nate Bittle,Out,2026-11-08T21:20Z,out,Fracture,Right,2026-11-15,Bittle (foot) is listed as out for Monday's game against Memphis.
@@ -96,6 +96,7 @@ Utah Jazz,UTAH,Trey Alexander,Out,2026-11-12T15:42Z,out,Sprain,Right,2026-11-16,
 Utah Jazz,UTAH,Lauri Markkanen,Out,2026-11-11T18:22Z,out,Fracture,Right,2027-01-04,"Markkanen has been diagnosed with a non-displaced fracture in his right hand and will be sidelined for at least one month, Shams Charania of ESPN reports."
 Utah Jazz,UTAH,Jusuf Nurkic,Out,2026-11-06T18:20Z,out,Strain,Right,2026-11-20,"Nurkic (toe) has begun participating in on-court activities as he continues recovering from a right foot injury sustained during an Oct. 4 preseason game against Denver. He will be re-evaluated in two weeks, the Jazz announced Friday."
 Utah Jazz,UTAH,Jaren Jackson Jr.,Out,2026-10-27T19:25Z,out,Not Specified,Right,2026-12-14,"Jackson has been diagnosed with a torn MCL in his right knee and will be sidelined for 6-to-8 weeks, per Shams Charania of ESPN."
+Washington Wizards,WSH,Bub Carrington,Day-To-Day,2026-11-13T03:26Z,day-to-day,,,2026-11-15,Carrington (chest) has been ruled out for the remainder of Thursday's game against the Pistons.
 Washington Wizards,WSH,Tristan Vukcevic,Out,2026-11-08T22:17Z,out,Pinched Nerve,Left,2026-11-16,Vukcevic (hip) has been ruled out for Monday's game against Detroit.
 Washington Wizards,WSH,Reece Beekman,Out,2026-11-02T18:22Z,out,,,2026-12-03,The Wizards announced Monday that Beekman sustained a right acromioclavicular joint injury and will be re-evaluated in approximately three weeks.
 Washington Wizards,WSH,Justin Champagnie,Out,2026-10-28T18:38Z,out,Not Specified,Right,2027-02-25,"Champagnie (foot) is expected to miss several months, per Josh Robbins of The Athletic."
