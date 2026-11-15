@@ -1496,8 +1496,8 @@ function vgChart(xs, series, refs, lab, aria){   // one y-axis line chart, x = g
   let g=`<line x1="${L}" x2="${W-R}" y1="${Hh-B}" y2="${Hh-B}" stroke="var(--line)"/><text x="${L-5}" y="${y(hi-pad)+4}" text-anchor="end">${tk(hi-pad)}</text><text x="${L-5}" y="${y(lo+pad)+4}" text-anchor="end">${tk(lo+pad)}</text>`;
   refs.forEach(r=>{ g+=`<line x1="${L}" x2="${W-R}" y1="${y(r.y)}" y2="${y(r.y)}" stroke="var(--muted)" stroke-width="1" stroke-dasharray="${r.dash||'4 4'}"/>`+(r.label?`<text x="${W-R}" y="${y(r.y)-4}" text-anchor="end">${esc(r.label)}</text>`:''); });
   series.forEach(s=>{ const pts=s.v.map((u,i)=>u==null?null:x(i)+','+y(u)).filter(Boolean);
-    if(pts.length>1) g+=`<polyline points="${pts.join(' ')}" fill="none" stroke="${s.c}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"${s.dash?` stroke-dasharray="${s.dash}"`:''}/>`;
-    const k=s.v.length-1; if(s.v[k]!=null) g+=`<circle cx="${x(k)}" cy="${y(s.v[k])}" r="4.5" fill="${s.c}" stroke="var(--surface)" stroke-width="2"/>`; });
+    if(pts.length>1) g+=`<polyline points="${pts.join(' ')}" fill="none" stroke="${s.c}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"${s.dash?` stroke-dasharray="${s.dash}"`:''}${s.op?` opacity="${s.op}"`:''}/>`;
+    const k=s.v.length-1; if(s.v[k]!=null) g+=`<circle cx="${x(k)}" cy="${y(s.v[k])}" r="${s.op?3.5:4.5}" fill="${s.c}" stroke="var(--surface)" stroke-width="2"${s.op?` opacity="${s.op}"`:''}/>`; });
   g+=`<text x="${L}" y="${Hh-5}">${esc(xs[0].d)}</text>`+(n>1?`<text x="${W-R}" y="${Hh-5}" text-anchor="end">${esc(xs[n-1].d)}</text>`:'');
   g+=`<line class="vgx" x1="0" x2="0" y1="${T}" y2="${Hh-B}" stroke="var(--ink)" stroke-width="1" visibility="hidden"/>`;
   const id='vg'+Math.random().toString(36).slice(2,8);
@@ -1571,6 +1571,18 @@ function renderVegas(){
     <div class="cleg"><span><i style="background:var(--magenta)"></i>t-statistic: do games move the way JIMBO leans?</span><span>dashed: research bar 2.5</span></div>`
     +(tt.some(v=>v!=null)?vgChart(xs,[{v:tt,c:'var(--magenta)'}],[{y:0,dash:'2 3'},{y:2.5,label:'2.5'}],i=>tt[i]==null?`Through ${xs[i].d}: too few games.`:`Through ${xs[i].d} (${xs[i].n} games): t ${tt[i].toFixed(2)}${xs[i].n>=50?`; best weight on JIMBO vs the line ${Math.round(Math.max(0,Math.min(1,xs[i].s.b))*100)}%`:''}; ATS ${xs[i].s.w}–${xs[i].s.l}.`,'Running t-statistic of JIMBO vs the line'):'<p class="note">Needs a few more games.</p>');
   h+=`<p class="note">Rough guide: if JIMBO deserves half the weight against the line, t should pass 2.5 around 600 games (early January); a third, around 1,100 (late March); less than that, not this season. Games are noisy: a perfect forecast still misses by about 13 points.</p>`;
+  // Rolling ATS (user request 2026-11-15): trailing 7 calendar days ending on each game day, games pooled (wins / decisions;
+  // pushes and games where JIMBO matched the line left out, same rule as vgStats). Faint line = gap 3+ games only (shown from 5
+  // decisions in the window). Ink = season to date. Solid 50% = a coin flip against the line (no break-even line: user does not bet).
+  const dn=d=>{ const s=String(d); return Date.UTC(+s.slice(0,4),+s.slice(4,6)-1,+s.slice(6)); }, pc=(w,l)=>w+l?Math.round(w/(w+l)*100)+'%':'–';
+  const r7=[], b7=[], sa=[], w7=[];
+  days.forEach((d,i)=>{ const lo=dn(d)-6*864e5, s=vgStats(rows.filter(r=>r[0]<=d&&dn(r[0])>=lo)), n=s.w+s.l, nb=s.bw+s.bl, z=xs[i].s;
+    r7.push(n?s.w/n*100:null); b7.push(nb>=5?s.bw/nb*100:null); sa.push(z.w+z.l?z.w/(z.w+z.l)*100:null); w7.push({s, from:dl(days.find(e=>dn(e)>=lo))}); });
+  h+=`<h3 class="vgh">Against the spread, last 7 days</h3>
+    <div class="cleg"><span><i style="background:var(--magenta)"></i>last 7 days</span><span><i style="background:var(--magenta);opacity:.35"></i>last 7 days, gap 3+</span><span><i style="background:var(--ink)"></i>season so far</span><span>% of games covered siding with JIMBO; line: 50%</span></div>`
+    +(r7.some(v=>v!=null)?vgChart(xs,[{v:sa,c:'var(--ink)'},{v:b7,c:'var(--magenta)',op:.35},{v:r7,c:'var(--magenta)'}],[{y:50,dash:'none',label:'50%'}],i=>{ const s=w7[i].s;
+      return `${w7[i].from}–${xs[i].d}: ${s.w}–${s.l}, ${pc(s.w,s.l)}; gap 3+ ${s.bw}–${s.bl}${s.bw+s.bl?`, ${pc(s.bw,s.bl)}`:''}. Season: ${xs[i].s.w}–${xs[i].s.l}, ${pc(xs[i].s.w,xs[i].s.l)}.`; },'Rolling 7-day record against the spread siding with JIMBO'):'<p class="note">Needs a few more games.</p>');
+  h+=`<p class="note">Each point pools every game in the 7 days ending that night (pushes left out). A week is 40–60 games, so swings of about ±7 points are normal luck; the season line is the steadier read. Above 50%, games have been finishing on JIMBO's side of the line more often than not; at 50%, its disagreements with the line are a coin flip.</p>`;
   h+=`<h3 class="vgh">Does a 70% call win 70% of the time?</h3>`+vgCalib(rows);
   const who=(r,v,k)=>Math.abs(v)<0.05?'even':`${v>0?r[1]:r[2]} ${Math.abs(v).toFixed(k)}`;
   // ATS (user request 2026-10-31): JIMBO's side vs the line; same rule as vgStats w/l (g = JIMBO - line, rr = final - line)

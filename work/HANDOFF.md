@@ -7,6 +7,12 @@ Design spec (Claude Doc): https://claude.ai/code/artifact/e5eebcf8-5649-4c33-b97
 To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs work/setup.sh, reads this file (repo CLAUDE.md says the same).
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
 
+## SESSION 52 (2026-11-15, user request, display only) -- ROLLING 7-DAY ATS CHART on the vs Vegas tab (app only)
+New chart "Against the spread, last 7 days" after the t-stat chart + its note, before calibration. Per game day: games in the trailing 7
+calendar days pooled (w/(w+l), vgStats rule: pushes and JIMBO = line excluded). Magenta = all games; faint magenta = gap 3+ (from 5
+decisions); ink = season so far; solid 50% reference. NO 52.4% break-even line (user: does not bet, Vegas is the yardstick).
+vgChart series now take op (opacity). First read: Nov 8-14 31-18 (63%), gap 3+ 13-5; season 96-91 (51%). sw.js hand-bumped jimbo-0091c87613b.
+
 ## SESSION 51 (2026-11-13, user: calibration chart 30-40% bucket, 3 of 29 home wins: important or noise?) -- RESEARCH ONLY, NOTHING CHANGED
 RESEARCH_LOG "CALIBRATION CHART: THE 30-40% BUCKET"; code/calib/. Real (p ~.002, ~.02 after 10 buckets) but NOT a JIMBO flaw: spread over 17 home
 teams, and the line said 33% on the same 29 games. Both JIMBO and the line are too timid this season (margin slope 1.23 / 1.24; favourites crushing).
