@@ -7,6 +7,13 @@ Design spec (Claude Doc): https://claude.ai/code/artifact/e5eebcf8-5649-4c33-b97
 To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs work/setup.sh, reads this file (repo CLAUDE.md says the same).
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
 
+## SESSION 53 (2026-11-16, user request, display only) -- WINS ADDED column on the Players "This season" leaderboard (app only)
+Wins added = points added / PPW, PPW = 36.7 = points of season margin per win (team seasons 2023-24..2025-26, wins above .500 regressed
+on total margin through the origin; 90% boot 35.4-38.1). Rises with scoring: 2014-15 ~30-31, 2014-24 pooled 33.9. Same baseline as points
+added (AVERAGE player; user explicitly does not want replacement level). Sortable (same order as points added), also on the player
+page summary line, explained in sNote. Constant PPW sits next to sSort in site/index.html AND code/dash_v2.html (template patched too).
+Wemby 11-16: +82.6 pts -> +2.3 wins. iPhone 13 + desktop: no overflow, no page errors. sw.js jimbo-0091c87614a. Recompute PPW each summer.
+
 ## SESSION 52 (2026-11-15, user request, display only) -- ROLLING 7-DAY ATS CHART on the vs Vegas tab (app only)
 New chart "Against the spread, last 7 days" after the t-stat chart + its note, before calibration. Per game day: games in the trailing 7
 calendar days pooled (w/(w+l), vgStats rule: pushes and JIMBO = line excluded). Magenta = all games; faint magenta = gap 3+ (from 5
