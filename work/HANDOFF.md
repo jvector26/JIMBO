@@ -18,6 +18,7 @@ of team margins (all 30 teams: actual = 1.62 x box sum, corr .84). nightly.py no
 team's leftover (actual total margin - its players' box sum) by possessions for that team (traded players split by seconds). Rosters sum to
 real margin (MIL -5.2 wins). App: Points added + Wins added use pa (fallback sr*sp/100); Season rating stays box-only. Sharing by possessions
 spreads the leftover evenly, not to who earned it (Wemby 2.3 -> 2.5; Giannis 1.2 -> 0.9). sw.js jimbo-0091c87614b.
+BUG FIX same session: position filter 'C' returned nobody (one-letter value was read as a group code G/W/B); now 'GWB'.includes(pf). sw.js jimbo-0091c87614c.
 
 ## SESSION 52 (2026-11-15, user request, display only) -- ROLLING 7-DAY ATS CHART on the vs Vegas tab (app only)
 New chart "Against the spread, last 7 days" after the t-stat chart + its note, before calibration. Per game day: games in the trailing 7

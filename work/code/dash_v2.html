@@ -1250,7 +1250,7 @@ function seasonRank(){ // league rank by points added, every player with a seaso
   const a=SZ.players.filter(z=>z.sr!=null).map(z=>[z.k,PA(z)]).sort((x,y)=>y[1]-x[1]); return new Map(a.map((x,i)=>[x[0],i+1])); }
 function renderSeasonPlayers(){
   const q=$('q').value.trim().toLowerCase(), team=tf.value, pf=$('posf').value;
-  const posOk=r=>!pf||(pf.length===1?POS3(r.p.ps)===pf:POS5(r.p.ps)===pf);
+  const posOk=r=>!pf||('GWB'.includes(pf)?POS3(r.p.ps)===pf:POS5(r.p.ps)===pf);
   let list=P.rows.filter(r=>r.z&&r.z.sr!=null&&(!team||r.t===team)&&posOk(r)&&(!q||r.p.n.toLowerCase().includes(q)))
     .map(r=>({r, sr:r.z.sr, pa:PA(r.z), wa:PA(r.z)/PPW}));
   if(sSort==='sr') list=list.filter(x=>{ const z=x.r.z, tg=(ZT[x.r.t]||{}).gp||0; return (z.mpg||0)>=15&&(z.gp||0)>=Math.ceil(tg/2); });  // qualified, like NBA stat leaders
@@ -1269,7 +1269,7 @@ function renderPlayers(){
   if(SEASON&&plView==='season'){ renderSeasonPlayers(); return; }
   const rostered=P.rows.filter(r=>r.t!=='FA'); const rank=new Map(); [...rostered].sort((a,b)=>b.tot-a.tot).forEach((r,i)=>rank.set(r.p.k,i+1));
   const q=$('q').value.trim().toLowerCase(), team=tf.value, minf=+$('minf').value, pf=$('posf').value;
-  const posOk=r=>!pf||(pf.length===1?POS3(r.p.ps)===pf:POS5(r.p.ps)===pf);
+  const posOk=r=>!pf||('GWB'.includes(pf)?POS3(r.p.ps)===pf:POS5(r.p.ps)===pf);
   let list=P.rows.filter(r=>(team?r.t===team:r.t!=='FA') && r.min>=minf && posOk(r) && (!q||r.p.n.toLowerCase().includes(q)));
   if(q&&!team) list=P.rows.filter(r=>r.p.n.toLowerCase().includes(q));  // a name search also finds free agents
   list.forEach(r=>{ const tw=topWorst(r); r.tw=tw; r.sq=srQual(r); });
