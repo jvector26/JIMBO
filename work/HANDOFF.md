@@ -8,7 +8,7 @@ To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs wor
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
 
 ## SESSION 54 (2026-11-16, user request, display only) -- DAY-TO-DAY WHAT-IF TOGGLES on the game page (app only)
-Game page gets a "Day-to-day players" section (above "How the game could go"): each DTD player has In / 50-50 / Out buttons plus a
+Game page gets a "Day-to-day players" section (below Expected rotations, above Context; moved same day at user request, sw 14e, 'Build 11-16b'): each DTD player has In / 50-50 / Out buttons plus a
 swing line "PHI win chance: 48% if he plays (31 min) · 46% if he sits · swing 2 pts" (other DTD players held as set). In = his
 minutes when playing (z.mc), same as the existing "plays" scenario; Out = 0. Toggles redraw the whole game page (header, waterfall,
 rotations). Page-only state GVF, never saved, cleared when the game page closes or switches game; Tonight cards and the pregame
