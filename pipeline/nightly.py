@@ -537,9 +537,28 @@ try:
         _ps = (_f.poss_off + _f.poss_def) / 2
         _b = _b - (_b * _ps).sum() / _ps.sum()
         _t = _q.groupby("player")[["pts", "oreb", "dreb", "ast"]].sum()
+        # Team-adjusted points added (2026-11-16, user: "a more realistic wins added"). The box score explains only ~60% of
+        # team margins, so each team's leftover margin (actual total margin minus its players' box points added) is
+        # spread over the players who played for it in proportion to their possessions there (BPM-style team
+        # adjustment). Every roster then sums to its real margin. A traded player's possessions are split by seconds.
+        _PA = {}
+        try:
+            _sec = _q.groupby(["player", "team"]).sec.sum()
+            _sh = _sec / _sec.groupby(level=0).transform("sum")
+            _pt = _sh * _ps.reindex(_sh.index.get_level_values(0)).values          # possessions per (player, team)
+            _pt = _pt[_pt.index.get_level_values(0).isin(_b.index)]
+            _bx = _b.reindex(_pt.index.get_level_values(0)).values * _pt / 100      # box points added per (player, team)
+            _tm = pd.concat([pd.Series(gm.home_pts.values - gm.away_pts.values, index=gm.home_team.values),
+                             pd.Series(gm.away_pts.values - gm.home_pts.values, index=gm.away_team.values)]).groupby(level=0).sum()
+            _lv = _tm.reindex(_bx.groupby(level=1).sum().index).fillna(0) - _bx.groupby(level=1).sum()
+            _adj = _bx + _lv.reindex(_pt.index.get_level_values(1)).values * _pt / _pt.groupby(level=1).transform("sum")
+            _PA = _adj.groupby(level=0).sum().to_dict()
+        except Exception as e:
+            print(f"WARNING team-adjusted points added skipped: {e!r}")
         for _p in _b.index:
             _tt = _t.loc[_p] if _p in _t.index else None
             SR[int(_p)] = {"sr": round(float(_b[_p]), 2), "sp": round(float(_ps[_p])),
+                           **({"pa": round(float(_PA[_p]), 1)} if _p in _PA else {}),
                            **({"sb": [int(_tt.pts), int(_tt.oreb + _tt.dreb), int(_tt.ast)]} if _tt is not None else {})}
 except Exception as e:
     print(f"WARNING season rating skipped: {e!r}")

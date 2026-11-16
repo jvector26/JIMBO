@@ -13,6 +13,11 @@ on total margin through the origin; 90% boot 35.4-38.1). Rises with scoring: 201
 added (AVERAGE player; user explicitly does not want replacement level). Sortable (same order as points added), also on the player
 page summary line, explained in sNote. Constant PPW sits next to sSort in site/index.html AND code/dash_v2.html (template patched too).
 Wemby 11-16: +82.6 pts -> +2.3 wins. iPhone 13 + desktop: no overflow, no page errors. sw.js jimbo-0091c87614a. Recompute PPW each summer.
+SAME SESSION, user ("a more realistic wins added"; MIL players summed -3.3 wins at 1-13): TEAM ADJUSTMENT. Box points added explain only ~60%
+of team margins (all 30 teams: actual = 1.62 x box sum, corr .84). nightly.py now writes per-player "pa" = box points added + share of the
+team's leftover (actual total margin - its players' box sum) by possessions for that team (traded players split by seconds). Rosters sum to
+real margin (MIL -5.2 wins). App: Points added + Wins added use pa (fallback sr*sp/100); Season rating stays box-only. Sharing by possessions
+spreads the leftover evenly, not to who earned it (Wemby 2.3 -> 2.5; Giannis 1.2 -> 0.9). sw.js jimbo-0091c87614b.
 
 ## SESSION 52 (2026-11-15, user request, display only) -- ROLLING 7-DAY ATS CHART on the vs Vegas tab (app only)
 New chart "Against the spread, last 7 days" after the t-stat chart + its note, before calibration. Per game day: games in the trailing 7
