@@ -1,5 +1,5 @@
 team,abbr,name,status,date,type,detail,side,return_date,comment
-Atlanta Hawks,ATL,Jock Landale,Day-To-Day,2026-11-15T17:55Z,day-to-day,Inflammation,Right,2026-11-15,Landale (hip) is listed as questionable for Sunday's game against Milwakee.
+Atlanta Hawks,ATL,Jock Landale,Out,2026-11-15T23:22Z,out,Inflammation,Right,2026-11-18,"Landale (hip) is out for Sunday's game against Bucks, Brad Rowland of the Locked On Podcast Network reports."
 Atlanta Hawks,ATL,Kingston Flemings,Out,2026-11-14T23:08Z,out,Strain,,2026-11-18,Flemings (back) has been ruled out for Sunday's game against the Bucks.
 Atlanta Hawks,ATL,Mouhamed Gueye,Out,2026-11-13T00:06Z,out,Fracture,Left,2026-12-12,"Gueye (foot) is ready to begin on-court activities and will be re-evaluated in four weeks, Brad Rowland of the Locked On Podcast Network reports."
 Atlanta Hawks,ATL,Keshon Gilbert,Out,2026-11-12T23:10Z,out,Inflammation,Left,2026-11-20,Gilbert (knee) has been ruled out for Friday's game against the Bulls.
@@ -52,15 +52,15 @@ Memphis Grizzlies,MEM,Zach Edey,Day-To-Day,2026-11-15T22:11Z,day-to-day,,Left,20
 Memphis Grizzlies,MEM,Scotty Pippen Jr.,Out,2026-11-10T23:09Z,out,Soreness,,2026-11-21,"Pippen (back) remains out for Wednesday's game against Denver, Michael Wallace of the Grizzlies' official site reports."
 Memphis Grizzlies,MEM,Richie Saunders,Out,2026-11-07T17:24Z,out,Surgery,Right,2026-12-01,"Saunders signed a two-way contract with the Grizzlies on Saturday, Shams Charania of ESPN reports."
 Miami Heat,MIA,Pelle Larsson,Day-To-Day,2026-11-15T22:47Z,day-to-day,,,2026-11-16,Larsson (illness) is questionable to play in Monday's game against the Rockets.
-Milwaukee Bucks,MIL,Ousmane Dieng,Out,2026-11-15T20:13Z,out,Fracture,Left,2026-11-18,Dieng (finger) is listed as out for Sunday's game versus the Hawks.
-Milwaukee Bucks,MIL,Ryan Rollins,Day-To-Day,2026-11-15T17:23Z,day-to-day,,,2026-11-15,Rollins (illness) is questionable to play in Sunday's game against the Hawks.
+Milwaukee Bucks,MIL,Ousmane Dieng,Out,2026-11-15T23:46Z,out,Surgery,Left,2026-12-14,"Dieng will undergo a procedure to repair a fractured left finger Monday, Justin Garcia of the Milwaukee Bucks Radio Network reports."
+Milwaukee Bucks,MIL,Ryan Rollins,Out,2026-11-15T23:19Z,out,,,2026-11-18,Rollins (illness) is out for Sunday's game against the Hawks.
 Minnesota Timberwolves,MIN,Jaylen Clark,Out,2026-11-15T22:40Z,out,Not Specified,Right,2026-11-29,Clark (hamstring) has been ruled out for the next two weeks.
 Minnesota Timberwolves,MIN,Anthony Edwards,Out,2026-10-29T18:33Z,out,Surgery,Right,2026-12-21,"Edwards underwent a successful arthroscopic procedure on his right knee Thursday, the Timberwolves announced."
 Minnesota Timberwolves,MIN,Donte DiVincenzo,Out,2026-10-05T20:53Z,out,Surgery,Right,2027-04-02,"DiVincenzo (Achilles) remains confident that he'll return during the 2026-27 season, Jon Krawczynski of The Athletic reports."
+New Orleans Pelicans,NO,Bryce McGowens,Out,2026-11-15T23:10Z,out,Infection,Left,2026-11-18,McGowens (elbow) has been ruled out for Monday's game against the Warriors.
 New Orleans Pelicans,NO,Bennedict Mathurin,Out,2026-11-15T23:06Z,out,Plantar Fasciitis,Left,2026-11-18,Mathurin (foot) has been ruled out for Monday's game against the Warriors.
 New Orleans Pelicans,NO,Trey Murphy III,Out,2026-11-15T22:57Z,out,Tendinitis,Not Specified,2026-11-18,Murphy (knees) has been ruled out for Monday's game against Golden State.
 New Orleans Pelicans,NO,Trendon Watford,Out,2026-11-15T22:52Z,out,Sprain,Right,2026-11-18,Watford (ankle) has been ruled out for Monday's game against Golden State.
-New Orleans Pelicans,NO,Bryce McGowens,Out,2026-11-15T22:07Z,out,Infection,Left,2026-11-18,McGowens (elbow) has been ruled out for Saturday's game against the Nuggets.
 New Orleans Pelicans,NO,Dejounte Murray,Out,2026-11-13T20:19Z,out,,,2026-11-20,Murray (ankle) is out for Friday's game against Memphis.
 Oklahoma City Thunder,OKC,Jaylin Williams,Out,2026-11-15T01:14Z,out,Spasms,,2026-11-18,Williams (back) has been ruled out for Sunday's game against the Kings.
 Oklahoma City Thunder,OKC,Ajay Mitchell,Day-To-Day,2026-11-15T01:10Z,day-to-day,Sprain,Left,2026-11-15,Mitchell (ankle) is questionable to suit up for Sunday's game against the Kings.
@@ -82,6 +82,7 @@ Portland Trail Blazers,POR,Chris Youngblood,Out,2026-11-15T23:02Z,out,Bruise,Rig
 Portland Trail Blazers,POR,Vit Krejci,Out,2026-11-11T19:56Z,out,,Left,2027-01-12,"Krejci underwent surgery on his fractured left ankle Wednesday and will be re-evaluated in eight weeks, Brett Siegel of ClutchPoints.com reports."
 Portland Trail Blazers,POR,Ja Morant,Out,2026-11-08T02:18Z,out,Not Specified,Left,2026-12-01,"Head coach Micah Nori said Morant met with a doctor in Los Angeles, who gave him a positive outlook on his recovery from the hamstring injury. While Nori declined to update Morant's timetable, he added Morant ""may not be out for as long as we thought,"" Trail Blazers Insider Sean Highkin reports."
 Portland Trail Blazers,POR,Shaedon Sharpe,Out,2026-08-24T20:23Z,out,Surgery,Right,2027-03-02,"Sharpe suffered a torn meniscus in his knee and is expected to miss six months, per Shams Charania of ESPN."
+Sacramento Kings,SAC,De'Andre Hunter,Day-To-Day,2026-11-16T00:18Z,day-to-day,Soreness,Left,2026-11-15,"Hunter supplied 24 points (7-13 FG, 2-5 3Pt, 8-9 FT), five rebounds, two assists and two steals in 42 minutes during Friday's 120-107 loss to Portland."
 Sacramento Kings,SAC,Maxime Raynaud,Out,2026-11-15T01:00Z,out,Dislocated,Right,2026-11-18,Raynaud (knee) has been ruled out for Sunday's game against the Thunder.
 Sacramento Kings,SAC,Precious Achiuwa,Day-To-Day,2026-11-15T00:57Z,day-to-day,Soreness,Left,2026-11-15,Achiuwa (ankle) is questionable for Sunday's game against the Thunder.
 Sacramento Kings,SAC,Ben Simmons,Out,2026-10-21T04:22Z,out,Surgery,Right,2027-10-01,"Simmons underwent successful surgery Tuesday to repair a torn right Achilles tendon, James Ham of ESPN 1320 Sacramento reports."
