@@ -1,11 +1,22 @@
 # JIMBO handoff: current state (read this first)
 JIMBO = judgment-induced model for basketball outcomes. NBA 2026-27 player ratings, minutes, team win totals, playoff odds,
-game odds, nightly in-season updates. Updated 2026-11-11 (session 50: four fundamentals tests, all fail; session 48: learning-speed check; session 47: historical lines test; session 38: consistent availability; session 35: matchups tab removed, injury box; session 34: NO MORE ZIP; everything lives in the repo, sandbox tree in work/). 
+game odds, nightly in-season updates. Updated 2026-11-16 (session 54: DTD what-if toggles on the game page; session 50: four fundamentals tests, all fail; session 48: learning-speed check; session 47: historical lines test; session 38: consistent availability; session 35: matchups tab removed, injury box; session 34: NO MORE ZIP; everything lives in the repo, sandbox tree in work/). 
 Full history of every test and decision: RESEARCH_LOG.md (1,650 lines; don't read it whole:
 `grep -n "^## " RESEARCH_LOG.md`, then read the section you need).
 Design spec (Claude Doc): https://claude.ai/code/artifact/e5eebcf8-5649-4c33-b974-23aa18e5c675
 To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs work/setup.sh, reads this file (repo CLAUDE.md says the same).
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
+
+## SESSION 54 (2026-11-16, user request, display only) -- DAY-TO-DAY WHAT-IF TOGGLES on the game page (app only)
+Game page gets a "Day-to-day players" section (above "How the game could go"): each DTD player has In / 50-50 / Out buttons plus a
+swing line "PHI win chance: 48% if he plays (31 min) · 46% if he sits · swing 2 pts" (other DTD players held as set). In = his
+minutes when playing (z.mc), same as the existing "plays" scenario; Out = 0. Toggles redraw the whole game page (header, waterfall,
+rotations). Page-only state GVF, never saved, cleared when the game page closes or switches game; Tonight cards and the pregame
+vs Vegas log keep the 50-50 number. Code: gameStrength(force)/tonightGames(list,day,force)/allGames(force), rot entries carry dk
+(is DTD), dtdHTML(g). Applied to site/index.html AND code/dash_v2.html by tools/dtd_toggle_patch.py (do not reapply).
+sw.js jimbo-0091c87614d, footnote 'Build 11-16'. iPhone 13 + desktop: no page errors, no overflow, cards unchanged after toggling.
+Found, NOT changed: Embiid 11-16 swing only 0.6 pts of margin: rated +1.0 now, and with him out PHI's healthy pool is under 240 so
+trim240 scales everyone up (Maxey 36 -> 41 min) instead of filling from the bench. Same scale-up applies inside the 50-50 average.
 
 ## SESSION 53 (2026-11-16, user request, display only) -- WINS ADDED column on the Players "This season" leaderboard (app only)
 Wins added = points added / PPW, PPW = 36.7 = points of season margin per win (team seasons 2023-24..2025-26, wins above .500 regressed

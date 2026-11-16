@@ -476,6 +476,17 @@ body.pvopen #gv{display:none}
 .dist text{font-family:var(--text);font-size:12px;fill:var(--muted)}
 .dist .lab{fill:var(--ink);font-weight:600}
 .game[data-g]{cursor:pointer}
+.dtdrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:10px 0;border-top:1px solid var(--line,#ddd)}
+.dtdrow:first-of-type{border-top:0}
+.dtdrow .who{flex:1 1 180px;min-width:0}
+.dtdrow .who b{font-weight:700}
+.dtdseg{display:inline-flex;border:2px solid var(--black);border-radius:6px;overflow:hidden}
+.dtdseg button{font:inherit;font-size:13px;padding:5px 11px;border:0;border-left:2px solid var(--black);background:transparent;color:inherit;cursor:pointer;min-height:32px}
+.dtdseg button:first-child{border-left:0}
+.dtdseg button[aria-pressed="true"]{background:var(--black);color:var(--bg,#FBF8F1);font-weight:700}
+.dtdswing{flex:1 1 100%;font-size:13px;color:var(--muted)}
+.dtdswing b{color:var(--ink,inherit)}
+.dtdwhatif{background:var(--gold);color:var(--black);font-size:12px;font-weight:700;padding:2px 7px;border-radius:4px;margin-left:6px}
 .game[data-g]:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 .tnnav{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;margin:2px 0 8px}
 .tnnav .btn{min-width:44px;min-height:44px;font-size:22px;line-height:1;padding:0 12px} .tnnav .btn:disabled{opacity:.35}
@@ -1017,30 +1028,32 @@ function trim240(v, lock, key){ // bottom-trim the rotation to 240 (lowest key c
   for(const i of idx){ const c=Math.min(ex,out[i]); out[i]-=c; ex-=c; if(ex<=0) break; }
   return out;
 }
-function gameStrength(){ // per team: tonight's expected rotation = minutes WHEN PLAYING (nightly z.mc), injury report applied
+function gameStrength(force){ // force (game page what-if, session 54): {player key: 1 plays (minutes when playing) | 0 out}; others as below. Per team: tonight's expected rotation = minutes WHEN PLAYING (nightly z.mc), injury report applied
   // (out 0; each day-to-day player plays with prob 0.5: average over those scenarios), edits kept, bottom-trimmed to 240
   const st={}, rot={};
   P.team.forEach(x=>{ const R=x.roster, lock=R.map(r=>r.o.g!==0&&r.o.mpg!=null);
     const base=R.map((r,i)=>{ if(r.o.g===0) return 0; if(lock[i]) return r.o.mpg; const s=(r.z&&r.z.status||'').toLowerCase();
-      if(s.startsWith('out')||s.includes('suspen')) return 0; return r.z&&r.z.mc!=null?r.z.mc:(r.me||0); });
+      if(s.startsWith('out')||s.includes('suspen')) return 0; if(force&&force[r.p.k]===0) return 0; return r.z&&r.z.mc!=null?r.z.mc:(r.me||0); });
     const key=R.map((r,i)=>r.z&&r.z.mk!=null?r.z.mk:base[i]);
-    const dtd=R.map((r,i)=>i).filter(i=>!lock[i]&&base[i]>0&&/day/i.test(R[i].z&&R[i].z.status||'')).slice(0,8);
+    const isd=R.map((r,i)=>r.o.g!==0&&!lock[i]&&/day/i.test(r.z&&r.z.status||'')&&(r.z&&r.z.mc!=null?r.z.mc:(r.me||0))>0);
+    const dtd=R.map((r,i)=>i).filter(i=>isd[i]&&base[i]>0&&!(force&&force[R[i].p.k]!=null)).slice(0,8);
     const em=new Array(R.length).fill(0), n=1<<dtd.length;
     for(let m=0;m<n;m++){ const b=base.slice(); dtd.forEach((i,j)=>{ if(!((m>>j)&1)) b[i]=0; }); trim240(b,lock,key).forEach((v,i)=>em[i]+=v/n); }
-    rot[x.t]=R.map((r,i)=>({r, em:em[i], ifp:dtd.includes(i)?trim240(base,lock,key)[i]:null}));
+    rot[x.t]=R.map((r,i)=>({r, em:em[i], ifp:dtd.includes(i)?trim240(base,lock,key)[i]:null, dk:isd[i]}));
     st[x.t]=rot[x.t].reduce((a,q)=>a+q.r.tot*q.em,0)/48; });
   return {st, rot, mean:Object.values(st).reduce((a,b)=>a+b,0)/NT};
 }
-function tonightGames(list, day){ // spread = (lineup pts + team offset + blend adj)_home - (same)_away + home court; each part returned for the game page
+function tonightGames(list, day, force){ // spread = (lineup pts + team offset + blend adj)_home - (same)_away + home court; each part returned for the game page
   // list/day: a later day's games (2026-10-29, Tonight day stepper); same team strengths as tonight (today's rotations and injury report)
   if(!SEASON||!SZ.tonight) return [];
-  const G=gameStrength(), T=Object.fromEntries(P.team.map(x=>[x.t,x]));
+  const G=gameStrength(force), T=Object.fromEntries(P.team.map(x=>[x.t,x]));
   const part=t=>{ const lin=G.st[t]-G.mean, pts=lin*SZ.pace/100, off=ZT[t].offset, bl=T[t].gap*ZT[t].dec; return {t, lin, pts, off, bl, dec:ZT[t].dec, m:pts+off+bl, rot:G.rot[t], x:T[t]}; };
   return (list||SZ.tonight).map(g=>{ const H=part(g.home), A=part(g.away), rs=g.rs||0, sp=H.m-A.m+M.hca+rs, spm=(H.pts+H.off)-(A.pts+A.off)+M.hca+rs;   // rs: back-to-back adjustment, home side (session 37)
     return {...g, day:day||SZ.game_day, rs, sp, ph:E.Phi(sp/M.sig), spm, phm:E.Phi(spm/M.sig), H, A}; });
 }
 const ymd=d=>{ const s=String(d).replace(/-/g,''); return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}`; };
-function allGames(){ return tonightGames().concat(...(SZ.upcoming||[]).map(u=>tonightGames(u.games, ymd(u.day)))); }
+function allGames(force){ return tonightGames(null, null, force).concat(...(SZ.upcoming||[]).map(u=>tonightGames(u.games, ymd(u.day), force))); }
+let GVF={};   // game page what-if for day-to-day players {key: 1 in | 0 out}; page only, never saved, cleared when the game page closes or changes
 function injWhat(z){ // "left knee inflammation" from factual report fields (side, body part, injury type)
   if(!z) return ''; const ok=x=>x&&!/^(nan|not specified)$/i.test(x);
   const side=ok(z.is)?z.is.toLowerCase():'', part=ok(z.ib)?z.ib:'', typ=ok(z.inj)?z.inj.replace(/\s*(Left|Right|Not Specified)$/i,'').trim():'';
@@ -1376,10 +1389,10 @@ $('tonight')&&$('tonight').addEventListener('click',e=>{ const n=e.target.closes
 $('tonight')&&$('tonight').addEventListener('keydown',e=>{ const c=e.target.closest('.game[data-g]'); if(c&&e.target===c&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); openGame(+c.dataset.g); } });
 function openGame(id){
   if(!gvKey){ gvScroll=window.scrollY; try{ history.pushState({gv:id},''); gvPushed=true; }catch(e){ gvPushed=false; } }
-  gvKey=id; document.body.classList.add('gvopen'); $('gv').hidden=false; renderGV();
+  if(gvKey!==id) GVF={}; gvKey=id; document.body.classList.add('gvopen'); $('gv').hidden=false; renderGV();
   const top=$('gv').getBoundingClientRect().top+window.scrollY-10; window.scrollTo(0,Math.max(0,top)); $('gvBack')&&$('gvBack').focus({preventScroll:true});
 }
-function closeGame(){ gvKey=null; gvPushed=false; document.body.classList.remove('gvopen'); $('gv').hidden=true; $('gv').innerHTML=''; window.scrollTo(0,gvScroll); }
+function closeGame(){ GVF={}; gvKey=null; gvPushed=false; document.body.classList.remove('gvopen'); $('gv').hidden=true; $('gv').innerHTML=''; window.scrollTo(0,gvScroll); }
 const mTxt=(v,g)=>Math.abs(v)<0.05?'even':`${v>0?g.home:g.away} by ${Math.abs(v).toFixed(1)}`;
 function distSVG(g,ms){ // home margin ~ Normal(spread, sig)
   const sd=M.sig, X0=-40, X1=40, W=Math.max(300,Math.min(760,(($('gv').clientWidth||640)-40))), H=W<500?170:190, L=12, R=12, T=26, B=30, y0=H-B;
@@ -1412,9 +1425,24 @@ function rotHTML(Q,g){
     ${off.length?`<tr class="offhd"><td colspan="5">Not expected to play (${off.length})</td></tr>`+off.map(q=>row(q,true)).join(''):''}
     </tbody></table></div></div>`;
 }
+function dtdHTML(g){ // day-to-day what-if (session 54): each DTD player in / 50-50 / out, with the in-vs-out swing (other DTD players held as set)
+  const list=[...g.A.rot.map(q=>[q,g.A]), ...g.H.rot.map(q=>[q,g.H])].filter(([q])=>q.dk); if(!list.length) return '';
+  const one=f=>tonightGames([g], g.day, f)[0];
+  const rows=list.map(([q,S])=>{ const r=q.r, k=r.p.k, cur=GVF[k]==null?'h':String(GVF[k]), home=S===g.H;
+    const pin=one({...GVF,[k]:1}), pout=one({...GVF,[k]:0}), w=x=>home?x.ph:1-x.ph;
+    const mIn=(pin.H.rot.concat(pin.A.rot).find(x=>x.r.p.k===k)||{}).em||0, d=Math.round((w(pin)-w(pout))*100);
+    const b=(v,lab)=>`<button data-dtd="${esc(k)}" data-v="${v}" aria-pressed="${cur===v}">${lab}</button>`;
+    return `<div class="dtdrow"><div class="who"><b>${esc(r.p.n)}</b> <span class="note">${S.t}${injWhat(r.z)?` · ${esc(injWhat(r.z))}`:''}</span></div>
+      <div class="dtdseg" role="group" aria-label="${esc(r.p.n)} tonight">${b('1','In')}${b('h','50-50')}${b('0','Out')}</div>
+      <div class="dtdswing">${S.t} win chance: <b>${pct(w(pin))}</b> if he plays (${Math.round(mIn)} min) · <b>${pct(w(pout))}</b> if he sits · swing <b>${d} pts</b></div></div>`; }).join('');
+  const any=Object.keys(GVF).length;
+  return `<div class="pvsec"><h3>Day-to-day players${any?'<span class="dtdwhatif">what-if</span>':''}</h3>
+    <p class="note">JIMBO counts each day-to-day player as a coin flip. Set him in or out to see the odds if he plays (his usual minutes, teammates trimmed to fit 240) or sits (his minutes go to teammates); everything on this page updates. ${any?`Showing your what-if; the Tonight card and the vs Vegas log keep the 50-50 number. <button class="linkbtn" data-dtdreset="1">Reset</button>`:'Only this page changes; nothing is saved.'}</p>
+    ${rows}</div>`;
+}
 function renderGV(){
   if(!gvKey||!P) return;
-  const g=allGames().find(x=>x.game===gvKey); if(!g){ closeGame(); return; }
+  const g=allGames(GVF).find(x=>x.game===gvKey); if(!g){ closeGame(); return; }
   const H=g.H, A=g.A, ms=mktSpread(g), pace=SZ.pace, day=new Date(g.day+'T12:00:00');
   const ds=day.toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'}), tip=tipTime(g.time_utc);
   const rec=x=>ANYPLAYED?` · ${x.w}-${x.l}`:'';
@@ -1427,6 +1455,7 @@ function renderGV(){
     <div class="card"><div class="k">Market</div><div class="v">${ms!=null?esc(g.line):'–'}</div><div class="s">${ms!=null?`${esc(mTxt(ms,g))}${g.total?` · total ${g.total}`:''}`:'line not posted yet'}</div></div>
     ${ms!=null?`<div class="card"><div class="k">JIMBO vs market</div><div class="v ${Math.abs(g.sp-ms)>=3?cls(g.sp-ms):''}">${fmt(g.sp-ms)}</div><div class="s">points, for ${g.home}</div></div>`:''}
   </div>`;
+  h+=dtdHTML(g);
   // uncertainty
   const pH10=1-E.Phi((10-g.sp)/M.sig), pA10=E.Phi((-10-g.sp)/M.sig), lo=g.sp-1.2816*M.sig, hi=g.sp+1.2816*M.sig;
   h+=`<div class="pvsec"><h3>How the game could go</h3><p class="note">Final margin from ${g.home}'s side: centered on JIMBO's spread, with the spread of real NBA results around a pregame forecast (standard deviation ${M.sig} points).</p>
@@ -1465,6 +1494,8 @@ function renderGV(){
   $('gv').innerHTML=h;
 }
 $('gv').addEventListener('click',e=>{ if(e.target.closest('#gvBack')){ gvPushed?history.back():closeGame(); return; }
+  const dd=e.target.closest('[data-dtd]'); if(dd){ const v=dd.dataset.v; if(v==='h') delete GVF[dd.dataset.dtd]; else GVF[dd.dataset.dtd]=+v; renderGV(); return; }
+  if(e.target.closest('[data-dtdreset]')){ GVF={}; renderGV(); return; }
   const b=e.target.closest('[data-edit]'); if(b){ openEditor(b.dataset.edit); return; }
   const pr=e.target.closest('[data-pv]'); if(pr) openPlayer(pr.dataset.pv); });
 // ---------- JIMBO vs Vegas (app; session 29). Data: data/vegas.json from pipeline/nightly.py, rows [date, home, away, JIMBO home margin
@@ -1536,7 +1567,7 @@ function vgCalib(rows){
   return `<div class="vgtiles"><div class="vgt"><span class="vgk">Brier score</span><span class="vgv">${BJ.toFixed(3)} <small>vs ${BV.toFixed(3)}</small></span><span class="note">JIMBO vs the line; lower is better (a coin flip scores .250)</span></div></div>
     <div class="cleg"><span><i style="background:var(--magenta)"></i>JIMBO</span><span><i style="background:var(--surface);border:2px solid var(--ink);box-sizing:border-box"></i>Vegas line</span><span>dashed: perfect calibration</span></div>
     <div class="cchart" style="max-width:420px"><svg id="${id}" viewBox="0 0 ${W} ${Hh}" width="100%" style="touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:pointer" role="img" aria-label="Calibration: predicted home win chance vs how often the home team won, JIMBO and the Vegas line">${g}</svg></div><p class="note vgread" style="user-select:none;-webkit-user-select:none">${esc(base)}</p>
-    <p class="note">Games are grouped by the home team's predicted chance in 10% steps; each dot sits at the average chance in its group, sized by games, with a 95% range. A well calibrated forecast stays on the diagonal. The line's chance comes from its spread the same way JIMBO's comes from its margin (σ ${M.sig} points). Expect wide ranges until a few hundred games. <span style="opacity:.6">Build 11-06.</span></p>`;
+    <p class="note">Games are grouped by the home team's predicted chance in 10% steps; each dot sits at the average chance in its group, sized by games, with a 95% range. A well calibrated forecast stays on the diagonal. The line's chance comes from its spread the same way JIMBO's comes from its margin (σ ${M.sig} points). Expect wide ranges until a few hundred games. <span style="opacity:.6">Build 11-16.</span></p>`;
 }
 function renderVegas(){
   const el=$('vegas'); if(!el) return;
