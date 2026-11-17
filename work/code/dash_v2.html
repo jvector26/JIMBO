@@ -69,7 +69,7 @@ table{border-collapse:collapse;width:100%}
 th{font-size:13px;font-weight:600;color:var(--muted);text-align:right;padding:9px 8px;border-bottom:1px solid var(--rule);white-space:nowrap;background:var(--surface);vertical-align:bottom}
 th.l,td.l{text-align:left}
 th button{background:none;border:0;color:inherit;font-weight:600;padding:0}
-th button[aria-sort]::after{content:" ▾"}
+th button[aria-sort]::after{content:" ▾"} th button[aria-sort="ascending"]::after{content:" ▴"}
 .sttools{flex-wrap:nowrap} .sttools select{flex:0 1 auto;min-width:0;max-width:240px} .sttools .btn{flex:0 0 auto;white-space:nowrap}
 th button.stsort{cursor:pointer;text-align:inherit} th button.stsort.on{text-decoration:underline;text-underline-offset:3px}
 td{padding:7px 8px;border-bottom:1px solid var(--soft);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -1258,7 +1258,7 @@ function bar(parts,scale){
     else { neg-=w; h+=`<span style="left:${neg}%;width:${w}%;background:${col}" title="${LABEL[c]} ${fmt(v)}"></span>`; } });
   return `<div class="bar" role="img" aria-label="Rating breakdown">${h}</div>`;
 }
-let plView='proj', sSort='pa';
+let plView='proj', sSort='pa', sAsc=false;  // season leaderboard: tap the same header again to reverse
 const PPW=36.7;  // points of season margin per win: team seasons 2023-24..2025-26, wins above .500 on total margin (90% 35.4-38.1)
 const PA=z=>z.pa!=null?z.pa:z.sr*z.sp/100;  // team-adjusted points added (nightly 'pa', 2026-11-16); box-only fallback
 // Box wins vs proj (2026-11-17, user): (season box rating - preseason box rating) x possessions / 100 / PPW. Preseason box =
@@ -1280,7 +1280,7 @@ function renderSeasonPlayers(){
   let list=P.rows.filter(r=>r.z&&r.z.sr!=null&&(!team||r.t===team)&&posOk(r)&&(!q||r.p.n.toLowerCase().includes(q)))
     .map(r=>({r, sr:r.z.sr, pa:PA(r.z), wa:PA(r.z)/PPW, wx:wxOf(r), q:srQual(r)}));
   if(sSort==='sr'||sSort==='wx') list=list.filter(x=>{ const z=x.r.z, tg=(ZT[x.r.t]||{}).gp||0; return (z.mpg||0)>=15&&(z.gp||0)>=Math.ceil(tg/2); });  // qualified, like NBA stat leaders
-  list.sort((a,b)=>{ const x=a[sSort], y=b[sSort]; if(x==null||y==null) return (x==null)-(y==null); return y-x; });
+  list.sort((a,b)=>{ const x=a[sSort], y=b[sSort]; if(x==null||y==null) return (x==null)-(y==null); return sAsc?x-y:y-x; });
   $('count').textContent=`${list.length} players`;
   $('srows').innerHTML=list.slice(0,shown).map((x,i)=>{ const r=x.r, z=r.z, g=z.gp||0, sb=z.sb;
     const line=sb&&g?`${(sb[0]/g).toFixed(1)} · ${(sb[1]/g).toFixed(1)} · ${(sb[2]/g).toFixed(1)}`:'';
@@ -1330,8 +1330,8 @@ if(SEASON&&SZ.players.some(z=>z.sr!=null)){ $('plv').hidden=false;
     $('plv').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));
     const s_=plView==='season'; $('sTbl').hidden=!s_; $('sNote').hidden=!s_; document.querySelector('#p-pl .tbl:not(#sTbl)').hidden=s_;
     $('minf').hidden=s_; renderPlayers(); });
-  document.querySelectorAll('th button[data-ssort]').forEach(b=>b.addEventListener('click',()=>{ sSort=b.dataset.ssort;
-    document.querySelectorAll('th button[data-ssort]').forEach(x=>x.removeAttribute('aria-sort')); b.setAttribute('aria-sort','descending'); renderPlayers(); }));
+  document.querySelectorAll('th button[data-ssort]').forEach(b=>b.addEventListener('click',()=>{ const k=b.dataset.ssort; sAsc=k===sSort?!sAsc:false; sSort=k; shown=50;
+    document.querySelectorAll('th button[data-ssort]').forEach(x=>x.removeAttribute('aria-sort')); b.setAttribute('aria-sort',sAsc?'ascending':'descending'); renderPlayers(); }));
   $('srows').addEventListener('click',e=>{ const tr=e.target.closest('tr.p'); if(tr) openPlayer(tr.dataset.k); });
   $('srows').addEventListener('keydown',e=>{ const tr=e.target.closest('tr.p'); if(tr&&e.target===tr&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); tr.click(); } });
 }
@@ -1580,7 +1580,7 @@ function vgCalib(rows){
   return `<div class="vgtiles"><div class="vgt"><span class="vgk">Brier score</span><span class="vgv">${BJ.toFixed(3)} <small>vs ${BV.toFixed(3)}</small></span><span class="note">JIMBO vs the line; lower is better (a coin flip scores .250)</span></div></div>
     <div class="cleg"><span><i style="background:var(--magenta)"></i>JIMBO</span><span><i style="background:var(--surface);border:2px solid var(--ink);box-sizing:border-box"></i>Vegas line</span><span>dashed: perfect calibration</span></div>
     <div class="cchart" style="max-width:420px"><svg id="${id}" viewBox="0 0 ${W} ${Hh}" width="100%" style="touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:pointer" role="img" aria-label="Calibration: predicted home win chance vs how often the home team won, JIMBO and the Vegas line">${g}</svg></div><p class="note vgread" style="user-select:none;-webkit-user-select:none">${esc(base)}</p>
-    <p class="note">Games are grouped by the home team's predicted chance in 10% steps; each dot sits at the average chance in its group, sized by games, with a 95% range. A well calibrated forecast stays on the diagonal. The line's chance comes from its spread the same way JIMBO's comes from its margin (σ ${M.sig} points). Expect wide ranges until a few hundred games. <span style="opacity:.6">Build 11-17.</span></p>`;
+    <p class="note">Games are grouped by the home team's predicted chance in 10% steps; each dot sits at the average chance in its group, sized by games, with a 95% range. A well calibrated forecast stays on the diagonal. The line's chance comes from its spread the same way JIMBO's comes from its margin (σ ${M.sig} points). Expect wide ranges until a few hundred games. <span style="opacity:.6">Build 11-17b.</span></p>`;
 }
 function renderVegas(){
   const el=$('vegas'); if(!el) return;

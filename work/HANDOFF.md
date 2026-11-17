@@ -17,6 +17,7 @@ Why box-to-box (user agreed after a bias check on 11-17 data): full preseason ra
 (0.53 within team), stars -0.8/100, C -0.76/100, league offset +372 pts: the preseason lineup part vs the even per-possession team share
 don't match. Box vs box: slope 1.05, buckets -0.04..+0.36/100, positions -0.08..+0.32/100. Rookies as a group: sr -1.33 vs formula -2.87.
 Does NOT add up with Wins added (no team adjustment). 11-17 top: Wemby +1.0, D. Mitchell +0.9, Curry +0.9, Luka +0.9; bottom Buzelis -0.7.
+FIX same day (user): season leaderboard headers now reverse on a second tap (sAsc; blanks stay last); sort arrow shows ▴ when ascending (also Projection view). sw.js jimbo-0091c876150, footnote "Build 11-17b".
 Phone fit: GP column now hidden on phones (hide-s) and .stab cells 3px padding / 15px numbers under 430px (table was 34 px too wide).
 Code: preBox()/wxOf() next to PA in code/dash_v2.html (template) and site/index.html; test code/tests/wx_test.py SITE_DIR (iPhone 13 +
 desktop: no page errors, no overflow). sw.js hand-bumped jimbo-0091c87614f, footnote 'Build 11-17'. claude.ai dashboard unaffected (SEASON false).
