@@ -506,6 +506,7 @@ body.pvopen #gv{display:none}
 .stab th{white-space:normal;line-height:1.15} .stab th .sub{display:block;font-weight:400;font-size:11px;opacity:.85}
 .stab td.l{white-space:normal}
 @media (max-width:640px){ .stab td,.stab th{padding-left:4px;padding-right:4px} .stab .pa{font-size:17px} }
+@media (max-width:430px){ .stab td,.stab th{padding-left:3px;padding-right:3px} .stab td.num{font-size:15px} }
 .stab th button[aria-sort]{text-decoration:underline;text-underline-offset:3px}
 .stab .pa{font-family:var(--cond);font-size:19px;font-weight:700}
 #sNote{max-width:72ch;margin:-12px 2px 14px}
@@ -643,15 +644,16 @@ body.pvopen #gv{display:none}
       <div class="tbl" id="sTbl" hidden>
         <table class="stab">
           <thead><tr>
-            <th class="l">#</th><th class="l">Player<span class="sub">pts · reb · ast per game</span></th><th>GP</th><th class="hide-s">Min/g</th>
+            <th class="l">#</th><th class="l">Player<span class="sub">pts · reb · ast per game</span></th><th class="hide-s">GP</th><th class="hide-s">Min/g</th>
             <th><button data-ssort="sr" title="This season's box score only, per 100 possessions">Season<br>rating</button></th>
             <th><button data-ssort="pa" aria-sort="descending" title="Points added to his team's margin vs an average player, team-adjusted">Points<br>added</button></th>
             <th><button data-ssort="wa" title="Points added / 36.7 (points of margin per win, 2023-26); each team's players sum to its real margin">Wins<br>added</button></th>
+            <th><button data-ssort="wx" title="Box score only: (season box rating - preseason box rating) x possessions / 100 / 36.7. Blank for rookies. Grey = under 15 min/g or under half his team's games">Box vs<br>proj</button></th>
           </tr></thead>
           <tbody id="srows"></tbody>
         </table>
       </div>
-      <p class="note" id="sNote" hidden>Points added = how many points he has added to his team's scoring margin so far, compared with an average player in the same minutes. It starts from his season rating × possessions ÷ 100, then gets a team adjustment: the box score explains only about 60% of how much teams win or lose by, so the rest of each team's actual margin is shared among its players by possessions played. Every team's players add up to its real scoring margin. Wins added = points added ÷ 36.7, the points of scoring margin a team has needed per extra win over the last three seasons (more than the old rule of thumb of ~30, because scoring is up). So it rewards playing well <i>and</i> playing a lot: a big rating in a few minutes won't climb this list. Season rating = points per 100 possessions vs an average player, from this season's box score only: nothing from past seasons or the projection, and nothing pulled toward average, so small samples swing a lot. Sorting by season rating lists players averaging 15+ minutes who have played at least half their team's games. Lineup results aren't in it. Updated nightly.</p>
+      <p class="note" id="sNote" hidden>Points added = how many points he has added to his team's scoring margin so far, compared with an average player in the same minutes. It starts from his season rating × possessions ÷ 100, then gets a team adjustment: the box score explains only about 60% of how much teams win or lose by, so the rest of each team's actual margin is shared among its players by possessions played. Every team's players add up to its real scoring margin. Wins added = points added ÷ 36.7, the points of scoring margin a team has needed per extra win over the last three seasons (more than the old rule of thumb of ~30, because scoring is up). So it rewards playing well <i>and</i> playing a lot: a big rating in a few minutes won't climb this list. Season rating = points per 100 possessions vs an average player, from this season's box score only: nothing from past seasons or the projection, and nothing pulled toward average, so small samples swing a lot. Sorting by season rating lists players averaging 15+ minutes who have played at least half their team's games. Lineup results aren't in it. Box wins vs proj = how many wins his box score has added beyond what his preseason projection expected, in the possessions he has actually played: (season rating − preseason box rating) × possessions ÷ 100 ÷ 36.7. Box score on both sides (the preseason side includes the age adjustment, not lineup results), so it does not add up with Wins added. Missed games don't count against him. Blank for rookies (their projection isn't built from a box score). Grey = small sample; sorting by it lists qualified players only. Updated nightly.</p>
       <button class="btn more" id="more">Show 50 more</button>
     </div>
 
@@ -1270,22 +1272,33 @@ function bar(parts,scale){
 let plView='proj', sSort='pa';
 const PPW=36.7;  // points of season margin per win: team seasons 2023-24..2025-26, wins above .500 on total margin (90% 35.4-38.1)
 const PA=z=>z.pa!=null?z.pa:z.sr*z.sp/100;  // team-adjusted points added (nightly 'pa', 2026-11-16); box-only fallback
+// Box wins vs proj (2026-11-17, user): (season box rating - preseason box rating) x possessions / 100 / PPW. Preseason box =
+// slope x sum of feature contributions (default weights, not the sliders) + age + returner adjustments; no lineup part, no hustle
+// (the season rating has neither). Re-centred so the possession-weighted gap over everyone with a value is 0 (the season rating is
+// centred over all players incl. rookies). Rookies / players without a box projection (p.fx or no p.f): null.
+let WXC=null;
+function preBox(p){ if(!p||p.fx!=null||!p.f) return null; let s=0; for(const v of p.f) s+=v; return M.slope*(s+(p.ag||0))+(p.rt||0); }
+function wxOf(r){
+  if(!WXC){ WXC=new Map(); let a=0,b=0,w=0; const L=[];
+    P.rows.forEach(x=>{ const z=x.z, pb=preBox(x.p); if(!z||z.sr==null||!(z.sp>0)||pb==null) return; L.push([x.p.k,z,pb]); a+=z.sr*z.sp; b+=pb*z.sp; w+=z.sp; });
+    const c=w?(b-a)/w:0; L.forEach(([k,z,pb])=>WXC.set(k,(z.sr-(pb-c))*z.sp/100/PPW)); }
+  return WXC.has(r.p.k)?WXC.get(r.p.k):null; }
 function seasonRank(){ // league rank by points added, every player with a season rating
   const a=SZ.players.filter(z=>z.sr!=null).map(z=>[z.k,PA(z)]).sort((x,y)=>y[1]-x[1]); return new Map(a.map((x,i)=>[x[0],i+1])); }
 function renderSeasonPlayers(){
   const q=$('q').value.trim().toLowerCase(), team=tf.value, pf=$('posf').value;
   const posOk=r=>!pf||('GWB'.includes(pf)?POS3(r.p.ps)===pf:POS5(r.p.ps)===pf);
   let list=P.rows.filter(r=>r.z&&r.z.sr!=null&&(!team||r.t===team)&&posOk(r)&&(!q||r.p.n.toLowerCase().includes(q)))
-    .map(r=>({r, sr:r.z.sr, pa:PA(r.z), wa:PA(r.z)/PPW}));
-  if(sSort==='sr') list=list.filter(x=>{ const z=x.r.z, tg=(ZT[x.r.t]||{}).gp||0; return (z.mpg||0)>=15&&(z.gp||0)>=Math.ceil(tg/2); });  // qualified, like NBA stat leaders
-  list.sort((a,b)=>b[sSort]-a[sSort]);
+    .map(r=>({r, sr:r.z.sr, pa:PA(r.z), wa:PA(r.z)/PPW, wx:wxOf(r), q:srQual(r)}));
+  if(sSort==='sr'||sSort==='wx') list=list.filter(x=>{ const z=x.r.z, tg=(ZT[x.r.t]||{}).gp||0; return (z.mpg||0)>=15&&(z.gp||0)>=Math.ceil(tg/2); });  // qualified, like NBA stat leaders
+  list.sort((a,b)=>{ const x=a[sSort], y=b[sSort]; if(x==null||y==null) return (x==null)-(y==null); return y-x; });
   $('count').textContent=`${list.length} players`;
   $('srows').innerHTML=list.slice(0,shown).map((x,i)=>{ const r=x.r, z=r.z, g=z.gp||0, sb=z.sb;
     const line=sb&&g?`${(sb[0]/g).toFixed(1)} · ${(sb[1]/g).toFixed(1)} · ${(sb[2]/g).toFixed(1)}`:'';
     return `<tr class="p" tabindex="0" data-k="${esc(r.p.k)}"><td class="l rk">${i+1}</td>
       <td class="l"><span class="nm pvlink">${esc(r.p.n)}</span><span class="tm">${r.t==='FA'?'free agent':r.t} · ${POS5(r.p.ps)}</span>${injBadge(r)}<span class="line">${line}</span></td>
-      <td class="num">${g}</td><td class="num hide-s">${(z.mpg||0).toFixed(1)}</td>
-      <td class="num ${cls(x.sr)}">${fmt(x.sr,2)}</td><td><span class="pa ${cls(x.pa)}">${fmt(x.pa)}</span></td><td class="num ${cls(x.wa)}">${fmt(x.wa)}</td></tr>`; }).join('');
+      <td class="num hide-s">${g}</td><td class="num hide-s">${(z.mpg||0).toFixed(1)}</td>
+      <td class="num ${cls(x.sr)}">${fmt(x.sr,2)}</td><td><span class="pa ${cls(x.pa)}">${fmt(x.pa)}</span></td><td class="num ${cls(x.wa)}">${fmt(x.wa)}</td><td class="num ${x.wx==null||!x.q?'muted':cls(x.wx)}">${x.wx==null?'–':fmt(x.wx)}</td></tr>`; }).join('');
   $('more').hidden=list.length<=shown;
 }
 function renderPlayers(){
@@ -1578,7 +1591,7 @@ function vgCalib(rows){
   return `<div class="vgtiles"><div class="vgt"><span class="vgk">Brier score</span><span class="vgv">${BJ.toFixed(3)} <small>vs ${BV.toFixed(3)}</small></span><span class="note">JIMBO vs the line; lower is better (a coin flip scores .250)</span></div></div>
     <div class="cleg"><span><i style="background:var(--magenta)"></i>JIMBO</span><span><i style="background:var(--surface);border:2px solid var(--ink);box-sizing:border-box"></i>Vegas line</span><span>dashed: perfect calibration</span></div>
     <div class="cchart" style="max-width:420px"><svg id="${id}" viewBox="0 0 ${W} ${Hh}" width="100%" style="touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:pointer" role="img" aria-label="Calibration: predicted home win chance vs how often the home team won, JIMBO and the Vegas line">${g}</svg></div><p class="note vgread" style="user-select:none;-webkit-user-select:none">${esc(base)}</p>
-    <p class="note">Games are grouped by the home team's predicted chance in 10% steps; each dot sits at the average chance in its group, sized by games, with a 95% range. A well calibrated forecast stays on the diagonal. The line's chance comes from its spread the same way JIMBO's comes from its margin (σ ${M.sig} points). Expect wide ranges until a few hundred games. <span style="opacity:.6">Build 11-16b.</span></p>`;
+    <p class="note">Games are grouped by the home team's predicted chance in 10% steps; each dot sits at the average chance in its group, sized by games, with a 95% range. A well calibrated forecast stays on the diagonal. The line's chance comes from its spread the same way JIMBO's comes from its margin (σ ${M.sig} points). Expect wide ranges until a few hundred games. <span style="opacity:.6">Build 11-17.</span></p>`;
 }
 function renderVegas(){
   const el=$('vegas'); if(!el) return;
@@ -1914,7 +1927,7 @@ function seasHTML(k){
   const projM=p.mpg!=null?+p.mpg:null;
   const tiles=[tile('MIN',mins/n,projM,'proj',4), tile('PTS'+u,...rate(sum('pts'),ly&&ly.pts),LY,10), tile('REB'+u,...rate(reb,ly&&(ly.oreb+ly.dreb)),LY,8),
     tile('AST'+u,...rate(sum('ast'),ly&&ly.ast),LY,10), tile('TS%',ts!=null?ts*100:null,lyTs!=null?lyTs*100:null,LY,25)].join('');
-  const sumL=z.sr!=null?(()=>{ const pa=PA(z), rk=seasonRank().get(k); return `<p class="sea-sum">Season rating <b class="${cls(z.sr)}">${fmt(z.sr,2)}</b> · Points added <b class="${cls(pa)}">${fmt(pa)}</b> · Wins added <b class="${cls(pa)}">${fmt(pa/PPW)}</b>${rk?` · #${rk} in the league`:''}</p>`; })():'';
+  const sumL=z.sr!=null?(()=>{ const pa=PA(z), rk=seasonRank().get(k); return `<p class="sea-sum">Season rating <b class="${cls(z.sr)}">${fmt(z.sr,2)}</b> · Points added <b class="${cls(pa)}">${fmt(pa)}</b> · Wins added <b class="${cls(pa)}">${fmt(pa/PPW)}</b>${(()=>{ const r_=P&&P.rows.find(x=>x.p.k===k), w_=r_?wxOf(r_):null; return w_==null?'':` · Box wins vs proj <b class="${cls(w_)}">${fmt(w_)}</b>`; })()}${rk?` · #${rk} in the league`:''}</p>`; })():'';
   let out=sec('Season so far',`${sumL}${ctl}<div class="stiles">${tiles}</div><p class="note" style="margin:10px 0 0">Bar = how much to trust each number yet; grey = too early to read much into. “proj” = his preseason minutes projection; “was” = last season${s.split!=='all'?`; showing ${n} of ${n0} games`:''}.</p>`,`<span class="note">${rec}</span>`);
   // 2. what stands out: biggest moves vs last season / projection, scored by how unlikely they are by chance
   const N=[], earlyT=n0<10?` <span class="early">Early: ${n0} game${n0>1?'s':''}.</span>`:'';

@@ -1,11 +1,25 @@
 # JIMBO handoff: current state (read this first)
 JIMBO = judgment-induced model for basketball outcomes. NBA 2026-27 player ratings, minutes, team win totals, playoff odds,
-game odds, nightly in-season updates. Updated 2026-11-16 (session 54: DTD what-if toggles on the game page; session 50: four fundamentals tests, all fail; session 48: learning-speed check; session 47: historical lines test; session 38: consistent availability; session 35: matchups tab removed, injury box; session 34: NO MORE ZIP; everything lives in the repo, sandbox tree in work/). 
+game odds, nightly in-season updates. Updated 2026-11-17 (session 55: Box wins vs proj column; session 54: DTD what-if toggles on the game page; session 50: four fundamentals tests, all fail; session 48: learning-speed check; session 47: historical lines test; session 38: consistent availability; session 35: matchups tab removed, injury box; session 34: NO MORE ZIP; everything lives in the repo, sandbox tree in work/). 
 Full history of every test and decision: RESEARCH_LOG.md (1,650 lines; don't read it whole:
 `grep -n "^## " RESEARCH_LOG.md`, then read the section you need).
 Design spec (Claude Doc): https://claude.ai/code/artifact/e5eebcf8-5649-4c33-b974-23aa18e5c675
 To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs work/setup.sh, reads this file (repo CLAUDE.md says the same).
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
+
+## SESSION 55 (2026-11-17, user request, display only) -- BOX WINS VS PROJ column on the Players "This season" leaderboard (app only)
+Column "Box vs proj" (after Wins added; also on the player-page summary line as "Box wins vs proj"). Value = (season box rating sr -
+preseason box rating) x his possessions sp / 100 / PPW (36.7). Preseason box = M.slope x (sum of dash.json p.f + p.ag) + p.rt: box part
+of the projection with age + returner adjustments, NO lineup part, NO hustle (sr has neither), default weights (not the sliders).
+Re-centred client-side so the possession-weighted gap over everyone with a value is 0. Rookies / anyone without p.f (p.fx, in-season
+signings) = blank (user picked option a). Grey = not qualified (srQual: 15+ min/g, half the team's games); sorting by it lists qualified only.
+Why box-to-box (user agreed after a bias check on 11-17 data): full preseason rating x poss vs team-adjusted points added had slope 0.69
+(0.53 within team), stars -0.8/100, C -0.76/100, league offset +372 pts: the preseason lineup part vs the even per-possession team share
+don't match. Box vs box: slope 1.05, buckets -0.04..+0.36/100, positions -0.08..+0.32/100. Rookies as a group: sr -1.33 vs formula -2.87.
+Does NOT add up with Wins added (no team adjustment). 11-17 top: Wemby +1.0, D. Mitchell +0.9, Curry +0.9, Luka +0.9; bottom Buzelis -0.7.
+Phone fit: GP column now hidden on phones (hide-s) and .stab cells 3px padding / 15px numbers under 430px (table was 34 px too wide).
+Code: preBox()/wxOf() next to PA in code/dash_v2.html (template) and site/index.html; test code/tests/wx_test.py SITE_DIR (iPhone 13 +
+desktop: no page errors, no overflow). sw.js hand-bumped jimbo-0091c87614f, footnote 'Build 11-17'. claude.ai dashboard unaffected (SEASON false).
 
 ## SESSION 54 (2026-11-16, user request, display only) -- DAY-TO-DAY WHAT-IF TOGGLES on the game page (app only)
 Game page gets a "Day-to-day players" section (below Expected rotations, above Context; moved same day at user request, sw 14e, 'Build 11-16b'): each DTD player has In / 50-50 / Out buttons plus a
