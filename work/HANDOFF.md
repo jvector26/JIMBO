@@ -1,11 +1,21 @@
 # JIMBO handoff: current state (read this first)
 JIMBO = judgment-induced model for basketball outcomes. NBA 2026-27 player ratings, minutes, team win totals, playoff odds,
-game odds, nightly in-season updates. Updated 2026-11-17 (session 55: Box wins vs proj column; session 54: DTD what-if toggles on the game page; session 50: four fundamentals tests, all fail; session 48: learning-speed check; session 47: historical lines test; session 38: consistent availability; session 35: matchups tab removed, injury box; session 34: NO MORE ZIP; everything lives in the repo, sandbox tree in work/). 
+game odds, nightly in-season updates. Updated 2026-11-20 (session 56: sliders-moved notice; session 55: Box wins vs proj column; session 54: DTD what-if toggles on the game page; session 50: four fundamentals tests, all fail; session 48: learning-speed check; session 47: historical lines test; session 38: consistent availability; session 35: matchups tab removed, injury box; session 34: NO MORE ZIP; everything lives in the repo, sandbox tree in work/). 
 Full history of every test and decision: RESEARCH_LOG.md (1,650 lines; don't read it whole:
 `grep -n "^## " RESEARCH_LOG.md`, then read the section you need).
 Design spec (Claude Doc): https://claude.ai/code/artifact/e5eebcf8-5649-4c33-b974-23aa18e5c675
 To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs work/setup.sh, reads this file (repo CLAUDE.md says the same).
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
+
+## SESSION 56 (2026-11-20, user request, display only) -- SLIDERS-MOVED NOTICE
+Why: user saw MIL-POR card "POR by 11.5" but the vs Vegas log had 12.2. Not backdating: the app's Tonight cards apply saved sliders,
+the nightly never reads sliders. overrides.json has off_rebounding 0.2 + def_rebounding 0.2 since 11-06 (user did not know). With
+them at 1 the app cards match the logged margins exactly (11-18, 11-19 replays). User: keep the design, just make it visible.
+Shipped: yellow banner under the header on every tab ("Sliders moved: ... Forecasts and Tonight cards use them; the vs Vegas record
+uses the default model. Show sliders" -> opens Model settings) + "your sliders" tag on Tonight card JIMBO lines. Hidden at defaults.
+Code: slMoved()/renderSlWarn() next to renderSetSum; applied to site/index.html AND code/dash_v2.html by tools/slider_warn_patch.py
+(do not reapply). sw.js jimbo-0091c876151, footnote "Build 11-20". Phone + desktop: no page errors, no overflow.
+Sliders themselves NOT changed (still rebounding 0.2). Project note: claude/tonight_card_vs_log_2026-11-20.md.
 
 ## SESSION 55 (2026-11-17, user request, display only) -- BOX WINS VS PROJ column on the Players "This season" leaderboard (app only)
 Column "Box vs proj" (after Wins added; also on the player-page summary line as "Box wins vs proj"). Value = (season box rating sr -
