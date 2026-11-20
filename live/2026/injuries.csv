@@ -29,7 +29,7 @@ Detroit Pistons,DET,Cade Cunningham,Day-To-Day,2026-11-19T21:36Z,day-to-day,Sore
 Detroit Pistons,DET,Ugonna Onyenso,Day-To-Day,2026-11-19T16:15Z,day-to-day,,Left,2026-11-21,Onyenso agreed to a two-way contract with the Pistons on Thursday.
 Detroit Pistons,DET,Duncan Robinson,Out,2026-11-17T16:25Z,out,Strain,Left,2026-11-27,"Robinson will be re-evaluated in one week due to a left quadriceps strain, Coty M. Davis of The Detroit News reports."
 Detroit Pistons,DET,Jalen Duren,Out,2026-11-08T16:05Z,out,Strain,Right,2026-11-24,"Duren (hamstring) has begun on-court activity and will be re-evaluated in two weeks, Hunter Patterson of The Athletic reports."
-Golden State Warriors,GS,Draymond Green,Out,2026-11-19T18:51Z,out,,Not Specified,2026-11-22,Green (elbow) is out for Thursday's game against the Grizzlies.
+Golden State Warriors,GS,Draymond Green,Day-To-Day,2026-11-20T03:53Z,day-to-day,,Not Specified,2026-11-22,Green (elbow) is out for Thursday's game against the Grizzlies.
 Golden State Warriors,GS,Brandon Williams,Out,2026-11-18T17:12Z,out,Strain,Left,2026-11-22,Williams (hamstring) has progressed to on-court activities and will be re-evaluated Saturday.
 Golden State Warriors,GS,Stephen Curry,Out,2026-11-12T17:03Z,out,,Right,2026-12-12,"Curry has been diagnosed with an oblique abdominal tear and will be re-evaluated in two weeks, Shams Charania of ESPN reports."
 Golden State Warriors,GS,Kristaps Porzingis,Out,2026-11-06T21:26Z,out,,,2027-01-02,Porzingis announced on his social media that he's stepping away from basketball.
@@ -48,15 +48,15 @@ LA Clippers,LAC,Brandon Ingram,Out,2026-11-18T23:11Z,out,Surgery,Right,2026-11-2
 LA Clippers,LAC,Bradley Beal,Out,2026-10-15T01:03Z,out,Inflammation,Right,2026-11-29,"Beal (knee) will not be ready for the start of the regular season, NBA writer Justin Russo reports."
 LA Clippers,LAC,Jordan Miller,Out,2026-08-26T20:04Z,out,Surgery,Left,2027-03-02,"Miller underwent surgery Wednesday to repair a torn left rotator cuff and will be re-evaluated in six months, per Law Murray of The Athletic."
 Los Angeles Lakers,LAL,Austin Reaves,Out,2026-11-20T01:05Z,out,Bruise,Left,2026-11-23,Reaves (heel) is listed as out for Friday's game against the Kings.
+Memphis Grizzlies,MEM,Zach Edey,Day-To-Day,2026-11-20T03:53Z,day-to-day,,,2026-11-21,Edey (hip) has been ruled out for Thursday's game against the Warriors.
 Memphis Grizzlies,MEM,Jerami Grant,Day-To-Day,2026-11-20T02:08Z,day-to-day,Not Specified,Left,2026-11-21,"Grant won't return to Thursday's game against the Warriors due to a left calf injury. He'll finish with three points (1-2 FG, 1-1 3Pt) across five minutes."
-Memphis Grizzlies,MEM,Zach Edey,Out,2026-11-19T19:09Z,out,,,2026-11-21,Edey (hip) has been ruled out for Thursday's game against the Warriors.
 Memphis Grizzlies,MEM,Ty Jerome,Out,2026-11-19T19:07Z,out,,Right,2026-11-21,Jerome (hip) has been ruled out for Thursday's game against the Warriors.
 Memphis Grizzlies,MEM,GG Jackson,Out,2026-11-17T23:18Z,out,Surgery,Left,2027-01-18,Jackson underwent a procedure Wednesday to repair a broken fifth metatarsal in his left foot. He is expected to recover fully and will be re-evaluated in approximately three months.
 Memphis Grizzlies,MEM,Scotty Pippen Jr.,Out,2026-11-16T17:16Z,out,Soreness,,2026-11-25,Pippen (back) is progressing in his recovery but is still considered week-to-week.
 Memphis Grizzlies,MEM,Richie Saunders,Out,2026-11-07T17:24Z,out,Surgery,Right,2026-12-01,"Saunders signed a two-way contract with the Grizzlies on Saturday, Shams Charania of ESPN reports."
 Miami Heat,MIA,Myron Gardner,Day-To-Day,2026-11-19T14:45Z,day-to-day,,,2026-11-22,Gardner (hamstring) is out for Wednesday's game against the Bucks.
-Milwaukee Bucks,MIL,Kyle Kuzma,Out,2026-11-19T19:20Z,out,Bruise,Right,2026-11-21,Kuzma (shoulder) has been ruled out for Thursday's game against Portland due to a right shoulder contusion.
-Milwaukee Bucks,MIL,Myles Turner,Out,2026-11-19T19:15Z,out,Bruise,Left,2026-11-21,"Turner (shoulder) has been ruled out for Thursday's game against Portland due to a left shoulder contusion,"
+Milwaukee Bucks,MIL,Myles Turner,Day-To-Day,2026-11-20T03:55Z,day-to-day,Bruise,Left,2026-11-21,"Turner (shoulder) has been ruled out for Thursday's game against Portland due to a left shoulder contusion,"
+Milwaukee Bucks,MIL,Kyle Kuzma,Day-To-Day,2026-11-20T03:55Z,day-to-day,Bruise,Right,2026-11-21,Kuzma (shoulder) has been ruled out for Thursday's game against Portland due to a right shoulder contusion.
 Milwaukee Bucks,MIL,Ousmane Dieng,Out,2026-11-15T23:46Z,out,Surgery,Left,2026-12-14,"Dieng will undergo a procedure to repair a fractured left finger Monday, Justin Garcia of the Milwaukee Bucks Radio Network reports."
 Minnesota Timberwolves,MIN,Jaylen Clark,Out,2026-11-15T22:40Z,out,Not Specified,Right,2026-11-29,Clark (hamstring) has been ruled out for the next two weeks.
 Minnesota Timberwolves,MIN,Anthony Edwards,Out,2026-10-29T18:33Z,out,Surgery,Right,2026-12-21,"Edwards underwent a successful arthroscopic procedure on his right knee Thursday, the Timberwolves announced."
@@ -82,9 +82,9 @@ Philadelphia 76ers,PHI,Dominick Barlow,Out,2026-11-17T22:12Z,out,Fracture,Not Sp
 Philadelphia 76ers,PHI,Adem Bona,Out,2026-11-12T16:36Z,out,Sprain,,2026-11-21,"Bona (back) will be re-evaluated in approximately one week after seeing a specialist, Ky Carlin of USA Today reports."
 Philadelphia 76ers,PHI,Ariel Hukporti,Out,2026-10-06T19:17Z,out,Surgery,Right,2027-10-01,"Hukporti has sustained a season-ending ruptured right Achilles tendon, per Shams Charania of ESPN."
 Phoenix Suns,PHX,Mark Williams,Out,2026-09-11T16:03Z,out,Surgery,Left,2027-02-03,"Williams underwent surgery Thursday to repair a torn labrum in his left shoulder and will miss an extended period of time, Shams Charania of ESPN reports."
-Portland Trail Blazers,POR,Deni Avdija,Out,2026-11-20T00:21Z,out,,,2026-11-21,Avdija (foot) is listed as out for Thursday's game against the Bucks.
+Portland Trail Blazers,POR,Robert Williams III,Day-To-Day,2026-11-20T03:55Z,day-to-day,,,2026-11-21,Williams (rest) is listed as out for Thursday's game versus the Bucks.
+Portland Trail Blazers,POR,Deni Avdija,Day-To-Day,2026-11-20T03:55Z,day-to-day,,,2026-11-21,Avdija (foot) is listed as out for Thursday's game against the Bucks.
 Portland Trail Blazers,POR,Chris Youngblood,Out,2026-11-19T15:06Z,out,Bruise,Right,2026-11-21,Youngblood (heel) has been ruled out for Thursday's game against the Bucks.
-Portland Trail Blazers,POR,Robert Williams III,Out,2026-11-18T22:58Z,out,,,2026-11-21,Williams (rest) is listed as out for Thursday's game versus the Bucks.
 Portland Trail Blazers,POR,Vit Krejci,Out,2026-11-11T19:56Z,out,,Left,2027-01-12,"Krejci underwent surgery on his fractured left ankle Wednesday and will be re-evaluated in eight weeks, Brett Siegel of ClutchPoints.com reports."
 Portland Trail Blazers,POR,Ja Morant,Out,2026-11-08T02:18Z,out,Not Specified,Left,2026-12-01,"Head coach Micah Nori said Morant met with a doctor in Los Angeles, who gave him a positive outlook on his recovery from the hamstring injury. While Nori declined to update Morant's timetable, he added Morant ""may not be out for as long as we thought,"" Trail Blazers Insider Sean Highkin reports."
 Portland Trail Blazers,POR,Shaedon Sharpe,Out,2026-08-24T20:23Z,out,Surgery,Right,2027-03-02,"Sharpe suffered a torn meniscus in his knee and is expected to miss six months, per Shams Charania of ESPN."
