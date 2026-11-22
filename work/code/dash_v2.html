@@ -317,6 +317,7 @@ tr.benchhd td{text-align:left;background:var(--soft);color:var(--muted);font-siz
 td.muted{color:var(--muted)}
 .ptab.nosz .sznc{display:none} .ptab td.skc{white-space:nowrap} .ptab .skn{font-size:13px;color:var(--muted)} .ptab td.skc b{font-family:var(--cond);font-weight:600}
 .ptab .skline{display:none;font-size:12px;color:var(--muted);margin-top:1px}
+.fivenote{font-size:12.5px;color:var(--muted);margin:-8px 0 16px}
 @media (max-width:640px){ .ptab .skline{display:block} .ptab:not(.nosz) .edc{display:none} }  /* phones in season: Edit lives on the player page */
 .rk2 small.p100{font-family:var(--text);font-weight:400;font-size:11px;color:var(--muted);margin-left:3px}
 @media (max-width:760px){ /* team detail stays on screen while the wide standings table scrolls sideways */
@@ -620,12 +621,12 @@ body.pvopen #gv{display:none}
         <span class="count" id="count"></span>
       </div>
       <div class="tbl">
-        <table class="ptab" style="min-width:720px">
+        <table class="ptab" style="min-width:800px">
           <thead><tr>
             <th class="l">#</th><th class="l">Player</th><th class="hide-s"><button data-sort="age" title="Age for 2026-27">Age</button></th>
             <th><button data-sort="min" id="minH">Proj min</button></th>
-            <th class="hide-s"><button data-sort="off" title="Offense, points per 100 vs an average player">Off</button></th><th class="hide-s"><button data-sort="def" title="Defense, points per 100 vs an average player">Def</button></th>
-            <th><button data-sort="tot" aria-sort="descending" title="2026-27 projected rating (offense + defense)">Rating</button></th>
+            <th class="hide-s"><button data-sort="bo" title="Box score, offense: points per 100 vs average (this season's box score included)">Box O</button></th><th class="hide-s"><button data-sort="bd" title="Box score, defense (hustle stats included): points per 100 vs average">Box D</button></th><th class="hide-s"><button data-sort="lo" title="Lineup results beyond the box score, offense (preseason)">Lin O</button></th><th class="hide-s"><button data-sort="ld" title="Lineup results beyond the box score, defense (preseason)">Lin D</button></th>
+            <th><button data-sort="tot" aria-sort="descending" title="Overall 2026-27 rating: box + lineup, plus age, this season's lineup results and league re-centering">Overall</button></th>
             <th class="sznc"><button data-sort="sr" title="This season's box score only, per 100 possessions, nothing pulled toward average. Grey = under 15 min/g or under half his team's games (sorted last)">Season</button></th>
             <th class="l hide-s"><button data-sort="top" title="His biggest plus among the box-score skills and lineup impact">Top skill</button></th>
             <th class="l hide-s"><button data-sort="worst" title="His biggest minus among the box-score skills and lineup impact (sorts worst first)">Worst skill</button></th>
@@ -739,7 +740,7 @@ function makeEngine(D){
   }
   const featMult=S=>F.map(x=>S[compOf[x]]);
   function rawRating(p,m,S){ // model rating before league re-centering, with its parts
-    if(p.fx!=null) return {off:p.fx/2, def:p.fx/2, parts:{base:p.fx}, dreb:null, dstop:null};
+    if(p.fx!=null) return {off:p.fx/2, def:p.fx/2, parts:{base:p.fx}, dreb:null, dstop:null, bo:null, bd:null};
     const parts={}; let off=0, def=0;
     for(let i=0;i<NF;i++){const v=SL*p.f[i]*m[i]; const c=compOf[F[i]]; parts[c]=(parts[c]||0)+v; if(isO[i]) off+=v; else def+=v;}
     const lo=SL*S.lineup_o*p.lo, ld=SL*S.lineup_d*p.ld, ag=SL*p.ag*(S.age==null?1:S.age);
@@ -747,8 +748,9 @@ function makeEngine(D){
     const hu=p.hu||0, hc=(p.hb&&p.hb[1])||0; if(hu) parts.hustle=hu-hc;  // hustle stats (defense #7): post-slope, fixed. Display: the 3PT-contest part is shown under perimeter defense, loose balls stay 'hustle'
     if(hc) parts.perimeter_def=(parts.perimeter_def||0)+hc;
     const dreb=parts.def_rebounding||0, dstop=def-dreb+ld+hu;  // defense split: rebounding vs stops/shot prevention (box + lineup defense)
+    const bo=off, bd=def+hu;  // five ratings (2026-11-22): box offense / box defense (hustle counts as box defense)
     off+=lo+ag/2+rt/2; def+=ld+ag/2+rt/2+hu;
-    return {off, def, parts, dreb, dstop};
+    return {off, def, parts, dreb, dstop, bo, bd};
   }
   // role (depth-chart tier) override: want = a[tier] + b[tier] * m0, as project.py / nightly.py (L newcomers: fixed newc_L)
   const DEP=M.depth||null;
@@ -786,7 +788,7 @@ function makeEngine(D){
   function project(S, OV){
     const mult=featMult(S);
     const rows=D.players.map(p=>{ const o=OV[p.k]||{}; const r=rawRating(p,mult,S);
-      return {p, t:o.t||p.t, raw:r.off+r.def, off:r.off, def:r.def, dreb:r.dreb, dstop:r.dstop, parts:r.parts, o, role:o.d||null, roleU:!!o.d, roleA:false}; });
+      return {p, t:o.t||p.t, raw:r.off+r.def, off:r.off, def:r.def, bo:r.bo, bd:r.bd, lo:r.bo==null?null:r.parts.lineup_o, ld:r.bo==null?null:r.parts.lineup_d, lu:null, dreb:r.dreb, dstop:r.dstop, parts:r.parts, o, role:o.d||null, roleU:!!o.d, roleA:false}; });
     const byTeam={}; TEAMS.forEach(t=>byTeam[t]=[]); rows.forEach(r=>{ if(byTeam[r.t]) byTeam[r.t].push(r); });
     TEAMS.forEach(t=>assignRoles(byTeam[t], r=>r.o.t?null:r.p.dt));
     const teamOver={};
@@ -983,6 +985,7 @@ function seasonOverlay(P){
   P.rows.forEach(r=>{ const z=ZP.get(r.p.k)||null; r.z=z;
     const d=z?z.r-z.r_pre:0;   // this season's games (nightly rating update)
     if(Math.abs(d)>1e-9){ r.parts.season=d; r.mtot+=d; if(r.o.r==null){ r.tot+=d; r.off+=d/2; r.def+=d/2; } }
+    if(z&&z.u&&r.bo!=null){ r.bo+=z.u[0]; r.bd+=z.u[1]; r.lu=z.u[2]; }  // five ratings: this season's box update O/D; lineup update stays net
     r.t=r.o.t||(z?z.t:r.p.t);
     const gr=GR[r.t]||0, me=z?z.me:(r.p.mpg||0), av=z?z.av:Math.min(1,(r.p.g||0)/82);
     r.me=me; r.gp=z?z.gp:0; r.mpgS=z?z.mpg:0; r.mraw=r.t==='FA'?0:(z&&z.mr!=null?z.mr:(r.p.mm||0)/82);
@@ -1114,6 +1117,15 @@ function axisHead(){ let s=''; for(let v=20;v<=60;v+=10) s+=`<span style="left:$
 function gm(r){ const v=gmv(r), c=r.o.g!=null||r.o.mpg!=null||r.o.d?'ov':'';
   return `<td class="num ${c}">${Math.round(v.g)}</td><td class="num ${c}">${v.mpg.toFixed(1)}</td>`; }
 function noteRest(n){ return String(n||'').replace(/(^|;\s*)depth chart: [a-z ]+/g,'').replace(/^;\s*/,'').trim(); }
+// five ratings (2026-11-22): what the overall holds beyond box O/D + lineup O/D
+function fiveRest(r){ if(r.bo==null) return null; const pa=r.parts, age=(pa.aging||0)+(pa.returner||0), lu=r.lu||0;
+  const rest=r.tot-(r.bo+r.bd+r.lo+r.ld), other=rest-age-lu, out=[];
+  if(Math.abs(age)>=0.005) out.push(`age ${fmt(age)}`);
+  if(r.lu!=null) out.push(`lineup results this season ${fmt(lu)} (one net number, not split into offense and defense)`);
+  if(Math.abs(other)>=0.05) out.push(r.o.r!=null?`your rating edit ${fmt(other)}`:(r.lu==null&&pa.season!=null?`this season's games ${fmt(other)} (not split yet)`:`league re-centering ${fmt(other)}`));
+  return out; }
+function fiveLine(r){ return r.bo==null?'':`Box ${fmt(r.bo)} / ${fmt(r.bd)} · Lineup ${fmt(r.lo)} / ${fmt(r.ld)}`; }
+function fiveTd(v, extra){ return v==null?`<td class="num muted ${extra||''}">–</td>`:`<td class="num ${cls(v)} ${extra||''}">${fmt(v)}</td>`; }
 function roleTag(r){ const L={S:'Starter',R:'Rotation',L:'Limited minutes',N:'Out of rotation'}[r.role]; if(!L) return '';
   if(r.roleU) return `<span class="rl rl-u" title="Your role edit">${L}</span>`;
   if(r.roleA) return `<span class="rl rl-a" title="Moved automatically to keep five starters">${L} (auto)</span>`;
@@ -1126,11 +1138,11 @@ function rosterHTML(x){
   const row=r=>{ const ch=chNR(r), z0=!inRot(r), rn=roleNote(r);
     return `<tr class="pr" data-pv="${esc(r.p.k)}"><td class="l"><span class="nm pvlink">${esc(r.p.n)}</span>${ch?'<span class="flag">edited</span>':''}${injBadge(r)}${rn?`<span class="tm">${rn}</span>`:''}</td>
     <td class="num hide-s">${r.p.a!=null?Math.floor(r.p.a):'–'}</td>${z0?'<td class="num muted">–</td><td class="num muted">–</td>':gm(r)}<td class="num hide-s">${Math.round(gmv(r).smin).toLocaleString()}</td>
-    <td class="num ${r.o.r!=null?'ov':cls(r.tot)}">${fmt(r.tot)}</td><td class="num ${z0?'muted':cls(gmv(r).add)}">${fmt(gmv(r).add,2)}</td>
+    <td class="num ${r.o.r!=null?'ov':cls(r.tot)}">${fmt(r.tot)}</td>${fiveTd(r.bo,'hide-m')}${fiveTd(r.bd,'hide-m')}${fiveTd(r.lo,'hide-m')}${fiveTd(r.ld,'hide-m')}<td class="num ${z0?'muted':cls(gmv(r).add)}">${fmt(gmv(r).add,2)}</td>
     <td><button class="edit" data-edit="${esc(r.p.k)}">Edit</button></td></tr>`; };
-  const rows=rot.map(row).join('')+(bench.length?`<tr class="benchhd"><td colspan="8">No projected minutes (${bench.length}): the roster has more players than minutes. Tap Edit to give someone a role.</td></tr>`+bench.map(row).join(''):'');
+  const rows=rot.map(row).join('')+(bench.length?`<tr class="benchhd"><td colspan="12">No projected minutes (${bench.length}): the roster has more players than minutes. Tap Edit to give someone a role.</td></tr>`+bench.map(row).join(''):'');
   return `${winsHist(x)}${histChart(x.t)}<div class="roster">${poPath(x)}<div class="rsum"><span>Net rating <b class="${cls(x.net)}">${fmt(x.net)}</b></span><span>Offense <b>${fmt(x.off)}</b></span><span>Defense <b>${fmt(x.def)}</b></span><span>Minutes-weighted age <b>${x.age.toFixed(1)}</b></span></div>
-    <table><thead><tr><th class="l">Player</th><th class="hide-s">Age</th><th>Games</th><th>Min when playing</th><th class="hide-s">Season min</th><th>Rating</th><th title="Rating times share of team minutes">Adds to team</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+    <table><thead><tr><th class="l">Player</th><th class="hide-s">Age</th><th>Games</th><th>Min when playing</th><th class="hide-s">Season min</th><th title="Overall rating">Overall</th><th class="hide-m" title="Box score, offense">Box O</th><th class="hide-m" title="Box score + hustle, defense">Box D</th><th class="hide-m" title="Lineup results beyond the box score, offense (preseason)">Lin O</th><th class="hide-m" title="Lineup results beyond the box score, defense (preseason)">Lin D</th><th title="Rating times share of team minutes">Adds to team</th><th></th></tr></thead><tbody>${rows}</tbody></table>
     ${x.roster.filter(r=>r.roleU&&r.role==='S').length>5?`<p class="warn">You have set ${x.roster.filter(r=>r.roleU&&r.role==='S').length} starters for ${x.t}; a team starts five.</p>`:''}${x.over>0?`<p class="warn">Your minutes for this team add up to ${Math.round((SEASON?240*x.gr:19680)+x.over).toLocaleString()}, more than the ${(SEASON?240*x.gr:19680).toLocaleString()} ${SEASON?'left this season':'a season allows'}. Everyone else is at zero.</p>`:''}</div>`;
 }
 // postseason path (2026-10-18): top-6 seed, play-in (finished 7th-10th), playoffs (top 6 + play-in winners), title
@@ -1316,9 +1328,9 @@ function renderPlayers(){
     const rk=rank.get(r.p.k), mv=rk&&baseRank.has(r.p.k)?baseRank.get(r.p.k)-rk:0, ch=Object.keys(r.o).length>0, key=r.p.k, z=r.z;
     const sz=z&&z.sr!=null?`<td class="num sznc ${r.sq?cls(z.sr):'muted'}" title="${z.gp||0} games, ${(z.mpg||0).toFixed(1)} min/g${r.sq?'':' (small sample)'}">${fmt(z.sr)}</td>`:'<td class="num sznc muted">–</td>';
     return `<tr class="p" tabindex="0" data-k="${esc(key)}"><td class="l rk">${i+1}</td>
-      <td class="l"><span class="nm pvlink">${esc(r.p.n)}</span><span class="tm">${r.t==='FA'?'free agent':r.t} · ${POS5(r.p.ps)}</span>${injBadge(r)}${ch?'<span class="flag">edited</span>':''}${r.tw[0]?`<span class="skline">Off ${fmt(r.off)} · Def ${fmt(r.def)} · best ${SKS[r.tw[0][0]]}, worst ${SKS[r.tw[1][0]]}</span>`:`<span class="skline">Off ${fmt(r.off)} · Def ${fmt(r.def)}</span>`}</td>
+      <td class="l"><span class="nm pvlink">${esc(r.p.n)}</span><span class="tm">${r.t==='FA'?'free agent':r.t} · ${POS5(r.p.ps)}</span>${injBadge(r)}${ch?'<span class="flag">edited</span>':''}${r.bo!=null?`<span class="skline">${fiveLine(r)}${r.tw[0]?` · best ${SKS[r.tw[0][0]]}, worst ${SKS[r.tw[1][0]]}`:''}</span>`:''}</td>
       <td class="hide-s num">${r.p.a!=null?Math.floor(r.p.a):'–'}</td><td class="num ${r.o.g!=null||r.o.mpg!=null?'ov':''}">${Math.round(r.min).toLocaleString()}</td>
-      <td class="num hide-s ${cls(r.off)}">${fmt(r.off)}</td><td class="num hide-s ${cls(r.def)}">${fmt(r.def)}</td>
+      ${fiveTd(r.bo,'hide-s')}${fiveTd(r.bd,'hide-s')}${fiveTd(r.lo,'hide-s')}${fiveTd(r.ld,'hide-s')}
       <td><span class="val ${r.o.r!=null?'ov':cls(r.tot)}">${fmt(r.tot)}</span>${mv&&r.o.r==null?`<span class="mv" title="Change in rank vs default weights">${mv>0?'▲':'▼'}${Math.abs(mv)}</span>`:''}</td>
       ${sz}${skc(r.tw[0])}${skc(r.tw[1])}
       <td class="l barcell hide-m">${bar(r.parts,scale)}</td><td class="edc"><button class="edit" data-edit="${esc(key)}">Edit</button></td></tr>`; }).join('');
@@ -1584,7 +1596,7 @@ function vgCalib(rows){
   return `<div class="vgtiles"><div class="vgt"><span class="vgk">Brier score</span><span class="vgv">${BJ.toFixed(3)} <small>vs ${BV.toFixed(3)}</small></span><span class="note">JIMBO vs the line; lower is better (a coin flip scores .250)</span></div></div>
     <div class="cleg"><span><i style="background:var(--magenta)"></i>JIMBO</span><span><i style="background:var(--surface);border:2px solid var(--ink);box-sizing:border-box"></i>Vegas line</span><span>dashed: perfect calibration</span></div>
     <div class="cchart" style="max-width:420px"><svg id="${id}" viewBox="0 0 ${W} ${Hh}" width="100%" style="touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:pointer" role="img" aria-label="Calibration: predicted home win chance vs how often the home team won, JIMBO and the Vegas line">${g}</svg></div><p class="note vgread" style="user-select:none;-webkit-user-select:none">${esc(base)}</p>
-    <p class="note">Games are grouped by the home team's predicted chance in 10% steps; each dot sits at the average chance in its group, sized by games, with a 95% range. A well calibrated forecast stays on the diagonal. The line's chance comes from its spread the same way JIMBO's comes from its margin (σ ${M.sig} points). Expect wide ranges until a few hundred games. <span style="opacity:.6">Build 11-20.</span></p>`;
+    <p class="note">Games are grouped by the home team's predicted chance in 10% steps; each dot sits at the average chance in its group, sized by games, with a 95% range. A well calibrated forecast stays on the diagonal. The line's chance comes from its spread the same way JIMBO's comes from its margin (σ ${M.sig} points). Expect wide ranges until a few hundred games. <span style="opacity:.6">Build 11-22.</span></p>`;
 }
 function renderVegas(){
   const el=$('vegas'); if(!el) return;
@@ -1797,12 +1809,12 @@ function renderPV(){
   let h=`<div class="pvtop"><button class="back" id="pvBack">← Back</button><button class="edit" data-edit="${esc(k)}">Edit</button></div>
   <div class="pvh"><h2>${esc(p.n)}</h2><p class="pvsub">${r.t==='FA'?'Free agent':r.t}${nextAge!=null?` · age ${nextAge} for 2026-27`:''}${roleNote(r)?` · ${roleNote(r)}`:''}${chNR(r)?' · <span class="ov">edited</span>':''}</p></div>
   ${injCard(r)}<div class="cards">
-    <div class="card"><div class="k">2026-27 rating</div><div class="v ${r.o.r!=null?'ov':cls(r.tot)}">${fmt(r.tot)}</div><div class="s">${rank?`#${rank} of ${rostered.length}`:'not on a roster'}</div></div>
-    <div class="card"><div class="k">Offense</div><div class="v ${cls(r.off)}">${fmt(r.off)}</div><div class="s">pts/100 vs average</div></div>
-    <div class="card"><div class="k">Defense</div><div class="v ${cls(r.def)}">${fmt(r.def)}</div><div class="s">pts/100 vs average</div></div>
+    <div class="card"><div class="k">Overall</div><div class="v ${r.o.r!=null?'ov':cls(r.tot)}">${fmt(r.tot)}</div><div class="s">${rank?`#${rank} of ${rostered.length}`:'not on a roster'}</div></div>
+    ${[['Box offense',r.bo,r.lu!=null?'incl. this season':'box score'],['Box defense',r.bd,r.lu!=null?'incl. hustle, this season':'incl. hustle'],['Lineup offense',r.lo,'preseason'],['Lineup defense',r.ld,'preseason']].map(([k_,v_,s_])=>
+      `<div class="card"><div class="k">${k_}</div><div class="v ${v_==null?'muted':cls(v_)}">${v_==null?'–':fmt(v_)}</div><div class="s">${v_==null?(D.rook[k]?'rookie: one baseline':'one baseline value'):s_}</div></div>`).join('')}
     <div class="card"><div class="k">${SEASON&&ANYPLAYED?'Minutes left':'Projected minutes'}</div><div class="v">${Math.round(r.min).toLocaleString()}</div><div class="s">${Math.round(g)} games × ${mpg.toFixed(1)} min</div></div>
     ${r.t!=='FA'?`<div class="card"><div class="k">Adds to team</div><div class="v ${cls(gv.add)}">${fmt(gv.add,2)}</div><div class="s">net rating points</div></div>`:''}
-  </div>`;
+  </div>${(()=>{ const fr=fiveRest(r); return fr==null?`<p class="fivenote">${D.rook[k]?'Rookie':'Newcomer'}: the overall is one baseline value, so there is no box / lineup split yet.</p>`:fr.length?`<p class="fivenote">Overall also includes: ${fr.join(' · ')}.</p>`:''; })()}`;
   const hTop=h; h='';
   // how the rating is built
   const pa=r.parts, box=M.components.reduce((a,c)=>a+(pa[c]||0),0), pbox=box, yrs=hist.slice(-3).map(x=>seasonLbl(x.y)).join(', ');

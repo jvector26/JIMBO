@@ -151,7 +151,7 @@ prior.index = prior.index.astype(np.int64)
 if games is not None and len(games):
     r, det = U.update_ratings(prior, H, pg, st, games, cfg)
 else:
-    r, det = prior.copy(), pd.DataFrame({"prior": prior, "box_delta": 0.0, "rapm_delta": 0.0, "poss": 0.0})
+    r, det = prior.copy(), pd.DataFrame({"prior": prior, "box_delta": 0.0, "box_delta_o": 0.0, "box_delta_d": 0.0, "rapm_delta": 0.0, "poss": 0.0})
 pace = cfg["pace"]
 if st is not None and games is not None and len(games) >= 60:
     pa = sum(st[f"fg2a{z}"] + st[f"fg3a{z}"] - st[f"oreb{z}"] + st[f"tov{z}"] + 0.44 * st[f"fta{z}"] for z in "AB")
@@ -562,12 +562,18 @@ try:
                            **({"sb": [int(_tt.pts), int(_tt.oreb + _tt.dreb), int(_tt.ast)]} if _tt is not None else {})}
 except Exception as e:
     print(f"WARNING season rating skipped: {e!r}")
+# this season's rating update, split for the app's five ratings (display only, 2026-11-22): u = [box O, box D, lineup net].
+# Lineup stays net: the in-season RAPM fits one number per player. Skipped when a user edit sets the rating.
+UD = {}
+for _p, _d in det.reindex(columns=["box_delta_o", "box_delta_d", "rapm_delta"]).fillna(0.0).iterrows():
+    if abs(_d).sum() > 1e-9: UD[int(_p)] = {"u": [round(float(_d.box_delta_o), 2), round(float(_d.box_delta_d), 2), round(float(_d.rapm_delta), 2)]}
 pl = P[(P.team != "FA") | (P.gp > 0)].copy()
 pl["rating_delta"] = pl.rating - pl.rating_pre
 players = [{"k": row.key, "n": row["name"], "t": row.team, "pos": round(float(row.pos_est), 2) if pd.notna(row.pos_est) else 3.0,
             "r": round(float(row.rating), 2), "r_pre": round(float(row.rating_pre), 2), "gp": int(row.gp),
             **({"id": int(row.pid)} if row.pid >= 0 and not str(row.key).startswith("p") else {}),   # NBA id for name-keyed players (app game log)
             **SR.get(int(row.pid), {}),                                                         # season rating / possessions / totals
+            **UD.get(int(row.pid), {}),                                                         # this season's update split: box O / box D / lineup (net), display only
             "mpg": round(float(row.mpg_season), 1), "min_rem": round(float(row.min_rem)), "status": row.status or "",
             # app fields: pre-allocation minutes wanted, mpg estimate, availability, games out
             "mw": round(float(row.min_want)), "me": round(float(row.mpg_est), 2), "mg": round(float(row.m_tg), 3), "mr": round(float(row.m_raw), 3), "mc": round(float(row.m_c), 2), "mk": round(float(row.m_pk), 2), "av": round(float(row.avail), 3),

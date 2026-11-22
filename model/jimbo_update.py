@@ -115,6 +115,14 @@ def update_ratings(prior, hist, pg, st, games, cfg):
     wc = cfg["dS"] * (fnow.poss_off + fnow.poss_def) / 2; wh = (woh + wdh) / 2
     bd = SL * ((hist_box * wh + cur_box * wc) / (wh + wc) - hist_box)
     r = r.add(bd, fill_value=0); det.loc[ids, "box_delta"] = bd
+    # display only (2026-11-22): the same box change split into offense / defense (box_of is linear, so bdo + bdd = bd).
+    # No-history players have no O/D history: their prior box is split evenly between the two sides.
+    hO = pd.Series(avg[OFF_FEATS].to_numpy() @ Wo[OFF_FEATS].values, index=ids); hD = hist_box - hO
+    hO[nohist] = hist_box[nohist] / 2; hD[nohist] = hist_box[nohist] / 2
+    cO = pd.Series(fnow[OFF_FEATS].to_numpy() @ Wo[OFF_FEATS].values, index=ids); cD = cur_box - cO
+    det["box_delta_o"] = 0.0; det["box_delta_d"] = 0.0
+    det.loc[ids, "box_delta_o"] = SL * ((hO * wh + cO * wc) / (wh + wc) - hO)
+    det.loc[ids, "box_delta_d"] = SL * ((hD * wh + cD * wc) / (wh + wc) - hD)
     A, B, y, w, hA = stint_rows(st, games.set_index("game").home_id)
     pr = r.reindex(np.unique(np.r_[A.ravel(), B.ravel()])).fillna(SL * cfg["unrated"])
     dl, _ = rapm_delta(A, B, y, w, hA, pr, cfg["lam"])
