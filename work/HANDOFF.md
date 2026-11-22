@@ -1,11 +1,22 @@
 # JIMBO handoff: current state (read this first)
 JIMBO = judgment-induced model for basketball outcomes. NBA 2026-27 player ratings, minutes, team win totals, playoff odds,
-game odds, nightly in-season updates. Updated 2026-11-20 (session 56: sliders-moved notice; session 55: Box wins vs proj column; session 54: DTD what-if toggles on the game page; session 50: four fundamentals tests, all fail; session 48: learning-speed check; session 47: historical lines test; session 38: consistent availability; session 35: matchups tab removed, injury box; session 34: NO MORE ZIP; everything lives in the repo, sandbox tree in work/). 
+game odds, nightly in-season updates. Updated 2026-11-22 (session 57: five ratings; session 56: sliders-moved notice; session 55: Box wins vs proj column; session 54: DTD what-if toggles on the game page; session 50: four fundamentals tests, all fail; session 48: learning-speed check; session 47: historical lines test; session 38: consistent availability; session 35: matchups tab removed, injury box; session 34: NO MORE ZIP; everything lives in the repo, sandbox tree in work/). 
 Full history of every test and decision: RESEARCH_LOG.md (1,650 lines; don't read it whole:
 `grep -n "^## " RESEARCH_LOG.md`, then read the section you need).
 Design spec (Claude Doc): https://claude.ai/code/artifact/e5eebcf8-5649-4c33-b974-23aa18e5c675
 To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs work/setup.sh, reads this file (repo CLAUDE.md says the same).
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
+
+## SESSION 57 (2026-11-22, user request, display only) -- FIVE RATINGS, SHIPPED gh 0eee1af
+Every player summary shows Overall, Box offense, Box defense, Lineup offense, Lineup defense (player page cards, Players >
+Projection table columns Box O / Box D / Lin O / Lin D, team roster on wide screens). Box parts include this season's box update,
+split O/D by the nightly (latest.json players[].u = [box O, box D, lineup net]); lineup parts are preseason; this season's lineup
+update stays one net number, shown in the "Overall also includes" line with age and league re-centering. Ratings unchanged.
+Code: model/jimbo_update.py (box_delta_o/_d), pipeline/nightly.py (u field), tools/five_ratings_patch.py (already applied to
+site/index.html + work/code/dash_v2.html; do not reapply). sw.js jimbo-0091c876152, "Build 11-22". Nightly dispatched after push:
+474 of 527 players carry u; Wembanyama u = [+0.28, +0.03, +1.51]. Left alone: This season leaderboard, game page, Career tab.
+Push note: the first add_repo push attempt in a session can be refused by the session's permission check; retrying after the
+user explicitly asks to fix it worked (2026-11-22).
 
 ## SESSION 56 (2026-11-20, user request, display only) -- SLIDERS-MOVED NOTICE
 Why: user saw MIL-POR card "POR by 11.5" but the vs Vegas log had 12.2. Not backdating: the app's Tonight cards apply saved sliders,
