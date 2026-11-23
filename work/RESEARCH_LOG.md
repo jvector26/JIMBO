@@ -2146,3 +2146,13 @@ looks fine partly because its other half ran hot. Where they differ by 3+ points
 actual - line -0.9 / +0.8), the usual ~3/4 weight on the line seen in the 2015-25 history. Brier .183 JIMBO vs .180 line.
 RECHECK: rerun live_slope.py around game 400 (early Dec). If the slope is still ~1.2+ for JIMBO AND the line, look at whether the preseason
 ratings are too compressed for 2026-27 (team spread vs Vegas win-total spread) rather than at win-probability conversion.
+
+## RIM DETERRENCE QUESTION (user, session 58, 2026-11-23) -> ADDED TO BACKLOG, NOTHING TESTED
+Prompt: game-score defense, Wemby 11-04 (+6.2) vs Giannis 11-14 (+6.0). Own stats (blk/dreb/stl/pf) Wemby +6.2 vs Giannis +2.4;
+on-court terms: d_opprim Wemby +2.1 (opp 7/18 at rim) vs Giannis +4.6 (11/33); d_oppxq Wemby -2.0 vs Giannis -0.9.
+d_oppxq split: shot MIX (xpts/shot vs league 1.074; rim 1.32, mid 0.86, three 1.06) Wemby 1.045 -> +0.3, Giannis 1.175 -> -0.9;
+shot VOLUME (opp FGA vs 0.922 per def poss) Wemby 75 vs 59.5 expected -> -2.3 (second chances), Giannis ~0.
+Issue: d_opprim credits per rim miss below league rate, so it scales with rim attempts allowed; deterred rim shots only earn the
+small mix credit (weight SL x 0.134 = 0.14 per expected point). Test idea: on-court opponent rim-attempt rate vs those opponents'
+usual rate (deterrence), and/or split d_oppxq into mix vs volume terms; game backtest + research bar. User: "JIMBO is valuing Wemby
+plenty", backlog only.

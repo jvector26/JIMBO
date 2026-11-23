@@ -484,7 +484,7 @@ notifications | coaching effect (B3) | split 3PT bar into volume vs accuracy (UI
 2nd/3rd-year players | talent 3P% in stint luck adjustment | team-margin concavity | position-specific spacing/rim/OREB
 weights | NCAA stage A+B refit together (never A alone: rerunning ncaa_model.py alone shifts cscores up to 0.66) |
 app edge case: role edit + team move in one edit | rest/travel/altitude for game odds | teammate-fit interactions in the
-lineup residual (untested beyond DREB / self-creation diminishing returns) | usage / shot-creation burden of tonight's active players (session 50 lead; define before testing) | G League / overseas prior for call-ups | opponent-adjusted
+lineup residual (untested beyond DREB / self-creation diminishing returns) | usage / shot-creation burden of tonight's active players (session 50 lead; define before testing) | rim deterrence on defense (session 58, user, Wemby vs Giannis game scores: d_opprim pays per opponent rim miss so it scales with rim attempts allowed; deterred shots only reach d_oppxq's shot-mix part, weight 0.14/xpt, ~0.3 pt that night; d_oppxq also mixes in shot VOLUME = second chances, -2.3 for Wemby 11-04. Idea: on-court opponent rim-attempt rate vs those opponents' usual rate, and/or split d_oppxq into mix vs volume; run against the research bar) | G League / overseas prior for call-ups | opponent-adjusted
 in-season box | live-ball vs dead-ball turnovers | assists by shot type | B2B x age, minutes-load fatigue | game-specific spread for win probability | model-only
 roster-age term (see blend note; after the opener) | retest after 2026-27:
 sepposs neff shrink, team halo, new-team penalty, young x rating bump, judgment shrink (does it help on 2026-27 preseason ratings?), contested-3 for centers.
