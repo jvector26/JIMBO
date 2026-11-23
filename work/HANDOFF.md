@@ -1,11 +1,27 @@
 # JIMBO handoff: current state (read this first)
 JIMBO = judgment-induced model for basketball outcomes. NBA 2026-27 player ratings, minutes, team win totals, playoff odds,
-game odds, nightly in-season updates. Updated 2026-11-22 (session 57: five ratings; session 56: sliders-moved notice; session 55: Box wins vs proj column; session 54: DTD what-if toggles on the game page; session 50: four fundamentals tests, all fail; session 48: learning-speed check; session 47: historical lines test; session 38: consistent availability; session 35: matchups tab removed, injury box; session 34: NO MORE ZIP; everything lives in the repo, sandbox tree in work/). 
+game odds, nightly in-season updates. Updated 2026-11-23 (session 58: box game score; session 57: five ratings; session 56: sliders-moved notice; session 55: Box wins vs proj column; session 54: DTD what-if toggles on the game page; session 50: four fundamentals tests, all fail; session 48: learning-speed check; session 47: historical lines test; session 38: consistent availability; session 35: matchups tab removed, injury box; session 34: NO MORE ZIP; everything lives in the repo, sandbox tree in work/). 
 Full history of every test and decision: RESEARCH_LOG.md (1,650 lines; don't read it whole:
 `grep -n "^## " RESEARCH_LOG.md`, then read the section you need).
 Design spec (Claude Doc): https://claude.ai/code/artifact/e5eebcf8-5649-4c33-b974-23aa18e5c675
 To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs work/setup.sh, reads this file (repo CLAUDE.md says the same).
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
+
+## SESSION 58 (2026-11-23, user request, display only) -- BOX GAME SCORE: game log column, Players "Top games", Tonight "Last night's best"
+Game score = one game's box line through the model's feature weights x slope, in POINTS added to the margin vs an average player in the
+same possessions; offense (gso) and defense (gsd). Count form of partial_features(shrink=False): each feature rate there is 100*X/poss, so a
+game's part is SL*W*(X_game - league_rate*poss_game/100), league rates + centring from the season to date (old games shift slightly each night).
+Shooting = makes above league rate on his attempts. Exact check (11-23): a player's games sum to his raw season box O/D rating x off/def
+possessions / 100 (max diff 3e-5); vs the nightly sr x sp / 100 corr 0.99996, mean |diff| 0.07 pts (sp averages the two possession counts).
+Lineup part not included. Single-game sd 2.3 pts (2.8 at 20+ min). Season best 11-23: Wembanyama vs DAL 11-04 +16.8 (O +10.6, D +6.2).
+Code: model/jimbo_update.game_scores(); pipeline/season_log.py appends cols gso, gsd to every played gamelog.json row (reads
+state/season_parse parquet written by nightly.py in the same job; try/except, null if missing). App via tools/game_score_patch.py (applied to
+site/index.html AND work/code/dash_v2.html, do not reapply): player-page game log GS column + Game score / GS offense / GS defense in the
+tap-open detail; Players tab third view "Top games" (#gTbl, gameScores()/renderTopGames(), header sort Off / Def / Game score, tap again to
+reverse, team filter = team he played for that night, row tap opens his page with that game open); Tonight tab bestNightHTML(): "Last night's
+best" (top 5, latest night in gamelog) on the Tonight view, "Best games that night" on past days. gamelog.json now also loads on Tonight
+(seasLoad -> seasAfter repaints). sw.js jimbo-0091c876153, footnote "Build 11-23". Test work/code/tests/game_score_test.py SITE_DIR
+(iPhone 13 + desktop: no page errors, no overflow). gamelog.json 315 -> 365 KB.
 
 ## SESSION 57 (2026-11-22, user request, display only) -- FIVE RATINGS, SHIPPED gh 0eee1af
 Every player summary shows Overall, Box offense, Box defense, Lineup offense, Lineup defense (player page cards, Players >

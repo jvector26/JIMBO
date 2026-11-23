@@ -55,6 +55,52 @@ def partial_features(pg, st, shrink=True):
     return f
 
 
+def game_scores(pg, st, Wo, Wd, SL):
+    """Box game score (display only, 2026-11-23): each player-game's box line through the model's feature weights, in
+    POINTS added to the margin vs an average player in the same possessions. Count form of partial_features(shrink=False):
+    every feature rate there is 100*X/poss, so a game's part is SL*W*(X_game - league_rate*poss_game/100), with the league
+    rates and centring from the season to date. Summing a player's games gives exactly his season box rating (raw,
+    offense per off. possession, defense per def. possession) times those possessions / 100.
+    Returns DataFrame indexed (player, game) with columns o, d (points)."""
+    keys = ["player", "game"]
+    tot = pg.groupby(keys)[TOT].sum()
+    out = []
+    for me, op in (("A", "B"), ("B", "A")):
+        x = pd.DataFrame({
+            "game": st.game.values, "lineup": st[f"lineup{me}"].values,
+            "poss_off": (st[f"fg2a{me}"] + st[f"fg3a{me}"] - st[f"oreb{me}"] + st[f"tov{me}"] + 0.44 * st[f"fta{me}"]).values,
+            "poss_def": (st[f"fg2a{op}"] + st[f"fg3a{op}"] - st[f"oreb{op}"] + st[f"tov{op}"] + 0.44 * st[f"fta{op}"]).values,
+            "opp_rim_a": st[f"za1{op}"].values, "opp_rim_m": st[f"rim_m{op}"].values,
+            "opp_mid_a": (st[f"za2{op}"] + st[f"za3{op}"]).values, "opp_3_a": (st[f"za4{op}"] + st[f"za5{op}"] + st[f"za6{op}"]).values})
+        x["player"] = x.pop("lineup").str.split("-")
+        x = x.explode("player"); x = x[x.player != ""]; x["player"] = x.player.astype(np.int64)
+        out.append(x.groupby(keys).sum())
+    oc = pd.concat(out).groupby(level=[0, 1]).sum()
+    g = tot.join(oc, how="inner")
+    # same player set as partial_features: season possessions > 0 on both ends
+    ps = g.groupby(level=0)[["poss_off", "poss_def"]].sum()
+    g = g[g.index.get_level_values(0).isin(ps[(ps.poss_off > 0) & (ps.poss_def > 0)].index)].copy()
+    L = g[["fg3m", "fg3a", "rim_fgm", "rim_fga", "mid_fgm", "mid_fga", "ftm", "fta"]].sum()
+    p3, prim, pmid, pft = L.fg3m / L.fg3a, L.rim_fgm / L.rim_fga, L.mid_fgm / L.mid_fga, L.ftm / L.fta
+    X = pd.DataFrame(index=g.index)
+    X["o_3vol"] = g.fg3a; X["o_3eff"] = 3 * (g.fg3m - p3 * g.fg3a)
+    X["o_rimvol"] = g.rim_fga; X["o_rimeff"] = 2 * (g.rim_fgm - prim * g.rim_fga)
+    X["o_midvol"] = g.mid_fga; X["o_mideff"] = 2 * (g.mid_fgm - pmid * g.mid_fga)
+    X["o_ftvol"] = g.fta; X["o_fteff"] = g.ftm - pft * g.fta
+    X["o_unast"] = g.fgm - g.astd_fgm; X["o_ast"] = g.ast; X["o_tov"] = g.tov; X["o_oreb"] = g.oreb
+    X["d_dreb"] = g.dreb; X["d_blk"] = g.blk; X["d_stl"] = g.stl; X["d_pf"] = g.pf
+    X["d_opprim"] = 2 * (g.opp_rim_m - prim * g.opp_rim_a)
+    X["d_oppxq"] = g.opp_rim_a * 2 * prim + g.opp_mid_a * 2 * pmid + g.opp_3_a * 3 * p3
+    res = pd.DataFrame(index=g.index)
+    for side, feats, W, poss in (("o", OFF_FEATS, Wo, g.poss_off), ("d", DEF_FEATS, Wd, g.poss_def)):
+        v = 0.0
+        for c in feats:
+            m = X[c].sum() / poss.sum()                    # league possession-weighted mean rate / 100
+            v = v + W[c] * (X[c] - m * poss)
+        res[side] = SL * v
+    return res
+
+
 def stint_rows(st, home_team_of_game):
     m = st.margin_start.abs()
     st = st[~(((st.t_start >= 2160) & (m >= 20)) | ((st.t_start >= 2520) & (m >= 15)))]

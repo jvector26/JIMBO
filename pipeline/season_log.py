@@ -5,7 +5,9 @@
 Runs after nightly.py (reads its latest.json). Writes:
   gamelog.json     {"asof", "cols", "g": {game: [date, home, away, home_pts, away_pts]},
                     "p": {player_id: [[game, team_is_home, starter, min, pts, fgm, fga, 3pm, 3pa, ftm, fta, oreb, dreb,
-                                       ast, stl, blk, tov, pm], ...]}}       # played games, oldest first
+                                       ast, stl, blk, tov, pm, gso, gsd], ...]}}   # played games, oldest first
+                    gso / gsd = box game score, offense / defense, in points (model/jimbo_update.game_scores; null if
+                    the game is not in the parsed play-by-play yet)
                     DNP rows: [game, team_is_home, -1, "reason"]   (only when the box lists a reason)
   rating_hist.json {"d": [asof dates], "r": {player key: [model rating on each date or null]}, "pre": {key: preseason},
                     "s": {key: [pure 2026-27 season rating (box score only) on each date or null]}}
@@ -22,7 +24,7 @@ ap.add_argument("--out", default=os.path.join(ROOT, "site", "data"))
 a = ap.parse_args()
 L = os.path.join(ROOT, "live", str(a.season))
 COLS = ["game", "home", "gs", "min", "pts", "fgm", "fga", "fg3m", "fg3a", "ftm", "fta", "oreb", "dreb",
-        "ast", "stl", "blk", "tov", "pm"]
+        "ast", "stl", "blk", "tov", "pm", "gso", "gsd"]
 
 
 def mins(s):
@@ -80,6 +82,27 @@ for _, g in meta.iterrows():
         bad += pts != pts_pbp
         P[pid].append([int(g.game), home, int(b.starter), round(mins(b.minutes), 1), pts,
                        *[int(s[k]) for k in COLS[5:17]], int(b.pm) if pd.notna(b.pm) else 0])
+# box game score (2026-11-23, display only): each game's box line through the model's feature weights, in points added
+# vs an average player in the same possessions. A player's games add up to his raw season box rating x possessions / 100.
+GS = {}
+try:
+    import sys
+    sys.path.insert(0, os.path.join(ROOT, "model")); import jimbo_update as U
+    pz = os.path.join(ROOT, "state", "season_parse")
+    cfg = json.load(open(os.path.join(ROOT, "state", str(a.season), "config.json")))
+    _pg = pd.read_parquet(os.path.join(pz, f"player_games_{a.season}.parquet"))
+    _st = pd.read_parquet(os.path.join(pz, f"stints_{a.season}.parquet"))
+    _gs = U.game_scores(_pg[_pg["min"] > 0], _st, pd.Series(cfg["Wo"]), pd.Series(cfg["Wd"]), cfg["slope"])
+    GS = {(int(p), int(g)): (round(float(o), 1), round(float(d), 1)) for (p, g), o, d in zip(_gs.index, _gs.o, _gs.d)}
+except Exception as e:
+    print(f"WARNING game scores skipped: {e!r}")
+nf = npl = 0
+for pid, rows in P.items():
+    for r in rows:
+        if r[2] >= 0:
+            v = GS.get((pid, r[0])); nf += v is None; npl += 1
+            r += list(v) if v else [None, None]
+print(f"season_log: game scores on {npl - nf} of {npl} played rows")
 print(f"season_log: {len(G)} games, {len(P)} players, {sum(len(v) for v in P.values())} rows, pts mismatches {bad}")
 
 LT = json.load(open(os.path.join(a.out, "latest.json")))
