@@ -1,11 +1,23 @@
 # JIMBO handoff: current state (read this first)
 JIMBO = judgment-induced model for basketball outcomes. NBA 2026-27 player ratings, minutes, team win totals, playoff odds,
-game odds, nightly in-season updates. Updated 2026-11-23 (session 58: box game score; session 57: five ratings; session 56: sliders-moved notice; session 55: Box wins vs proj column; session 54: DTD what-if toggles on the game page; session 50: four fundamentals tests, all fail; session 48: learning-speed check; session 47: historical lines test; session 38: consistent availability; session 35: matchups tab removed, injury box; session 34: NO MORE ZIP; everything lives in the repo, sandbox tree in work/). 
+game odds, nightly in-season updates. Updated 2026-11-24 (session 59: box score page; session 58: box game score; session 57: five ratings; session 56: sliders-moved notice; session 55: Box wins vs proj column; session 54: DTD what-if toggles on the game page; session 50: four fundamentals tests, all fail; session 48: learning-speed check; session 47: historical lines test; session 38: consistent availability; session 35: matchups tab removed, injury box; session 34: NO MORE ZIP; everything lives in the repo, sandbox tree in work/). 
 Full history of every test and decision: RESEARCH_LOG.md (1,650 lines; don't read it whole:
 `grep -n "^## " RESEARCH_LOG.md`, then read the section you need).
 Design spec (Claude Doc): https://claude.ai/code/artifact/e5eebcf8-5649-4c33-b974-23aa18e5c675
 To start a chat: say "continue JIMBO". Claude attaches jvector26/JIMBO, runs work/setup.sh, reads this file (repo CLAUDE.md says the same).
 The claude.ai project doc HANDOFF-3.md only points here; this file is the one source.
+
+## SESSION 59 (2026-11-24, user request, display only) -- BOX SCORE PAGE: tap a final on a past Tonight day
+Tonight tab > step back to a past day > tap any final ("Box score ›") -> both teams' box scores, away then home: MIN PTS REB AST STL BLK
+TO FG 3P FT PF +/- GS (GS = box game score, session 58). Default sort minutes, most first; tapping a header sorts BOTH tables, tap again
+reverses (sideways scroll kept). Team totals row + FG/3P/FT %, "Didn't play" list with reasons, S = starter, JIMBO / line / final strip
+under the score. Name column sticky; full names on desktop, "F. Last" on phones. Tap a player = his page with that game open; Back returns.
+Data: pipeline/season_log.py now writes gamelog.json col "pf" (personal fouls = max "(n PF)" in play-by-play foul text; team mean 21.7)
+appended AFTER gsd, plus "n": {player_id: name} for every boxed player (63 played players had no name in dash/latest). gamelog.json
+committed once by hand with pf + names (gso/gsd carried over); the nightly rebuilds it from here.
+Code: tools/box_score_patch.py (applied to site/index.html AND work/code/dash_v2.html; do not reapply): openBox()/renderBox()/bxIndex(),
+shares the #gv overlay (bxKey; closeGame, popstate, Escape, bottom nav handle it). sw.js jimbo-0091c876154, footnote "Build 11-24".
+Test work/code/tests/box_score_test.py SITE_DIR (iPhone 13 + desktop: no page errors, no page overflow; game_score_test still clean).
 
 ## SESSION 58 (2026-11-23, user request, display only) -- BOX GAME SCORE: game log column, Players "Top games", Tonight "Last night's best"
 Game score = one game's box line through the model's feature weights x slope, in POINTS added to the margin vs an average player in the

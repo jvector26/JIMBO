@@ -6,6 +6,8 @@ Runs after nightly.py (reads its latest.json). Writes:
   gamelog.json     {"asof", "cols", "g": {game: [date, home, away, home_pts, away_pts]},
                     "p": {player_id: [[game, team_is_home, starter, min, pts, fgm, fga, 3pm, 3pa, ftm, fta, oreb, dreb,
                                        ast, stl, blk, tov, pm, gso, gsd], ...]}}   # played games, oldest first
+                    pf = personal fouls (play-by-play "(n PF)" count; 2026-11-24, box score page)
+                    "n": {player_id: name} for every player in a box (box score page names players with no projection)
                     gso / gsd = box game score, offense / defense, in points (model/jimbo_update.game_scores; null if
                     the game is not in the parsed play-by-play yet)
                     DNP rows: [game, team_is_home, -1, "reason"]   (only when the box lists a reason)
@@ -24,7 +26,7 @@ ap.add_argument("--out", default=os.path.join(ROOT, "site", "data"))
 a = ap.parse_args()
 L = os.path.join(ROOT, "live", str(a.season))
 COLS = ["game", "home", "gs", "min", "pts", "fgm", "fga", "fg3m", "fg3a", "ftm", "fta", "oreb", "dreb",
-        "ast", "stl", "blk", "tov", "pm", "gso", "gsd"]
+        "ast", "stl", "blk", "tov", "pm", "gso", "gsd", "pf"]
 
 
 def mins(s):
@@ -56,12 +58,16 @@ def pbp_counts(path):
             elif t == "steal": st[pid]["stl"] += 1
             elif t == "block": st[pid]["blk"] += 1
             elif t == "turnover": st[pid]["tov"] += 1
+            elif t == "foul":                      # personal fouls: running count in the text, "(3 PF)"
+                m = re.search(r"\((\d+) PF\)", r.get("description") or "")
+                if m: st[pid]["pf"] = max(st[pid]["pf"], int(m.group(1)))
     return st
 
 
 meta = pd.read_csv(os.path.join(L, "games_meta.csv"))
 meta = meta[meta.status == 3].sort_values(["date_et", "game"])
-G, P, bad = {}, collections.defaultdict(list), 0
+PF = {}
+G, P, bad, NM = {}, collections.defaultdict(list), 0, {}
 for _, g in meta.iterrows():
     gid = f"00{int(g.game)}"
     bf, pf = os.path.join(L, "box", f"{gid}.csv.gz"), os.path.join(L, "pbp", f"{gid}.csv.gz")
@@ -72,6 +78,7 @@ for _, g in meta.iterrows():
     box = pd.read_csv(bf)
     for _, b in box.iterrows():
         pid, home = int(b.player), int(bool(b.home))
+        if isinstance(b.get("name"), str): NM[pid] = b["name"]
         if not b.played:
             why = b.not_playing_desc if isinstance(b.not_playing_desc, str) and b.not_playing_desc.strip() else ""
             if why: P[pid].append([int(g.game), home, -1, why.strip()[:40]])
@@ -80,6 +87,7 @@ for _, g in meta.iterrows():
         pts_pbp = 2 * (s["fgm"] - s["fg3m"]) + 3 * s["fg3m"] + s["ftm"]
         pts = int(b.pts) if pd.notna(b.pts) else pts_pbp
         bad += pts != pts_pbp
+        PF[(pid, int(g.game))] = int(s["pf"])
         P[pid].append([int(g.game), home, int(b.starter), round(mins(b.minutes), 1), pts,
                        *[int(s[k]) for k in COLS[5:17]], int(b.pm) if pd.notna(b.pm) else 0])
 # box game score (2026-11-23, display only): each game's box line through the model's feature weights, in points added
@@ -101,12 +109,12 @@ for pid, rows in P.items():
     for r in rows:
         if r[2] >= 0:
             v = GS.get((pid, r[0])); nf += v is None; npl += 1
-            r += list(v) if v else [None, None]
+            r += (list(v) if v else [None, None]) + [PF.get((pid, r[0]), 0)]
 print(f"season_log: game scores on {npl - nf} of {npl} played rows")
 print(f"season_log: {len(G)} games, {len(P)} players, {sum(len(v) for v in P.values())} rows, pts mismatches {bad}")
 
 LT = json.load(open(os.path.join(a.out, "latest.json")))
-json.dump({"asof": LT["asof"], "cols": COLS, "g": G, "p": P},
+json.dump({"asof": LT["asof"], "cols": COLS, "g": G, "p": P, "n": NM},
           open(os.path.join(a.out, "gamelog.json"), "w"), separators=(",", ":"), allow_nan=False)
 
 # rating history: one entry per asof date (later runs that day overwrite it)

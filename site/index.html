@@ -564,6 +564,24 @@ body.pvopen #gv{display:none}
 .tnbest button:hover{background:#FFF7CF}
 .tnbest .rk{font-family:var(--cond);font-weight:700;color:var(--muted)}
 .tnbest .who b{display:block;font-size:15px} .tnbest .who small{display:block;font-size:12px;color:var(--muted);font-family:var(--cond)}
+.game[data-bx]{cursor:pointer} .game[data-bx]:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.bxsec{margin:18px 0 0} .bxsec h3{margin:0;font-size:17px} .bxsec h3 .note{font-weight:400;font-size:13px}
+.bxwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:2px solid var(--black);background:var(--surface);margin:6px 0 4px}
+.bxt{width:100%;min-width:0}
+.bxt th,.bxt td{padding:6px 6px}
+.bxt th button{color:#fff;cursor:pointer;font:inherit;font-weight:600;min-height:28px}
+.bxt th button[aria-sort]{text-decoration:underline;text-underline-offset:3px}
+.bxt td{font-family:var(--cond);font-size:16px}
+.bxt .bxn{position:sticky;left:0;z-index:1;text-align:left;font-family:var(--text);font-size:14px;width:190px;min-width:190px;max-width:190px;overflow:hidden;text-overflow:ellipsis}
+.bxt td.bxn{background:var(--surface);box-shadow:inset -1px 0 0 var(--line)}
+.bxt th.bxn{background:var(--purple);z-index:2}
+.bxt td.bxn button{background:none;border:0;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.bxt .ns{display:none} .bxt .bxst{font-size:10.5px;color:var(--muted);margin-left:4px;font-weight:600}
+.bxt tfoot td{font-weight:700;border-top:2px solid var(--black);border-bottom:0}
+.bxt tfoot td.bxn{font-weight:700}
+.bxpct{font-size:13px;margin:4px 0 0} .bxdnp{font-size:13px;margin:2px 0 0}
+.bxsum{margin:2px 0 4px}
+@media (max-width:640px){ .bxt .nf{display:none} .bxt .ns{display:inline} .bxt th,.bxt td{padding:6px 4px} .bxt td{font-size:15px} .bxt .bxn{font-size:13.5px;width:124px;min-width:124px;max-width:124px} }
 .tnbest .sc{text-align:right;font-family:var(--cond)} .tnbest .sc b{display:block;font-size:20px} .tnbest .sc small{font-size:11.5px;color:var(--muted);white-space:nowrap}
 .glh{background:var(--purple);color:#fff;font-size:11.5px;font-weight:600;padding:7px 10px 5px}
 .glh span:first-child,.glh span:nth-child(2){text-align:left}
@@ -1461,12 +1479,12 @@ function pastCard(r){ const [,hm,aw,m,v,a,hp,ap,,ph]=r, who=(x,k)=>Math.abs(x)<0
   if(v!=null){ const gp=m-v, rr=a-v, side=Math.abs(gp)<0.05?null:gp>0?hm:aw;
     const ats=side==null?'JIMBO matched the line':rr===0?`${side} vs the line: push`:`JIMBO's side (${side}) ${(gp>0)===(rr>0)?'<b class="pwin">covered</b>':'<b class="ploss">didn\'t cover</b>'}`;
     verdict=`<div class="pverd"><span>${dm<dv?'<b class="vgj">JIMBO closer</b>':dm>dv?'<b>Line closer</b>':'<b>Tie</b>'} <span class="note">(missed by ${dm.toFixed(1)} vs ${dv.toFixed(1)})</span></span><span>${ats}</span></div>`; }
-  return `<div class="game past"><div class="gtop"><span class="note">Final</span>${v!=null?`<span class="note">Line ${esc(who(v,1).replace(' by ',' -'))}</span>`:'<span class="note">No line</span>'}</div>
+  return `<div class="game past" data-bx="${r[8]}" tabindex="0" role="button" aria-label="Box score: ${aw} at ${hm}"><div class="gtop"><span class="note">Final</span>${v!=null?`<span class="note">Line ${esc(who(v,1).replace(' by ',' -'))}</span>`:'<span class="note">No line</span>'}</div>
     <div class="gteams"><div class="gside${hw?'':' won'}"><span class="gpct">${ap??''}</span><span class="tname">${aw}</span><span class="note">away</span></div>
     <span class="at">at</span><div class="gside${hw?' won':''}"><span class="gpct">${hp??''}</span><span class="tname">${hm}</span><span class="note">home</span></div></div>
     <div class="note gsub pgrid"><span>JIMBO</span><b>${who(m,1)}</b><span>${ph!=null?`${Math.round((m>=0?ph:1-ph)*100)}% to win`:''}</span>
       <span>Line</span><b>${v!=null?who(v,1):'–'}</b><span></span>
-      <span>Final</span><b>${who(a,0)}</b><span></span></div>${verdict}</div>`; }
+      <span>Final</span><b>${who(a,0)}</b><span></span></div>${verdict}<div class="gdet">Box score ›</div></div>`; }
 function renderTonight(){
   if(!SEASON||!$('tonight')) return;
   const days=tnDays(); let i=days.findIndex(x=>x.d===tnSel); if(i<0){ tnSel=null; i=days.findIndex(x=>x.k==='now'); }
@@ -1498,14 +1516,78 @@ function renderTonight(){
 // ---------- game detail page (app): tap a game on Tonight
 let gvKey=null, gvScroll=0, gvPushed=false;
 $('tonight')&&$('tonight').addEventListener('click',e=>{ const bg=e.target.closest('[data-bgk]'); if(bg){ openGameScore(bg.dataset.bgk,bg.dataset.bgg); return; } const n=e.target.closest('[data-tnd]'); if(n){ const d=tnDays()[+n.dataset.tnd]; if(d){ tnSel=d.k==='now'?null:d.d; renderTonight(); } return; }
+  const bx=e.target.closest('.game[data-bx]'); if(bx){ openBox(+bx.dataset.bx); return; }
   const c=e.target.closest('.game[data-g]'); if(c) openGame(+c.dataset.g); });
-$('tonight')&&$('tonight').addEventListener('keydown',e=>{ const c=e.target.closest('.game[data-g]'); if(c&&e.target===c&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); openGame(+c.dataset.g); } });
+$('tonight')&&$('tonight').addEventListener('keydown',e=>{ const bx=e.target.closest('.game[data-bx]'); if(bx&&e.target===bx&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); openBox(+bx.dataset.bx); return; }
+  const c=e.target.closest('.game[data-g]'); if(c&&e.target===c&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); openGame(+c.dataset.g); } });
+// ---------- box score page (session 59, 2026-11-24, user request): tap a final on a past Tonight day. Data: gamelog.json
+// (player rows; "n" = names for players without a projection). Both teams; default sort minutes, most first; any header sorts both.
+let bxKey=null, bxSort='min', bxAsc=false, BXG=null, BXI=null, BXK=null;
+const BXC=[['min','MIN','Minutes'],['pts','PTS','Points'],['reb','REB','Rebounds (offensive + defensive)'],['ast','AST','Assists'],['stl','STL','Steals'],
+  ['blk','BLK','Blocks'],['tov','TO','Turnovers'],['fg','FG','Field goals made-attempted'],['fg3','3P','Threes made-attempted'],['ft','FT','Free throws made-attempted'],
+  ['pf','PF','Personal fouls'],['pm','+/−','Plus-minus: team margin while he was on the floor'],['gs','GS','Box game score: points added to the margin vs an average player in the same possessions']];
+function bxIndex(){ const G=SEAS.g; if(BXG===G) return BXI; const m=new Map(), kOf=new Map();
+  Object.entries(G.p).forEach(([pid,rows])=>rows.forEach(x=>{ let a=m.get(x[0]); if(!a) m.set(x[0],a=[]); a.push([pid,x]); }));
+  if(P) P.rows.forEach(r=>{ const id=seasPid(r.p.k); if(id!=null&&!kOf.has(id)) kOf.set(id,r.p.k); });
+  BXG=G; BXK=kOf; return (BXI=m); }
+function openBox(id){
+  if(!gvKey&&bxKey==null){ gvScroll=window.scrollY; try{ history.pushState({bx:id},''); gvPushed=true; }catch(e){ gvPushed=false; } }
+  bxKey=id; bxSort='min'; bxAsc=false; document.body.classList.add('gvopen'); $('gv').hidden=false; renderBox();
+  const top=$('gv').getBoundingClientRect().top+window.scrollY-10; window.scrollTo(0,Math.max(0,top)); $('gvBack')&&$('gvBack').focus({preventScroll:true}); }
+function renderBox(focusKey){
+  const id=bxKey; if(id==null) return;
+  const sl=[...$('gv').querySelectorAll('.bxwrap')].map(w=>w.scrollLeft);   // keep the sideways scroll when re-sorting
+  const vr=((APP&&APP.vg&&APP.vg.games)||[]).find(r=>r[8]===id), G=SEAS.st==='ok'?SEAS.g:null, g=G&&G.g[id];
+  const date=g?g[0]:vr?ymd(vr[0]):'', hm=g?g[1]:vr?vr[1]:'', aw=g?g[2]:vr?vr[2]:'', hp=g?g[3]:vr?vr[6]:null, ap=g?g[4]:vr?vr[7]:null;
+  const ds=date?new Date(date+'T12:00:00').toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'}):'';
+  const hw=hp!=null&&ap!=null&&hp>ap;
+  let h=`<div class="pvtop"><button class="back" id="gvBack">← Back</button><span class="note">${ds} · Final</span></div>
+  <div class="gvh"><div class="gside"><span class="gpct" style="${hw?'color:var(--muted)':''}">${ap??''}</span><span class="gvteam">${aw}</span><span class="note">away</span></div>
+    <span class="at">at</span><div class="gside"><span class="gpct" style="${hw?'':'color:var(--muted)'}">${hp??''}</span><span class="gvteam">${hm}</span><span class="note">home</span></div></div>`;
+  if(vr){ const [,,,m,v,a]=vr, who=(x,k)=>Math.abs(x)<0.05?'even':`${x>0?hm:aw} by ${Math.abs(x).toFixed(k)}`;
+    h+=`<div class="note gsub pgrid bxsum"><span>JIMBO</span><b>${who(m,1)}</b><span></span><span>Line</span><b>${v!=null?who(v,1):'–'}</b><span></span><span>Final</span><b>${who(a,0)}</b><span></span></div>`; }
+  if(!G){ seasLoad(); $('gv').innerHTML=h+`<p class="note">${SEAS.st==='err'?"Couldn't load the box score. Check your connection.":'Loading the box score…'}</p>`; return; }
+  if(!g){ $('gv').innerHTML=h+`<p class="note">This game's box score isn't in yet. It arrives with the next nightly update.</p>`; return; }
+  const ix=Object.fromEntries(G.cols.map((c,i)=>[c,i])), L=bxIndex().get(id)||[], NM=G.n||{};
+  const nameOf=(pid,k)=>{ const r=k&&byKey.get(k); return (r&&(r.n||r.p&&r.p.n))||NM[pid]||`Player ${pid}`; };
+  const short=n=>{ const w=n.split(' '); return w.length>1?`${w[0][0]}. ${w.slice(1).join(' ')}`:n; };
+  const v=(x,c)=>ix[c]!=null&&x[ix[c]]!=null?x[ix[c]]:null;
+  const rowOf=(pid,x)=>{ const k=BXK.get(pid)||null, gso=v(x,'gso'), gsd=v(x,'gsd');
+    return {pid, k, n:nameOf(pid,k), st:x[2]===1, min:v(x,'min')||0, pts:v(x,'pts'), reb:v(x,'oreb')+v(x,'dreb'), ast:v(x,'ast'), stl:v(x,'stl'), blk:v(x,'blk'),
+      tov:v(x,'tov'), fgm:v(x,'fgm'), fga:v(x,'fga'), f3m:v(x,'fg3m'), f3a:v(x,'fg3a'), ftm:v(x,'ftm'), fta:v(x,'fta'), pf:v(x,'pf'), pm:v(x,'pm'),
+      gs:gso==null||gsd==null?null:Math.round((gso+gsd)*10)/10}; };
+  const sv=(r,c)=>c==='fg'?r.fgm+r.fga/1000:c==='fg3'?r.f3m+r.f3a/1000:c==='ft'?r.ftm+r.fta/1000:r[c];
+  const ma=(m,a)=>`${m}-${a}`, pc=(m,a)=>a?`${(100*m/a).toFixed(1)}%`:'–';
+  const head=tm=>`<thead><tr><th class="bxn">${tm}</th>${BXC.map(([c,lab,t])=>`<th><button data-bxs="${c}" title="${t}" ${c===bxSort?`aria-sort="${bxAsc?'ascending':'descending'}"`:''}>${lab}</button></th>`).join('')}</tr></thead>`;
+  const cell=(r,c)=>{ switch(c){ case 'min': return Math.round(r.min); case 'fg': return ma(r.fgm,r.fga); case 'fg3': return ma(r.f3m,r.f3a); case 'ft': return ma(r.ftm,r.fta);
+      case 'pm': return `<span class="${cls(r.pm)}">${fmt(r.pm,0)}</span>`; case 'gs': return r.gs==null?'<span class="muted">–</span>':`<b class="${cls(r.gs)}">${fmt(r.gs)}</b>`;
+      default: return r[c]==null?'–':r[c]; } };
+  const side=home=>{ const tm=home?hm:aw, pts=home?hp:ap, op=home?ap:hp, mine=L.filter(([,x])=>!!x[1]===home);
+    const pl=mine.filter(([,x])=>x[2]>=0).map(([pid,x])=>rowOf(pid,x)), dnp=mine.filter(([,x])=>x[2]<0);
+    pl.sort((a,b)=>{ const x=sv(a,bxSort), y=sv(b,bxSort); if(x==null||y==null) return (x==null)-(y==null)||b.min-a.min;
+      return (bxAsc?x-y:y-x)||b.min-a.min; });
+    const T={}; ['min','pts','reb','ast','stl','blk','tov','fgm','fga','f3m','f3a','ftm','fta','pf'].forEach(c=>T[c]=pl.reduce((s,r)=>s+(r[c]||0),0));
+    const gsT=pl.some(r=>r.gs!=null)?Math.round(pl.reduce((s,r)=>s+(r.gs||0),0)*10)/10:null;
+    const body=pl.map(r=>{ const nm=`<span class="nf">${esc(r.n)}</span><span class="ns">${esc(short(r.n))}</span>${r.st?'<span class="bxst" title="Starter">S</span>':''}`;
+      return `<tr><td class="bxn">${r.k?`<button data-bxp="${esc(r.k)}" aria-label="${esc(r.n)}: open his game log">${nm}</button>`:nm}</td>${BXC.map(([c])=>`<td>${cell(r,c)}</td>`).join('')}</tr>`; }).join('');
+    const foot=`<tfoot><tr><td class="bxn">Team</td><td>${Math.round(T.min)}</td><td>${T.pts}</td><td>${T.reb}</td><td>${T.ast}</td><td>${T.stl}</td><td>${T.blk}</td><td>${T.tov}</td>
+      <td>${ma(T.fgm,T.fga)}</td><td>${ma(T.f3m,T.f3a)}</td><td>${ma(T.ftm,T.fta)}</td><td>${ix.pf!=null?T.pf:'–'}</td><td></td><td>${gsT==null?'':`<span class="${cls(gsT)}">${fmt(gsT)}</span>`}</td></tr></tfoot>`;
+    const dn=dnp.map(([pid,x])=>`${esc(nameOf(pid,BXK.get(pid)))} (${esc(String(x[3]||'').toLowerCase())})`).join(', ');
+    return `<div class="bxsec"><h3>${tm} <span class="note">${pts!=null&&op!=null?`${pts>op?'W':'L'} ${pts}-${op}`:''}</span></h3>
+      <div class="bxwrap"><table class="bxt">${head(tm)}<tbody>${body}</tbody>${foot}</table></div>
+      <p class="note bxpct">FG ${pc(T.fgm,T.fga)} · 3P ${pc(T.f3m,T.f3a)} · FT ${pc(T.ftm,T.fta)}</p>${dn?`<p class="note bxdnp">Didn't play: ${dn}</p>`:''}</div>`; };
+  h+=side(false)+side(true);
+  h+=`<p class="note" style="margin-top:14px">Sorted by ${(BXC.find(c=>c[0]===bxSort)||BXC[0])[2].split(':')[0].toLowerCase()}, ${bxAsc?'lowest':'most'} first. Tap a header to sort both teams, tap again to reverse. S = starter. GS = box game score: points added to the margin vs an average player in the same possessions (offense + defense). Tap a player for his game log.</p>`;
+  $('gv').innerHTML=h;
+  $('gv').querySelectorAll('.bxwrap').forEach((w,i)=>{ if(sl[i]) w.scrollLeft=sl[i]; });
+  if(focusKey){ const b=$('gv').querySelector(`[data-bxs="${focusKey}"]`); b&&b.focus({preventScroll:true}); }
+}
 function openGame(id){
   if(!gvKey){ gvScroll=window.scrollY; try{ history.pushState({gv:id},''); gvPushed=true; }catch(e){ gvPushed=false; } }
   if(gvKey!==id) GVF={}; gvKey=id; document.body.classList.add('gvopen'); $('gv').hidden=false; renderGV();
   const top=$('gv').getBoundingClientRect().top+window.scrollY-10; window.scrollTo(0,Math.max(0,top)); $('gvBack')&&$('gvBack').focus({preventScroll:true});
 }
-function closeGame(){ GVF={}; gvKey=null; gvPushed=false; document.body.classList.remove('gvopen'); $('gv').hidden=true; $('gv').innerHTML=''; window.scrollTo(0,gvScroll); }
+function closeGame(){ GVF={}; gvKey=null; bxKey=null; gvPushed=false; document.body.classList.remove('gvopen'); $('gv').hidden=true; $('gv').innerHTML=''; window.scrollTo(0,gvScroll); }
 const mTxt=(v,g)=>Math.abs(v)<0.05?'even':`${v>0?g.home:g.away} by ${Math.abs(v).toFixed(1)}`;
 function distSVG(g,ms){ // home margin ~ Normal(spread, sig)
   const sd=M.sig, X0=-40, X1=40, W=Math.max(300,Math.min(760,(($('gv').clientWidth||640)-40))), H=W<500?170:190, L=12, R=12, T=26, B=30, y0=H-B;
@@ -1554,6 +1636,7 @@ function dtdHTML(g){ // day-to-day what-if (session 54): each DTD player in / 50
     ${rows}</div>`;
 }
 function renderGV(){
+  if(bxKey!=null){ renderBox(); return; }
   if(!gvKey||!P) return;
   const g=allGames(GVF).find(x=>x.game===gvKey); if(!g){ closeGame(); return; }
   const H=g.H, A=g.A, ms=mktSpread(g), pace=SZ.pace, day=new Date(g.day+'T12:00:00');
@@ -1607,6 +1690,8 @@ function renderGV(){
   $('gv').innerHTML=h;
 }
 $('gv').addEventListener('click',e=>{ if(e.target.closest('#gvBack')){ gvPushed?history.back():closeGame(); return; }
+  const bs=e.target.closest('[data-bxs]'); if(bs){ const k=bs.dataset.bxs; bxAsc=k===bxSort?!bxAsc:false; bxSort=k; renderBox(k); return; }
+  const bp=e.target.closest('[data-bxp]'); if(bp){ openGameScore(bp.dataset.bxp,bxKey); return; }
   const dd=e.target.closest('[data-dtd]'); if(dd){ const v=dd.dataset.v; if(v==='h') delete GVF[dd.dataset.dtd]; else GVF[dd.dataset.dtd]=+v; renderGV(); return; }
   if(e.target.closest('[data-dtdreset]')){ GVF={}; renderGV(); return; }
   const b=e.target.closest('[data-edit]'); if(b){ openEditor(b.dataset.edit); return; }
@@ -1680,7 +1765,7 @@ function vgCalib(rows){
   return `<div class="vgtiles"><div class="vgt"><span class="vgk">Brier score</span><span class="vgv">${BJ.toFixed(3)} <small>vs ${BV.toFixed(3)}</small></span><span class="note">JIMBO vs the line; lower is better (a coin flip scores .250)</span></div></div>
     <div class="cleg"><span><i style="background:var(--magenta)"></i>JIMBO</span><span><i style="background:var(--surface);border:2px solid var(--ink);box-sizing:border-box"></i>Vegas line</span><span>dashed: perfect calibration</span></div>
     <div class="cchart" style="max-width:420px"><svg id="${id}" viewBox="0 0 ${W} ${Hh}" width="100%" style="touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:pointer" role="img" aria-label="Calibration: predicted home win chance vs how often the home team won, JIMBO and the Vegas line">${g}</svg></div><p class="note vgread" style="user-select:none;-webkit-user-select:none">${esc(base)}</p>
-    <p class="note">Games are grouped by the home team's predicted chance in 10% steps; each dot sits at the average chance in its group, sized by games, with a 95% range. A well calibrated forecast stays on the diagonal. The line's chance comes from its spread the same way JIMBO's comes from its margin (σ ${M.sig} points). Expect wide ranges until a few hundred games. <span style="opacity:.6">Build 11-23.</span></p>`;
+    <p class="note">Games are grouped by the home team's predicted chance in 10% steps; each dot sits at the average chance in its group, sized by games, with a 95% range. A well calibrated forecast stays on the diagonal. The line's chance comes from its spread the same way JIMBO's comes from its margin (σ ${M.sig} points). Expect wide ranges until a few hundred games. <span style="opacity:.6">Build 11-24.</span></p>`;
 }
 function renderVegas(){
   const el=$('vegas'); if(!el) return;
@@ -1754,7 +1839,7 @@ if(SEASON){ document.querySelectorAll('.lgline').forEach(e=>e.style.display='non
   $('fresh').hidden=false; $('fresh').textContent=`Nightly update ${gen&&!isNaN(gen)?gen.toLocaleString(undefined,{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):SZ.asof} · ${SZ.games_final?SZ.games_final+' games played':'season starts '+new Date('2026-10-20T12:00:00').toLocaleDateString(undefined,{month:'long',day:'numeric'})}`; }
 if(APP){ document.body.classList.add('app'); $('bnav').hidden=false;
   $('bnav').addEventListener('click',e=>{ const b=e.target.closest('[data-go]'); if(!b) return;
-    if(gvKey){ if(pvKey) closePlayer(); closeGame(); } else if(pvKey) (pvPushed?history.back():closePlayer());
+    if(gvKey||bxKey!=null){ if(pvKey) closePlayer(); closeGame(); } else if(pvKey) (pvPushed?history.back():closePlayer());
     if(b.dataset.go==='set'){ document.body.classList.add('setmode'); $('settings').open=true; document.querySelectorAll('#bnav button').forEach(x=>x.toggleAttribute('aria-current',x===b)); window.scrollTo(0,0); }
     else { selectTab($(b.dataset.go)); window.scrollTo(0,0); } }); }
 tabs.forEach((tb,i)=>{ tb.addEventListener('click',()=>selectTab(tb));
@@ -1771,8 +1856,8 @@ function openPlayer(k){
   const top=$('pv').getBoundingClientRect().top+window.scrollY-10; window.scrollTo(0,Math.max(0,top)); $('pvBack')&&$('pvBack').focus({preventScroll:true});
 }
 function closePlayer(){ pvKey=null; pvPushed=false; document.body.classList.remove('pvopen'); $('pv').hidden=true; $('pv').innerHTML=''; window.scrollTo(0,pvScroll); }
-window.addEventListener('popstate',()=>{ if(pvKey) closePlayer(); else if(gvKey) closeGame(); });
-document.addEventListener('keydown',e=>{ if(e.key!=='Escape'||ed.open) return; if(pvKey){ pvPushed?history.back():closePlayer(); } else if(gvKey){ gvPushed?history.back():closeGame(); } });
+window.addEventListener('popstate',()=>{ if(pvKey) closePlayer(); else if(gvKey||bxKey!=null) closeGame(); });
+document.addEventListener('keydown',e=>{ if(e.key!=='Escape'||ed.open) return; if(pvKey){ pvPushed?history.back():closePlayer(); } else if(gvKey||bxKey!=null){ gvPushed?history.back():closeGame(); } });
 const seasonLbl=y=>`${y}-${String((y+1)%100).padStart(2,'0')}`;
 function histSeasons(p,m){ // per-season box contributions under current weights (post-slope), grouped by component
   const h=D.hist[p.k]; if(!h) return [];
@@ -1978,7 +2063,7 @@ function seasLoad(){ if(SEAS.st==='loading'||SEAS.st==='ok') return; SEAS.st='lo
   Promise.all([gj('data/gamelog.json'),gj('data/rating_hist.json'),gj('data/prev_season.json').catch(()=>({p:{},cols:[]}))])
     .then(([g,rh,pv])=>{ SEAS.g=g; SEAS.rh=rh; SEAS.pv=pv; SEAS.st='ok'; GTOP=null; seasPaint(); seasAfter(); })
     .catch(()=>{ SEAS.st='err'; seasPaint(); seasAfter(); }); }
-function seasAfter(){ try{ if(plView==='games') renderPlayers(); renderTonight(); }catch(e){} }
+function seasAfter(){ try{ if(bxKey!=null) renderBox(); if(plView==='games') renderPlayers(); renderTonight(); }catch(e){} }
 function seasPaint(){ const el=$('pvSeason'); if(el&&pvKey) el.innerHTML=seasHTML(pvKey); }
 function seasPid(k){ if(k.startsWith('p')) return k.slice(1); const z=ZP&&ZP.get(k); return z&&z.id!=null?String(z.id):null; }
 const seaDate=d=>new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
